@@ -69,8 +69,8 @@ type Account struct {
     UpdatedAt        time.Time
 }
 type Client struct {
-    Db        *sql.DB
-    TableName string
+    db        *sql.DB
+    tableName string
 }
 type IdCounter struct {
     mu sync.Mutex
@@ -120,8 +120,8 @@ type UpdateOption struct {
 //
 func NewClient(db *sql.DB, tableName string) *Client {
     return &Client{
-        Db: db,
-        TableName: tableName,
+        db: db,
+        tableName: tableName,
     }
 }
 
@@ -220,14 +220,14 @@ func ValidateUsername(value string) bool {
 //
 func (c *Client) Count(option *SelectOption) (int64, error) {
     // Check if DB is connected.
-    if c.Db == nil {
-        return 0, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return 0, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Generate a SELECT query.
     var query strings.Builder
     args := make([]interface{}, 0)
-    query.WriteString("SELECT COUNT(*) FROM " + c.TableName)
+    query.WriteString("SELECT COUNT(*) FROM " + c.tableName)
 
     if option != nil {
         isWhere := false
@@ -303,7 +303,7 @@ func (c *Client) Count(option *SelectOption) (int64, error) {
 
     // Execute.
     var result int64
-    err := c.Db.QueryRow(query.String(), args...).Scan(&result)
+    err := c.db.QueryRow(query.String(), args...).Scan(&result)
     if err != nil {
         return 0, err
     }
@@ -317,8 +317,8 @@ func (c *Client) Count(option *SelectOption) (int64, error) {
 //
 func (c *Client) CreateTable() error {
     // Check if DB is connected.
-    if c.Db == nil {
-        return fmt.Errorf("Failed to execute create table query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return fmt.Errorf("Failed to execute create table query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Generate a CREATE TABLE query.
@@ -341,7 +341,7 @@ func (c *Client) CreateTable() error {
         INDEX (%s),
         INDEX (%s),
         INDEX (%s));`,
-        c.TableName,
+        c.tableName,
         ColId,
         ColStatus, ValStatusActive, ValStatusInactive, ValStatusPending, ValStatusSuspended, ValStatusDeleted, ValStatusActive,
         ColRole, ValRoleNone, ValRoleAdmin, ValRoleEditor, ValRoleViewer, ValRoleNone,
@@ -361,7 +361,7 @@ func (c *Client) CreateTable() error {
         ColUsername)
 
     // Execute the query.
-    if _, err := c.Db.Exec(query); err != nil {
+    if _, err := c.db.Exec(query); err != nil {
         return err
     }
 
@@ -374,15 +374,15 @@ func (c *Client) CreateTable() error {
 //
 func (c *Client) DeleteByPrimaryKey(id uint64) error {
     // Check if DB is connected.
-    if c.Db == nil {
-        return fmt.Errorf("Failed to execute delete query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return fmt.Errorf("Failed to execute delete query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Generate a select query.
-    query := "DELETE FROM " + c.TableName + " WHERE " + ColId + " = ?"
+    query := "DELETE FROM " + c.tableName + " WHERE " + ColId + " = ?"
 
     // Execute.
-    if _, err := c.Db.Exec(query, id); err != nil {
+    if _, err := c.db.Exec(query, id); err != nil {
         return err
     }
 
@@ -395,17 +395,17 @@ func (c *Client) DeleteByPrimaryKey(id uint64) error {
 //
 func (c *Client) Insert(option *InsertOption) error {
     // Check if DB is connected.
-    if c.Db == nil {
-        return fmt.Errorf("Failed to execute insert query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return fmt.Errorf("Failed to execute insert query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Set SQl query statement.
     if insertStmt == nil {
         var err error
-        insertStmt, err = c.Db.Prepare(
+        insertStmt, err = c.db.Prepare(
             fmt.Sprintf(
                 `INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                c.TableName,
+                c.tableName,
                 ColId,
                 ColStatus,
                 ColRole,
@@ -449,14 +449,14 @@ func (c *Client) Insert(option *InsertOption) error {
 //
 func (c *Client) Select(option *SelectOption) ([]*Account, error) {
     // Check if DB is connected.
-    if c.Db == nil {
-        return nil, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return nil, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Generate a SELECT query.
     var query strings.Builder
     args := make([]interface{}, 0)
-    query.WriteString("SELECT * FROM " + c.TableName)
+    query.WriteString("SELECT * FROM " + c.tableName)
 
     if option != nil {
         isWhere := false
@@ -543,7 +543,7 @@ func (c *Client) Select(option *SelectOption) ([]*Account, error) {
     }
 
     // Execute.
-    rows, err := c.Db.Query(query.String(), args...)
+    rows, err := c.db.Query(query.String(), args...)
     if err != nil {
         return nil, err
     }
@@ -582,16 +582,16 @@ func (c *Client) Select(option *SelectOption) ([]*Account, error) {
 //
 func (c *Client) SelectByPrimaryKey(id uint64) (*Account, error) {
     // Check if DB is connected.
-    if c.Db == nil {
-        return nil, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return nil, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Generate a select query.
-    query := "SELECT * FROM " + c.TableName + " WHERE " + ColId + " = ? LIMIT 1"
+    query := "SELECT * FROM " + c.tableName + " WHERE " + ColId + " = ? LIMIT 1"
 
     // Execute.
     result := &Account{}
-    if err := c.Db.QueryRow(query, id).Scan(
+    if err := c.db.QueryRow(query, id).Scan(
         &result.Id,
         &result.Status,
         &result.Role,
@@ -619,16 +619,16 @@ func (c *Client) SelectByPrimaryKey(id uint64) (*Account, error) {
 //
 func (c *Client) SelectByEmail(email string) (*Account, error) {
     // Check if DB is connected.
-    if c.Db == nil {
-        return nil, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return nil, fmt.Errorf("Failed to execute select query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Generate a select query.
-    query := "SELECT * FROM " + c.TableName + " WHERE " + ColEmail + " = ? LIMIT 1"
+    query := "SELECT * FROM " + c.tableName + " WHERE " + ColEmail + " = ? LIMIT 1"
 
     // Execute.
     result := &Account{}
-    if err := c.Db.QueryRow(query, email).Scan(
+    if err := c.db.QueryRow(query, email).Scan(
         &result.Id,
         &result.Status,
         &result.Role,
@@ -656,12 +656,12 @@ func (c *Client) SelectByEmail(email string) (*Account, error) {
 //
 func (c *Client) Update(id uint64, option *UpdateOption) error {
     // Check if DB is connected.
-    if c.Db == nil {
-        return fmt.Errorf("Failed to execute insert query because DB was disconnected. (table: %s)\n", c.TableName)
+    if c.db == nil {
+        return fmt.Errorf("Failed to execute insert query because DB was disconnected. (table: %s)\n", c.tableName)
     }
 
     // Generate a update query.
-    query := "UPDATE " + c.TableName + " SET "
+    query := "UPDATE " + c.tableName + " SET "
     var assignmentList []string
     args := make([]interface{}, 0)
 
@@ -705,7 +705,7 @@ func (c *Client) Update(id uint64, option *UpdateOption) error {
     // Execute.
     query += strings.Join(assignmentList, ", ") + " WHERE " + ColId + " = ?"
     args = append(args, id)
-    _, err := c.Db.Exec(query, args...)
+    _, err := c.db.Exec(query, args...)
 
     return err
 }
