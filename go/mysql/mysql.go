@@ -5,7 +5,7 @@ package mysql
 
 import (
     "database/sql"
-    _ "github.com/go-sql-driver/mysql"
+    mysqlDriver "github.com/go-sql-driver/mysql"
 )
 
 
@@ -14,44 +14,49 @@ const (
 )
 
 
-var (
-    myDB *sql.DB
-)
-
-
 //
-// Close database.
+// Open with configuration.
 //
-func Close() {
-    if myDB != nil {
-        myDB.Close()
-    }
-}
-
-
-//
-// Connect to the database.
-//
-func Conn() *sql.DB {
-    return myDB
-}
-
-
-//
-// Initialize with data source name.
-//
-func InitWithDataSourceName(dataSourceName string) error {
-    db, err := sql.Open(DriverName, dataSourceName)
+func OpenWithConfig(cfg *mysqlDriver.Config) (*sql.DB, error) {
+    connector, err := mysqlDriver.NewConnector(cfg)
     if err != nil {
-        return err
+        return nil, err
     }
 
+    db := sql.OpenDB(connector)
+
+    if err := ping(db); err != nil {
+        db.Close()
+    }
+
+    return db, nil
+}
+
+
+//
+// Open with data source name.
+//
+func OpenWithDSN(dsn string) (*sql.DB, error) {
+    db, err := sql.Open(DriverName, dsn)
+    if err != nil {
+        return nil, err
+    }
+
+    if err := ping(db); err != nil {
+        db.Close()
+    }
+
+    return db, nil
+}
+
+
+//
+// Ping to the database.
+//
+func ping(db *sql.DB) error {
     if err := db.Ping(); err != nil {
         db.Close()
         return err
     }
-
-    myDB = db
-
     return nil
 }
