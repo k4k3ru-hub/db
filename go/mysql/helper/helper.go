@@ -16,6 +16,8 @@ type IdCounter struct {
     mu sync.Mutex
     id uint64
 }
+
+
 type Condition struct {
     Column                   string      `json:"column"`
     Value                    interface{} `json:"value"`
@@ -49,21 +51,6 @@ func AppendUpdateAssignment[T any](assignments *[]string, args *[]any, col strin
     } else {
         *args = append(*args, f.Value)
     }
-}
-
-
-//
-// Generate an ID.
-//
-func GenerateId(idCounter *IdCounter) uint64 {
-    idCounter.mu.Lock()
-    defer idCounter.mu.Unlock()
-    id := uint64(time.Now().UnixNano())
-    if id <= idCounter.id {
-        id = idCounter.id + 1
-    }
-    idCounter.id = id
-    return id
 }
 
 
@@ -135,6 +122,24 @@ func GenerateQueryWhere(conditions []*Condition) (string, []interface{}, error) 
     }
 
     return query.String(), args, nil
+}
+
+
+//
+// Generate an ID.
+//
+// Version:
+//   - 2026-04-28: Added.
+//
+func (idc *IdCounter) GenerateID() uint64 {
+    idc.mu.Lock()
+    defer idc.mu.Unlock()
+    id := uint64(time.Now().UnixNano())
+    if id <= idc.id {
+        id = idc.id + 1
+    }
+    idc.id = id
+    return id
 }
 
 
