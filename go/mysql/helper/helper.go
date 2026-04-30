@@ -126,6 +126,23 @@ func GenerateQueryWhere(conditions []*Condition) (string, []interface{}, error) 
 
 
 //
+// Truncate runes.
+//
+func TruncateRunes(s string, max int) string {
+    if max <= 0 {
+        return ""
+    }
+
+    if utf8.RuneCountInString(s) <= max {
+        return s
+    }
+
+    r := []rune(s)
+    return string(r[:max])
+}
+
+
+//
 // Generate an ID.
 //
 // Version:
