@@ -138,7 +138,12 @@ func TruncateRunes(s string, max int) string {
     }
 
     r := []rune(s)
-    return string(r[:max])
+
+    if max <= 3 {
+        return string(r[:max])
+    }
+
+    return string(r[:max]) + "..."
 }
 
 
