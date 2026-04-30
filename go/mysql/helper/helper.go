@@ -8,6 +8,7 @@ import (
     "strings"
     "sync"
     "time"
+    "unicode/utf8"
     _ "github.com/go-sql-driver/mysql"
 )
 
