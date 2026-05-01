@@ -1,0 +1,14 @@
+filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
+filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
+filippo.io/edwards25519 v1.2.0 h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo=
+filippo.io/edwards25519 v1.2.0/go.mod h1:xzAOLCNug/yB62zG1bQ8uziwrIqIuxhctzJT18Q77mc=
+github.com/go-sql-driver/mysql v1.9.3 h1:U/N249h2WzJ3Ukj8SowVFjdtZKfu9vlLZxjPXV1aweo=
+github.com/go-sql-driver/mysql v1.9.3/go.mod h1:qn46aNg1333BRMNU69Lq93t8du/dwxI64Gl8i5p1WMU=
+github.com/go-sql-driver/mysql v1.10.0 h1:Q+1LV8DkHJvSYAdR83XzuhDaTykuDx0l6fkXxoWCWfw=
+github.com/go-sql-driver/mysql v1.10.0/go.mod h1:M+cqaI7+xxXGG9swrdeUIoPG3Y3KCkF0pZej+SK+nWk=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20251206093623-56478e26ee81 h1:9Kp8g9uSXR7Za1B1aVpPG3PNht1ddI+9NuThm96CMuU=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20251206093623-56478e26ee81/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260429142233-750c5c028019 h1:qWdk1KfLSh3CoCbC5YauYm0fUJDJUtlmDQsIei/+ds8=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260429142233-750c5c028019/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260430073826-7b694a255eee h1:Io4mPxLeFcrQd9RXyCz1VnoyZ7nDhbeuhXPNe7nH1+4=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260430073826-7b694a255eee/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
