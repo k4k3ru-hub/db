@@ -4,8 +4,12 @@
 package email
 
 import (
+    "crypto/rand"
+	"crypto/sha256"
     "database/sql"
+	"encoding/hex"
     "fmt"
+    "math/big"
     "strings"
     "time"
     "unicode/utf8"
@@ -17,6 +21,14 @@ import (
 
 const (
     DefaultOTPTableName = "account_email_otps"
+
+    DefaultCodeLength = 6
+
+    DefaultMaxAttemptCount uint8 = 3
+
+    DefaultExpiresIn = 10 * time.Minute
+
+    DefaultLockedUntilIn = 15 * time.Minute
 )
 
 
@@ -82,6 +94,62 @@ type OTPUpdateOption struct {
     AttemptCount *uint8     `json:"attemptCount,omitempty"`
     LastSentAt   *time.Time `json:"lastSentAt,omitempty"`
     LockedUntil  *time.Time `json:"lockedUntil,omitempty"`
+}
+
+
+//
+// Get default expires at.
+//
+// Version:
+//   - 2026-05-04: Added.
+//
+func DefaultExpiresAt() time.Time {
+    return time.Now().UTC().Add(DefaultExpiresIn)
+}
+
+
+//
+// Generate code.
+//
+// Version:
+//   - 2026-05-04: Added.
+//
+func GenerateCode() (string, error) {
+	// Calculate max value (10^DefaultCodeLength).
+	max := new(big.Int).Exp(
+		big.NewInt(10),
+		big.NewInt(DefaultCodeLength),
+		nil,
+	)
+
+	// Generate secure random number.
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate code: %w", err)
+	}
+
+	// Zero padding (e.g. 000123).
+	return fmt.Sprintf("%0*d", DefaultCodeLength, n.Uint64()), nil
+}
+
+
+//
+// Hash code.
+//
+// Version:
+//   - 2026-05-04: Added.
+//
+func HashCode(code string) (string, error) {
+	// Normalize.
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return "", fmt.Errorf("failed to hash code: missing required parameter: code=empty")
+	}
+
+	// Hash.
+	sum := sha256.Sum256([]byte(code))
+
+	return hex.EncodeToString(sum[:]), nil
 }
 
 
@@ -176,7 +244,7 @@ func (o *OTP) ValidateExpiresAt() error {
     if o.ExpiresAt.IsZero() {
         return fmt.Errorf("invalid parameter: expires_at=empty")
     }
-    if !o.ExpiresAt.After(time.Now()) {
+    if !o.ExpiresAt.After(time.Now().UTC()) {
         return fmt.Errorf("invalid parameter: expires_at=%s", o.ExpiresAt.Format(time.RFC3339))
     }
     return nil
@@ -196,7 +264,7 @@ func (o *OTP) ValidateLastSentAt() error {
     if o.LastSentAt.IsZero() {
         return fmt.Errorf("invalid parameter: last_sent_at=empty")
     }
-    if o.LastSentAt.After(time.Now()) {
+    if o.LastSentAt.After(time.Now().UTC()) {
         return fmt.Errorf("invalid parameter: last_sent_at=%s", o.LastSentAt.Format(time.RFC3339))
     }
     return nil
@@ -336,6 +404,79 @@ func (s *OTPStore) Insert(row *OTP) error {
         row.LockedUntil,
     ); err != nil {
         return fmt.Errorf("failed to insert account email otp: %w", err)
+    }
+
+    return nil
+}
+
+
+//
+// Upsert account email OTP.
+//
+// Version:
+//   - 2026-05-05: Added.
+//
+func (s *OTPStore) Upsert(row *OTP) error {
+    if s == nil {
+        return fmt.Errorf("failed to upsert account email otp: missing required parameter: otp_store=null")
+    }
+    if s.db == nil {
+        return fmt.Errorf("failed to upsert account email otp: missing required parameter: db=null")
+    }
+    if s.tableName == "" {
+        return fmt.Errorf("failed to upsert account email otp: missing required parameter: table_name=empty")
+    }
+    if row == nil {
+        return fmt.Errorf("failed to upsert account email otp: missing required parameter: otp=null")
+    }
+    if err := row.ValidateEmail(); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    }
+    if err := row.ValidateStatus(); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    }
+    if err := row.ValidateCodeHash(); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    }
+    if err := row.ValidateExpiresAt(); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    }
+    if err := row.ValidateLastSentAt(); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    }
+    if err := row.ValidateLockedUntil(); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    }
+
+    query := fmt.Sprintf(
+        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s);",
+        s.tableName,
+        ColEmail,
+        ColStatus,
+        ColCodeHash,
+        ColExpiresAt,
+        ColAttemptCount,
+        ColLastSentAt,
+        ColLockedUntil,
+        ColStatus, ColStatus,
+        ColCodeHash, ColCodeHash,
+        ColExpiresAt, ColExpiresAt,
+        ColAttemptCount, ColAttemptCount,
+        ColLastSentAt, ColLastSentAt,
+        ColLockedUntil, ColLockedUntil,
+    )
+
+    if _, err := s.db.Exec(
+        query,
+        row.Email,
+        row.Status,
+        row.CodeHash,
+        row.ExpiresAt,
+        row.AttemptCount,
+        row.LastSentAt,
+        row.LockedUntil,
+    ); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
     }
 
     return nil
