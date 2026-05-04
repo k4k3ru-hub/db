@@ -166,3 +166,78 @@ func (idc *IdCounter) GenerateID() uint64 {
 }
 
 
+//
+// Scan uint8 value.
+//
+// Version:
+//   - 2026-05-03: Added.
+//
+func ScanUint8(name string, value any) (uint8, error) {
+    if value == nil {
+        return 0, fmt.Errorf("missing required parameter: %s=null", name)
+    }
+
+    switch v := value.(type) {
+    case uint8:
+        return v, nil
+    case uint16:
+        if v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case uint32:
+        if v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case uint64:
+        if v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case uint:
+        if v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case int8:
+        if v < 0 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case int16:
+        if v < 0 || v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case int32:
+        if v < 0 || v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case int64:
+        if v < 0 || v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case int:
+        if v < 0 || v > 255 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint8(v), nil
+    case []byte:
+        n, err := strconv.ParseUint(string(v), 10, 8)
+        if err != nil {
+            return 0, fmt.Errorf("invalid parameter: %s=%s", name, string(v))
+        }
+        return uint8(n), nil
+    case string:
+        n, err := strconv.ParseUint(v, 10, 8)
+        if err != nil {
+            return 0, fmt.Errorf("invalid parameter: %s=%s", name, v)
+        }
+        return uint8(n), nil
+    default:
+        return 0, fmt.Errorf("unsupported parameter: %s_type=%T", name, value)
+    }
+}
