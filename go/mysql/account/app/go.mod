@@ -1,4 +1,4 @@
-module github.com/k4k3ru-hub/db/go/mysql/account/payment
+module github.com/k4k3ru-hub/db/go/mysql/account/app
 
 go 1.25.4
 

@@ -113,14 +113,28 @@ func (s *TxStatus) Scan(src any) error {
 type Chain string
 
 const (
-    ChainEVM    Chain = "evm"
-    ChainSui    Chain = "sui"
-    ChainSolana Chain = "solana"
+    ChainBitcoin   Chain = "bitcoin"
+    ChainEthereum  Chain = "ethereum"
+    ChainBNB       Chain = "bnb"
+    ChainPolygon   Chain = "polygon"
+    ChainArbitrum  Chain = "arbitrum"
+    ChainOptimism  Chain = "optimism"
+    ChainBase      Chain = "base"
+    ChainAvalanche Chain = "avalanche"
+    ChainSui       Chain = "sui"
+    ChainSolana    Chain = "solana"
 )
 
 func (c Chain) IsValid() bool {
     switch c {
-    case ChainEVM,
+    case ChainBitcoin,
+        ChainEthereum,
+        ChainBNB,
+        ChainPolygon,
+        ChainArbitrum,
+        ChainOptimism,
+        ChainBase,
+        ChainAvalanche,
         ChainSui,
         ChainSolana:
         return true

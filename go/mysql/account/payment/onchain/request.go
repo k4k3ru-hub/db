@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	DefaultRequestTableName = "payment_onchain_requests"
+	DefaultRequestTableName = "account_payment_onchain_requests"
 )
 
 var (
