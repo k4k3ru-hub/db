@@ -98,10 +98,8 @@ func (s *CredentialStatus) Scan(value any) error {
 type OTPStatus uint8
 
 const (
-    OTPStatusPending OTPStatus = iota
+    OTPStatusActive OTPStatus = iota
     OTPStatusVerified
-    OTPStatusExpired
-    OTPStatusLocked
 )
 
 
