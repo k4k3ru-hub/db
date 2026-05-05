@@ -139,12 +139,15 @@ func GenerateCode() (string, error) {
 // Version:
 //   - 2026-05-04: Added.
 //
-func HashCode(code string) (string, error) {
+func HashCode(code string, maxCodeLength int) (string, error) {
 	// Normalize.
 	code = strings.TrimSpace(code)
 	if code == "" {
 		return "", fmt.Errorf("failed to hash code: missing required parameter: code=empty")
 	}
+    if len(code) > maxCodeLength {
+        return "", fmt.Errorf("failed to hash code: invalid parameter: code=%q", helper.TruncateRunes(code, maxCodeLength))
+    }
 
 	// Hash.
 	sum := sha256.Sum256([]byte(code))
