@@ -503,7 +503,7 @@ func (s *OTPStore) SelectByEmail(email string) (*OTP, error) {
         return nil, fmt.Errorf("failed to select account email otp by email: %w", err)
     }
 
-    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColEmail)
 
     result := &OTP{}
     err := s.db.QueryRow(query, email).Scan(
@@ -686,7 +686,7 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
 // Version:
 //   - 2026-05-04: Added.
 //
-func (s *OTPStore) DeleteByID(email string) error {
+func (s *OTPStore) DeleteByEmail(email string) error {
     if s == nil {
         return fmt.Errorf("failed to delete account email otp by email: missing required parameter: otp_store=null")
     }
