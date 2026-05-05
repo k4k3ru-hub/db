@@ -111,10 +111,8 @@ const (
 //
 func (s OTPStatus) IsValid() bool {
     switch s {
-    case OTPStatusPending,
-        OTPStatusVerified,
-        OTPStatusExpired,
-        OTPStatusLocked:
+    case OTPStatusActive,
+        OTPStatusVerified:
         return true
     default:
         return false
