@@ -168,11 +168,11 @@ func (s *OTPStatus) Scan(value interface{}) error {
 // Version:
 //   - 2026-05-03: Added.
 //
-type OTPPurpose uint8
+type OTPPurpose string
 
 const (
-    OTPPurposeEmailCreate OTPPurpose = iota + 1
-    OTPPurposeAPIKeyCreate
+    OTPPurposeEmailCreate  OTPPurpose = "email-create"
+    OTPPurposeAPIKeyCreate OTPPurpose = "api-key-create"
 )
 
 
@@ -201,10 +201,10 @@ func (p OTPPurpose) IsValid() bool {
 //
 func (p OTPPurpose) Value() (driver.Value, error) {
     if !p.IsValid() {
-        return nil, fmt.Errorf("invalid parameter: otp_purpose=%d", p)
+        return nil, fmt.Errorf("invalid parameter: otp_purpose=%s", p)
     }
 
-    return int64(p), nil
+    return string(p), nil
 }
 
 
@@ -219,14 +219,19 @@ func (p *OTPPurpose) Scan(value interface{}) error {
         return fmt.Errorf("failed to scan: missing required parameter: otp_purpose=null")
     }
 
-    v, err := helper.ScanUint8("otp_purpose", value)
-    if err != nil {
-        return fmt.Errorf("failed to scan: %w", err)
+    var s string
+    switch v := value.(type) {
+    case string:
+        s = v
+    case []byte:
+        s = string(v)
+    default:
+        return fmt.Errorf("failed to scan: invalid parameter: otp_purpose=%v", value)
     }
 
-    scanned := OTPPurpose(v)
+    scanned := OTPPurpose(s)
     if !scanned.IsValid() {
-        return fmt.Errorf("failed to scan: invalid parameter: otp_purpose=%d", scanned)
+        return fmt.Errorf("failed to scan: invalid parameter: otp_purpose=%s", scanned)
     }
 
     *p = scanned

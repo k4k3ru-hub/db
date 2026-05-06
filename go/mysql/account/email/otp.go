@@ -338,7 +338,7 @@ func (s *OTPStore) CreateTable() error {
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s VARCHAR(255) NOT NULL COMMENT 'Email',
-            %s TINYINT UNSIGNED NOT NULL COMMENT 'Purpose',
+            %s VARCHAR(32) NOT NULL COMMENT 'Purpose',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(255) NOT NULL COMMENT 'Code hash',
             %s DATETIME NOT NULL COMMENT 'Expires at',
