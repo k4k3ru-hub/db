@@ -73,11 +73,9 @@ type AccountDeleteOption struct {
 // Validate account name.
 //
 func (a *Account) ValidateName() error {
-    // Guard.
     if a == nil {
         return fmt.Errorf("invalid parameter: account=null")
     }
-
     if a.Name == "" {
         return fmt.Errorf("invalid parameter: password=empty")
     }
@@ -193,7 +191,6 @@ func (s *AccountStore) CreateTable() error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            UNIQUE KEY uk_accounts_name (%s),
             KEY idx_accounts_status (%s),
             KEY idx_accounts_role (%s));
         `,
@@ -206,7 +203,6 @@ func (s *AccountStore) CreateTable() error {
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
-        ColName,
         ColStatus,
         ColRole,
     )
@@ -450,59 +446,6 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
             return nil, nil
         }
         return nil, fmt.Errorf("failed to select account by id: %w", err)
-    }
-
-    return result, nil
-}
-
-
-//
-// Select by name.
-//
-// Version:
-//   - 2026-04-29: Added.
-//
-func (s *AccountStore) SelectByName(name string) (*Account, error) {
-    // Guard.
-    if s == nil {
-        return nil, fmt.Errorf("failed to select account by name: missing required parameter: account_store=null")
-    }
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select account by name: missing required parameter: db=null")
-    }
-    if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account by name: missing required parameter: table_name=empty")
-    }
-
-    a := Account{
-        Name: name,
-    }
-    if err := a.ValidateName(); err != nil {
-        return nil, fmt.Errorf("failed to select account by name: %w", err)
-    }
-
-    // Generate a SELECT query.
-    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColName)
-
-    // Execute.
-    row := s.db.QueryRow(query, name)
-
-    // Scan.
-    result := &Account{}
-    err := row.Scan(
-        &result.ID,
-        &result.Status,
-        &result.Role,
-        &result.Name,
-        &result.LastLoggedIn,
-        &result.CreatedAt,
-        &result.UpdatedAt,
-    )
-    if err != nil {
-        if err == sql.ErrNoRows {
-            return nil, nil
-        }
-        return nil, fmt.Errorf("failed to select account by name: %w", err)
     }
 
     return result, nil
