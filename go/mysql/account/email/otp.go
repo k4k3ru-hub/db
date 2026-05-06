@@ -664,7 +664,7 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
     }
 
     if option.LockedUntilSetNull {
-        assignments = append(assignments, ColLastSentAt + " = NULL")
+        assignments = append(assignments, ColLockedUntil + " = NULL")
     } else if option.LockedUntil != nil {
         assignments = append(assignments, ColLockedUntil + " = ?")
         args = append(args, *option.LockedUntil)
