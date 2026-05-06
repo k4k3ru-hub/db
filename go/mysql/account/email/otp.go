@@ -40,6 +40,7 @@ const (
 //
 type OTP struct {
     Email        string     `json:"email"`
+    Purpose      OTPPurpose `json:"purpose"`
     Status       OTPStatus  `json:"status"`
     CodeHash     string     `json:"codeHash"`
     ExpiresAt    time.Time  `json:"expiresAt"`
@@ -68,15 +69,16 @@ type OTPStore struct {
 //   - 2026-05-03: Added.
 //
 type OTPSelectOption struct {
-    Email         *string    `json:"email,omitempty"`
-    EmailLike     *string    `json:"emailLike,omitempty"`
-    Status        *OTPStatus `json:"status,omitempty"`
-    ExpiresAtGTE  *time.Time `json:"expiresAtGte,omitempty"`
-    ExpiresAtLTE  *time.Time `json:"expiresAtLte,omitempty"`
-    OrderBy       string     `json:"orderBy"`
-    OrderByDesc   bool       `json:"orderByDesc"`
-    Limit         int        `json:"limit"`
-    Offset        int        `json:"offset"`
+    Email        *string     `json:"email,omitempty"`
+    EmailLike    *string     `json:"emailLike,omitempty"`
+    Purpose      *OTPPurpose `json:"purpose,omitempty"`
+    Status       *OTPStatus  `json:"status,omitempty"`
+    ExpiresAtGTE *time.Time  `json:"expiresAtGte,omitempty"`
+    ExpiresAtLTE *time.Time  `json:"expiresAtLte,omitempty"`
+    OrderBy      string      `json:"orderBy"`
+    OrderByDesc  bool        `json:"orderByDesc"`
+    Limit        int         `json:"limit"`
+    Offset       int         `json:"offset"`
 }
 
 
@@ -88,6 +90,7 @@ type OTPSelectOption struct {
 //
 type OTPUpdateOption struct {
     Email              string     `json:"email"`
+    Purpose            OTPPurpose `json:"purpose"`
     Status             *OTPStatus `json:"status,omitempty"`
     CodeHash           *string    `json:"codeHash,omitempty"`
     ExpiresAt          *time.Time `json:"expiresAt,omitempty"`
@@ -193,6 +196,23 @@ func (o *OTP) ValidateEmail() error {
     }
     if utf8.RuneCountInString(o.Email) > 255 {
         return fmt.Errorf("invalid parameter: email=%q", helper.TruncateRunes(o.Email, 255))
+    }
+    return nil
+}
+
+
+//
+// Validate OTP purpose.
+//
+// Version:
+//   - 2026-05-03: Added.
+//
+func (o *OTP) ValidatePurpose() error {
+    if o == nil {
+        return fmt.Errorf("missing required parameter: otp=null")
+    }
+    if !o.Purpose.IsValid() {
+        return fmt.Errorf("invalid parameter: purpose=%d", o.Purpose)
     }
     return nil
 }
@@ -318,24 +338,26 @@ func (s *OTPStore) CreateTable() error {
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s VARCHAR(255) NOT NULL COMMENT 'Email',
+            %s TINYINT UNSIGNED NOT NULL COMMENT 'Purpose',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(255) NOT NULL COMMENT 'Code hash',
             %s DATETIME NOT NULL COMMENT 'Expires at',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Attempt count',
             %s DATETIME NOT NULL COMMENT 'Last sent at',
             %s DATETIME NULL COMMENT 'Locked until',
-            PRIMARY KEY (%s),
+            PRIMARY KEY (%s, %s),
             KEY idx_account_app_email_otp_status (%s)
         );`,
         s.tableName,
         ColEmail,
+        ColPurpose,
         ColStatus,
         ColCodeHash,
         ColExpiresAt,
         ColAttemptCount,
         ColLastSentAt,
         ColLockedUntil,
-        ColEmail,
+        ColEmail, ColPurpose,
         ColStatus,
     )
 
@@ -369,6 +391,9 @@ func (s *OTPStore) Insert(row *OTP) error {
     if err := row.ValidateEmail(); err != nil {
         return fmt.Errorf("failed to insert account email otp: %w", err)
     }
+    if err := row.ValidatePurpose(); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
+    }
     if err := row.ValidateStatus(); err != nil {
         return fmt.Errorf("failed to insert account email otp: %w", err)
     }
@@ -386,9 +411,10 @@ func (s *OTPStore) Insert(row *OTP) error {
     }
 
     query := fmt.Sprintf(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?);",
+        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
         s.tableName,
         ColEmail,
+        ColPurpose,
         ColStatus,
         ColCodeHash,
         ColExpiresAt,
@@ -400,6 +426,7 @@ func (s *OTPStore) Insert(row *OTP) error {
     if _, err := s.db.Exec(
         query,
         row.Email,
+        row.Purpose,
         row.Status,
         row.CodeHash,
         row.ExpiresAt,
@@ -436,6 +463,9 @@ func (s *OTPStore) Upsert(row *OTP) error {
     if err := row.ValidateEmail(); err != nil {
         return fmt.Errorf("failed to upsert account email otp: %w", err)
     }
+    if err := row.ValidatePurpose(); err != nil {
+        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    }
     if err := row.ValidateStatus(); err != nil {
         return fmt.Errorf("failed to upsert account email otp: %w", err)
     }
@@ -453,9 +483,10 @@ func (s *OTPStore) Upsert(row *OTP) error {
     }
 
     query := fmt.Sprintf(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s);",
+        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s), %s = VALUES(%s);",
         s.tableName,
         ColEmail,
+        ColPurpose,
         ColStatus,
         ColCodeHash,
         ColExpiresAt,
@@ -473,6 +504,7 @@ func (s *OTPStore) Upsert(row *OTP) error {
     if _, err := s.db.Exec(
         query,
         row.Email,
+        row.Purpose,
         row.Status,
         row.CodeHash,
         row.ExpiresAt,
@@ -512,6 +544,7 @@ func (s *OTPStore) SelectByEmail(email string) (*OTP, error) {
     result := &OTP{}
     err := s.db.QueryRow(query, email).Scan(
         &result.Email,
+        &result.Purpose,
         &result.Status,
         &result.CodeHash,
         &result.ExpiresAt,
@@ -563,6 +596,7 @@ func (s *OTPStore) Select(option *OTPSelectOption) ([]*OTP, error) {
         row := &OTP{}
         if err := rows.Scan(
             &row.Email,
+            &row.Purpose,
             &row.Status,
             &row.CodeHash,
             &row.ExpiresAt,
@@ -636,7 +670,7 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
     }
 
     assignments := make([]string, 0, 7)
-    args := make([]any, 0, 8)
+    args := make([]any, 0, 9)
 
     if option.Status != nil {
         assignments = append(assignments, ColStatus + " = ?")
@@ -674,7 +708,7 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
         return fmt.Errorf("failed to update account email otp: invalid parameter: assignments=empty")
     }
 
-    args = append(args, option.Email)
+    args = append(args, option.Email, option.Purpose)
 
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColEmail)
 
@@ -731,8 +765,8 @@ func (o *OTPSelectOption) BuildQuery(selectFromClause string) (string, []any) {
     var query strings.Builder
     query.WriteString(selectFromClause)
 
-    conditions := make([]string, 0, 5)
-    args := make([]any, 0, 7)
+    conditions := make([]string, 0, 6)
+    args := make([]any, 0, 8)
 
     if o.Email != nil {
         conditions = append(conditions, ColEmail + " = ?")
@@ -741,6 +775,10 @@ func (o *OTPSelectOption) BuildQuery(selectFromClause string) (string, []any) {
     if o.EmailLike != nil {
         conditions = append(conditions, ColEmail + " LIKE ?")
         args = append(args, "%" + *o.EmailLike + "%")
+    }
+    if o.Purpose != nil {
+        conditions = append(conditions, ColPurpose + " = ?")
+        args = append(args, *o.Purpose)
     }
     if o.Status != nil {
         conditions = append(conditions, ColStatus + " = ?")
@@ -801,6 +839,12 @@ func (o *OTPSelectOption) Validate() error {
         }
     }
 
+    if o.Purpose != nil {
+        if err := (&OTP{Purpose: *o.Purpose}).ValidatePurpose(); err != nil {
+            return err
+        }
+    }
+
     if o.Status != nil {
         if err := (&OTP{Status: *o.Status}).ValidateStatus(); err != nil {
             return err
@@ -822,6 +866,7 @@ func (o *OTPSelectOption) Validate() error {
     if o.OrderBy != "" {
         switch o.OrderBy {
         case ColEmail,
+            ColPurpose,
             ColStatus,
             ColExpiresAt,
             ColAttemptCount,
@@ -857,6 +902,10 @@ func (o *OTPUpdateOption) Validate() error {
 
     if o.Email == "" {
         return fmt.Errorf("invalid parameter: email=empty")
+    }
+
+    if err := (&OTP{Purpose: o.Purpose}).ValidatePurpose(); err != nil {
+        return err
     }
 
     if o.Status != nil {

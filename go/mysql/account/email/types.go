@@ -171,10 +171,8 @@ func (s *OTPStatus) Scan(value interface{}) error {
 type OTPPurpose uint8
 
 const (
-    OTPPurposeUnknown OTPPurpose = iota
-    OTPPurposeAuth
-    OTPPurposeEmailChange
-    OTPPurposeSensitiveAction
+    OTPPurposeEmailCreate OTPPurpose = iota + 1
+    OTPPurposeAPIKeyCreate
 )
 
 
@@ -186,9 +184,8 @@ const (
 //
 func (p OTPPurpose) IsValid() bool {
     switch p {
-    case OTPPurposeAuth,
-        OTPPurposeEmailChange,
-        OTPPurposeSensitiveAction:
+    case OTPPurposeEmailCreate,
+        OTPPurposeAPIKeyCreate:
         return true
     default:
         return false
