@@ -94,7 +94,7 @@ type OTPUpdateOption struct {
     AttemptCount       *uint8     `json:"attemptCount,omitempty"`
     LastSentAt         *time.Time `json:"lastSentAt,omitempty"`
     LockedUntil        *time.Time `json:"lockedUntil,omitempty"`
-    LockedUntilSetNULL bool       `json:"lockedUntilSetNull"`
+    LockedUntilSetNull bool       `json:"lockedUntilSetNull"`
 }
 
 
