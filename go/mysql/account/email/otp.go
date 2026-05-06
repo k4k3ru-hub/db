@@ -212,7 +212,7 @@ func (o *OTP) ValidatePurpose() error {
         return fmt.Errorf("missing required parameter: otp=null")
     }
     if !o.Purpose.IsValid() {
-        return fmt.Errorf("invalid parameter: purpose=%d", o.Purpose)
+        return fmt.Errorf("invalid parameter: purpose=%s", o.Purpose)
     }
     return nil
 }
@@ -710,7 +710,7 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
 
     args = append(args, option.Email, option.Purpose)
 
-    query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColEmail)
+    query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ? AND %s = ?;", s.tableName, strings.Join(assignments, ", "), ColEmail, ColPurpose)
 
     if _, err := s.db.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update account email otp: %w", err)
