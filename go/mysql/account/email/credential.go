@@ -427,6 +427,50 @@ func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
 
 
 //
+// Select account email credential by email.
+//
+// Version:
+//   - 2026-05-05: Added.
+//
+func (s *CredentialStore) SelectByEmail(email string) (*Credential, error) {
+    if s == nil {
+        return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: credential_store=null")
+    }
+    if s.db == nil {
+        return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: db=null")
+    }
+    if s.tableName == "" {
+        return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: table_name=empty")
+    }
+    if err := (&Credential{Email: email}).ValidateEmail(); err != nil {
+        return nil, fmt.Errorf("failed to select account email credential by email: %w", err)
+    }
+
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColEmail)
+
+    result := &Credential{}
+    err := s.db.QueryRow(query, email).Scan(
+        &result.ID,
+        &result.AccountID,
+        &result.Email,
+        &result.Status,
+        &result.LastUsedAt,
+        &result.MetaData,
+        &result.CreatedAt,
+        &result.UpdatedAt,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, nil
+        }
+        return nil, fmt.Errorf("failed to select account email credential by email: %w", err)
+    }
+
+    return result, nil
+}
+
+
+//
 // Select account email credentials.
 //
 // Version:

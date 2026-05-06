@@ -87,13 +87,14 @@ type OTPSelectOption struct {
 //   - 2026-05-03: Added.
 //
 type OTPUpdateOption struct {
-    Email        string     `json:"email"`
-    Status       *OTPStatus `json:"status,omitempty"`
-    CodeHash     *string    `json:"codeHash,omitempty"`
-    ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
-    AttemptCount *uint8     `json:"attemptCount,omitempty"`
-    LastSentAt   *time.Time `json:"lastSentAt,omitempty"`
-    LockedUntil  *time.Time `json:"lockedUntil,omitempty"`
+    Email              string     `json:"email"`
+    Status             *OTPStatus `json:"status,omitempty"`
+    CodeHash           *string    `json:"codeHash,omitempty"`
+    ExpiresAt          *time.Time `json:"expiresAt,omitempty"`
+    AttemptCount       *uint8     `json:"attemptCount,omitempty"`
+    LastSentAt         *time.Time `json:"lastSentAt,omitempty"`
+    LockedUntil        *time.Time `json:"lockedUntil,omitempty"`
+    LockedUntilSetNULL bool       `json:"lockedUntilSetNull"`
 }
 
 
@@ -662,7 +663,9 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
         args = append(args, *option.LastSentAt)
     }
 
-    if option.LockedUntil != nil {
+    if option.LockedUntilSetNull {
+        assignments = append(assignments, ColLastSentAt + " = NULL")
+    } else if option.LockedUntil != nil {
         assignments = append(assignments, ColLockedUntil + " = ?")
         args = append(args, *option.LockedUntil)
     }
@@ -899,6 +902,10 @@ func (o *OTPUpdateOption) Validate() error {
         if err := otp.ValidateLockedUntil(); err != nil {
             return err
         }
+    }
+
+    if o.LockedUntil != nil && o.LockedUntilSetNull {
+        return fmt.Errorf("invalid parameter: locked_until and locked_until_set_null are mutually exclusive")
     }
 
     return nil
