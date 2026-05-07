@@ -118,11 +118,11 @@ func DefaultExpiresAt() time.Time {
 // Version:
 //   - 2026-05-04: Added.
 //
-func GenerateCode() (string, error) {
+func GenerateCode(codeLength int) (string, error) {
 	// Calculate max value (10^DefaultCodeLength).
 	max := new(big.Int).Exp(
 		big.NewInt(10),
-		big.NewInt(DefaultCodeLength),
+		big.NewInt(int64(codeLength)),
 		nil,
 	)
 
@@ -133,7 +133,7 @@ func GenerateCode() (string, error) {
 	}
 
 	// Zero padding (e.g. 000123).
-	return fmt.Sprintf("%0*d", DefaultCodeLength, n.Uint64()), nil
+	return fmt.Sprintf("%0*d", codeLength, n.Uint64()), nil
 }
 
 
