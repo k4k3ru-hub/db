@@ -520,29 +520,32 @@ func (s *OTPStore) Upsert(row *OTP) error {
 
 
 //
-// Select account email otp by email.
+// Select account email otp by email and purpose.
 //
 // Version:
-//   - 2026-05-04: Added.
+//   - 2026-05-07: Added.
 //
-func (s *OTPStore) SelectByEmail(email string) (*OTP, error) {
+func (s *OTPStore) SelectByEmailAndPurpose(email string, purpose OTPPurpose) (*OTP, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select account email otp by email: missing required parameter: otp_store=null")
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: otp_store=null")
     }   
     if s.db == nil {
-        return nil, fmt.Errorf("failed to select account email otp by email: missing required parameter: db=null")
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account email otp by email: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: table_name=empty")
     }
     if err := (&OTP{Email: email}).ValidateEmail(); err != nil {
-        return nil, fmt.Errorf("failed to select account email otp by email: %w", err)
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: %w", err)
+    }
+    if err := (&OTP{Purpose: purpose}).ValidatePurpose(); err != nil {
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: %w", err)
     }
 
-    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColEmail)
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? and %s = ? LIMIT 1;", s.tableName, ColEmail, ColPurpose)
 
     result := &OTP{}
-    err := s.db.QueryRow(query, email).Scan(
+    err := s.db.QueryRow(query, email, purpose).Scan(
         &result.Email,
         &result.Purpose,
         &result.Status,
@@ -556,7 +559,7 @@ func (s *OTPStore) SelectByEmail(email string) (*OTP, error) {
         if err == sql.ErrNoRows {
             return nil, nil
         }
-        return nil, fmt.Errorf("failed to select account email otp by email: %w", err)
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: %w", err)
     }
 
     return result, nil
