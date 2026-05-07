@@ -12,7 +12,7 @@ import (
 
 type Status uint8
 const (
-    StatusUnverified Status = iota
+    StatusPending Status = iota
     StatusActive
     StatusInactive
     StatusSuspended
