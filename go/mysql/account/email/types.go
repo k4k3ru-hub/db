@@ -20,7 +20,8 @@ import (
 type CredentialStatus uint8
 
 const (
-    CredentialStatusActive CredentialStatus = iota
+    CredentialStatusPending CredentialStatus = iota
+    CredentialStatusActive
     CredentialStatusInactive
     CredentialStatusSuspended
     CredentialStatusDeleted
@@ -34,15 +35,7 @@ const (
 //   - 2026-05-03: Added.
 //
 func (s CredentialStatus) IsValid() bool {
-    switch s {
-    case CredentialStatusActive,
-        CredentialStatusInactive,
-        CredentialStatusSuspended,
-        CredentialStatusDeleted:
-        return true
-    default:
-        return false
-    }
+    return s <= CredentialStatusDeleted
 }
 
 
