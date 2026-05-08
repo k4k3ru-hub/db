@@ -29,6 +29,30 @@ const (
 
 
 //
+// Convert credential status to string.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func (s CredentialStatus) String() string {
+    switch s {
+    case CredentialStatusPending:
+        return "pending"
+    case CredentialStatusActive:
+        return "active"
+    case CredentialStatusInactive:
+        return "inactive"
+    case CredentialStatusSuspended:
+        return "suspended"
+    case CredentialStatusDeleted:
+        return "deleted"
+    default:
+        return ""
+    }
+}
+
+
+//
 // Validate credential status.
 //
 // Version:
