@@ -70,17 +70,28 @@ type AccountDeleteOption struct {
 
 
 //
+// Validate ID.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func ValidateAccountID(id uint64) error {
+    if id == 0 {
+        return fmt.Errorf("id=0")
+    }
+    return nil
+}
+
+
+//
 // Validate account name.
 //
-func (a *Account) ValidateName() error {
-    if a == nil {
-        return fmt.Errorf("invalid parameter: account=null")
+func ValidateAccountName(name string) error {
+    if name == "" {
+        return fmt.Errorf("name=empty")
     }
-    if a.Name == "" {
-        return fmt.Errorf("invalid parameter: password=empty")
-    }
-    if utf8.RuneCountInString(a.Name) > 64 {
-        return fmt.Errorf("invalid parameter: name=%q", a.Name)
+    if utf8.RuneCountInString(name) > 64 {
+        return fmt.Errorf("name exceeds max length: max_length=64")
     }
 
     return nil
@@ -275,7 +286,7 @@ func (s *AccountStore) Insert(row *Account) error {
     if !row.Role.IsValid() {
         return fmt.Errorf("failed to insert account: invalid parameter: role=%d table=%q", row.Role, s.tableName)
     }
-    if err := row.ValidateName(); err != nil {
+    if err := ValidateAccountName(row.Name); err != nil {
         return fmt.Errorf("failed to insert account: %w table=%q", err, s.tableName)
     }
 
@@ -496,10 +507,7 @@ func (s *AccountStore) Update(option *AccountUpdateOption) error {
     }
 
     if option.Name != nil {
-        a := Account{
-            Name: *option.Name,
-        }
-        if err := a.ValidateName(); err != nil {
+        if err := ValidateAccountName(*option.Name); err != nil {
             return fmt.Errorf("failed to update account: %w", err)
         }
         assignments = append(assignments, ColName + " = ?")
