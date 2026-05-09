@@ -91,7 +91,7 @@ func ValidateAccountName(name string) error {
         return fmt.Errorf("name=empty")
     }
     if utf8.RuneCountInString(name) > 64 {
-        return fmt.Errorf("name exceeds max length: max_length=64")
+        return fmt.Errorf("name exceeds max length: max_length=64 name=%q", myHelper.TruncateRunes(name, 64))
     }
 
     return nil

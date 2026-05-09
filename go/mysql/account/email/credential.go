@@ -136,12 +136,9 @@ func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*Creden
 // Version:
 //   - 2026-05-03: Added.
 //
-func (c *Credential) ValidateID() error {
-    if c == nil {
-        return fmt.Errorf("missing required parameter: credential=null")
-    }
-    if c.ID == 0 {
-        return fmt.Errorf("invalid parameter: id=0")
+func ValidateCredentialID(id uint64) error {
+    if id == 0 {
+        return fmt.Errorf("id=0")
     }
     return nil
 }
@@ -153,12 +150,9 @@ func (c *Credential) ValidateID() error {
 // Version:
 //   - 2026-05-03: Added.
 //
-func (c *Credential) ValidateAccountID() error {
-    if c == nil {
-        return fmt.Errorf("missing required parameter: credential=null")
-    }
-    if c.AccountID == 0 {
-        return fmt.Errorf("invalid parameter: account_id=0")
+func ValidateCredentialAccountID(accountID uint64) error {
+    if accountID == 0 {
+        return fmt.Errorf("account_id=0")
     }
     return nil
 }
@@ -170,15 +164,12 @@ func (c *Credential) ValidateAccountID() error {
 // Version:
 //   - 2026-05-03: Added.
 //
-func (c *Credential) ValidateEmail() error {
-    if c == nil {
-        return fmt.Errorf("missing required parameter: credential=null")
+func ValidateCredentialEmail(email string) error {
+    if email == "" {
+        return fmt.Errorf("email=empty")
     }
-    if c.Email == "" {
-        return fmt.Errorf("invalid parameter: email=empty")
-    }
-    if utf8.RuneCountInString(c.Email) > 255 {
-        return fmt.Errorf("invalid parameter: email=%q", helper.TruncateRunes(c.Email, 255))
+    if utf8.RuneCountInString(email) > 255 {
+        return fmt.Errorf("email exceeds max length: max_length=255 email=%q", helper.TruncateRunes(email, 255))
     }
     return nil
 }
@@ -323,10 +314,10 @@ func (s *CredentialStore) Insert(row *Credential) error {
     if row == nil {
         return fmt.Errorf("failed to insert account email credential: missing required parameter: credential=null")
     }
-    if err := row.ValidateAccountID(); err != nil {
+    if err := ValidateCredentialAccountID(row.AccountID); err != nil {
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
-    if err := row.ValidateEmail(); err != nil {
+    if err := ValidateCredentialEmail(row.Email); err != nil {
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
     if err := row.ValidateStatus(); err != nil {
@@ -442,7 +433,7 @@ func (s *CredentialStore) SelectByEmail(email string) (*Credential, error) {
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: table_name=empty")
     }
-    if err := (&Credential{Email: email}).ValidateEmail(); err != nil {
+    if err := ValidateCredentialEmail(email); err != nil {
         return nil, fmt.Errorf("failed to select account email credential by email: %w", err)
     }
 
@@ -732,25 +723,25 @@ func (o *CredentialSelectOption) Validate() error {
     }
 
     if o.ID != nil {
-        if err := (&Credential{ID: *o.ID}).ValidateID(); err != nil {
+        if err := ValidateCredentialID(*o.ID); err != nil {
             return err
         }
     }
 
     if o.AccountID != nil {
-        if err := (&Credential{AccountID: *o.AccountID}).ValidateAccountID(); err != nil {
+        if err := ValidateCredentialAccountID(*o.AccountID); err != nil {
             return err
         }
     }
 
     if o.Email != nil {
-        if err := (&Credential{Email: *o.Email}).ValidateEmail(); err != nil {
+        if err := ValidateCredentialEmail(*o.Email); err != nil {
             return err
         }
     }
 
     if o.EmailLike != nil {
-        if err := (&Credential{Email: *o.EmailLike}).ValidateEmail(); err != nil {
+        if err := ValidateCredentialEmail(*o.EmailLike); err != nil {
             return err
         }
     }
@@ -807,19 +798,13 @@ func (o *CredentialUpdateOption) Validate() error {
     }
 
     if o.AccountID != nil {
-        c := Credential{
-            AccountID: *o.AccountID,
-        }
-        if err := c.ValidateAccountID(); err != nil {
+        if err := ValidateCredentialAccountID(*o.AccountID); err != nil {
             return err
         }
     }
 
     if o.Email != nil {
-        c := Credential{
-            Email: *o.Email,
-        }
-        if err := c.ValidateEmail(); err != nil {
+        if err := ValidateCredentialEmail(*o.Email); err != nil {
             return err
         }
     }
