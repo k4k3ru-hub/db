@@ -19,6 +19,30 @@ const (
     StatusDeleted
 )
 
+
+//
+// Convert status to string.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func (s Status) String() string {
+    switch s {
+    case StatusPending:
+        return "pending"
+    case StatusActive:
+        return "active"
+    case StatusInactive:
+        return "inactive"
+    case StatusSuspended:
+        return "suspended"
+    case StatusDeleted:
+        return "deleted"
+    default:
+        return ""
+    }
+}
+
     
 func (s Status) IsValid() bool {
     return s <= StatusDeleted
