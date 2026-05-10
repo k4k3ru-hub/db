@@ -43,8 +43,8 @@ type Credential struct {
     ExpiresAt   time.Time        `json:"expiresAt"`
     Scopes      []string         `json:"scopes"`
     LastUsedAt  *time.Time       `json:"lastUsedAt,omitempty"`
-    CreatedAt   time.Time        `json:"createdAt,omitempty"`
-    UpdatedAt   time.Time        `json:"updatedAt,omitempty"`
+    CreatedAt   time.Time        `json:"createdAt"`
+    UpdatedAt   time.Time        `json:"updatedAt"`
 }
 
 
@@ -783,6 +783,69 @@ func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
     if scopes.Valid && scopes.String != "" {
         if err := json.Unmarshal([]byte(scopes.String), &result.Scopes); err != nil {
             return nil, fmt.Errorf("failed to select account api key credential by id: %w", err)
+        }
+    }
+
+    return result, nil
+}
+
+
+//
+// Select account API key credential by account ID and name.
+//
+// Version:
+//   - 2026-05-10: Added.
+//
+func (s *CredentialStore) SelectByAccountIDAndName(accountID uint64, name string) (*Credential, error) {
+    // Guard.
+    if s == nil {
+        return nil, fmt.Errorf("failed to select account api key credential by account id and name: missing required parameter: credential_store=null")
+    }
+    if s.db == nil {
+        return nil, fmt.Errorf("failed to select account api key credential by account id and name: missing required parameter: db=null")
+    }
+    if s.tableName == "" {
+        return nil, fmt.Errorf("failed to select account api key credential by account id and name: missing required parameter: table_name=%q", "empty")
+    }
+    if accountID == 0 {
+        return nil, fmt.Errorf("failed to select account api key credential by account id and name: invalid parameter: account_id=0")
+    }
+    if name == "" {
+        return nil, fmt.Errorf("failed to select account api key credential by account id and name: invalid parameter: name=%q", "empty")
+    }
+
+    // Generate a SELECT query.
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
+
+    // Execute.
+    row := s.db.QueryRow(query, id)
+
+    // Scan.
+    result := &Credential{}
+    var scopes sql.NullString
+    err := row.Scan(
+        &result.ID,
+        &result.AccountID,
+        &result.Status,
+        &result.Name,
+        &result.PublicToken,
+        &result.SecretToken,
+        &result.ExpiresAt,
+        &scopes,
+        &result.LastUsedAt,
+        &result.CreatedAt,
+        &result.UpdatedAt,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, nil
+        }
+        return nil, fmt.Errorf("failed to select account api key credential by account id and name: %w", err)
+    }
+
+    if scopes.Valid && scopes.String != "" {
+        if err := json.Unmarshal([]byte(scopes.String), &result.Scopes); err != nil {
+            return nil, fmt.Errorf("failed to select account api key credential by account id and name: %w", err)
         }
     }
 
