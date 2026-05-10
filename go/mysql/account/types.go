@@ -1,5 +1,5 @@
 //
-// dto.go
+// types.go
 //
 package account
 

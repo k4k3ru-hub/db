@@ -25,14 +25,20 @@ var (
 )
 
 
+//
+// Account.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
 type Account struct {
     ID           uint64     `json:"id,string"`
     Status       Status     `json:"status"`
     Role         Role       `json:"role"`
     Name         string     `json:"name"`
     LastLoggedIn *time.Time `json:"lastLoggedIn,omitempty"`
-    CreatedAt    time.Time  `json:"createdAt,omitempty"`
-    UpdatedAt    time.Time  `json:"updatedAt,omitempty"`
+    CreatedAt    time.Time  `json:"createdAt"`
+    UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
 
@@ -43,11 +49,12 @@ type AccountStore struct {
 
 
 type AccountSelectOption struct {
+    ID          *uint64 `json:"id,string,omitempty"`
     Status      *Status `json:"status,omitempty"`
     Role        *Role   `json:"role,omitempty"`
     NameLike    *string `json:"nameLike,omitempty"`
-    IDOrLater   *uint64 `json:"idOrLater,omitempty"`
-    IDOrEarlier *uint64 `json:"idOrEarlier,omitempty"`
+    IDGTE       *uint64 `json:"idGte,omitempty"`
+    IDLTE       *uint64 `json:"idLte,omitempty"`
     OrderBy     string  `json:"orderBy"`
     OrderByDesc bool    `json:"orderByDesc"`
     Limit       int     `json:"limit"`
@@ -70,16 +77,86 @@ type AccountDeleteOption struct {
 
 
 //
-// Validate ID.
+// Validate account ID.
 //
 // Version:
 //   - 2026-05-08: Added.
 //
 func ValidateAccountID(id uint64) error {
     if id == 0 {
-        return fmt.Errorf("id=0")
+        return fmt.Errorf("invalid parameter: id=0")
     }
     return nil
+}
+
+
+//
+// Validate account ID.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func (a *Account) ValidateID() error {
+    if a == nil {
+        return fmt.Errorf("missing required parameter: account=null")
+    }
+    return ValidateAccountID(a.ID)
+}
+
+
+//
+// Validate account status.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func ValidateAccountStatus(status Status) error {
+    if !status.IsValid() {
+        return fmt.Errorf("invalid parameter: status=%d", status)
+    }
+    return nil
+}
+
+
+//
+// Validate account status.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func (a *Account) ValidateStatus() error {
+    if a == nil {
+        return fmt.Errorf("missing required parameter: account=null")
+    }
+    return ValidateAccountStatus(a.Status)
+}
+
+
+//
+// Validate account role.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func ValidateAccountRole(role Role) error {
+    if !role.IsValid() {
+        return fmt.Errorf("invalid parameter: role=%d", role)
+    }
+    return nil
+}
+
+
+//
+// Validate account role.
+//
+// Version:
+//   - 2026-05-08: Added.
+//
+func (a *Account) ValidateRole() error {
+    if a == nil {
+        return fmt.Errorf("missing required parameter: account=null")
+    }
+    return ValidateAccountRole(a.Role)
 }
 
 
@@ -88,13 +165,49 @@ func ValidateAccountID(id uint64) error {
 //
 func ValidateAccountName(name string) error {
     if name == "" {
-        return fmt.Errorf("name=empty")
+        return fmt.Errorf("invalid parameter: name=%q", "empty")
     }
     if utf8.RuneCountInString(name) > 64 {
-        return fmt.Errorf("name exceeds max length: max_length=64 name=%q", myHelper.TruncateRunes(name, 64))
+        return fmt.Errorf("invalid parameter: max_length=64 name=%q", "too long")
     }
 
     return nil
+}
+
+
+//
+// Validate account name.
+//
+func (a *Account) ValidateName() error {
+    if a == nil {
+        return fmt.Errorf("missing required parameter: account=null")
+    }
+    return ValidateAccountName(a.Name)
+}
+
+
+//
+// Validate account last logged in.
+//
+func ValidateAccountLastLoggedIn(lastLoggedIn *time.Time) error {
+    if lastLoggedIn == nil {
+        return nil
+    }
+    if lastLoggedIn.IsZero() {
+        return fmt.Errorf("invalid parameter: last_logged_in=%q", "empty")
+    }
+    return nil
+}
+
+
+//
+// Validate account last logged in.
+//
+func (a *Account) ValidateLastLoggedIn() error {
+    if a == nil {
+        return fmt.Errorf("missing required parameter: account=null")
+    }
+    return ValidateAccountLastLoggedIn(a.LastLoggedIn)
 }
 
 
@@ -118,7 +231,7 @@ func NewAccountStore(db *sql.DB, tableName string) (*AccountStore, error) {
         return nil, fmt.Errorf("failed to create account store: missing required parameter: db=null")
     }
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create account store: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to create account store: missing required parameter: table_name=%q", "empty")
     }
 
     return &AccountStore{
@@ -129,7 +242,7 @@ func NewAccountStore(db *sql.DB, tableName string) (*AccountStore, error) {
 
 
 //
-// Count.
+// Count accounts.
 //
 // Version:
 //   - 2026-04-29: Added.
@@ -143,28 +256,17 @@ func (s *AccountStore) Count(option *AccountSelectOption) (int64, error) {
         return 0, fmt.Errorf("failed to count accounts: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count accounts: missing required parameter: table_name=empty")
+        return 0, fmt.Errorf("failed to count accounts: missing required parameter: table_name=%q", "empty")
     }
-    if option == nil {
-        return 0, fmt.Errorf("failed to count accounts: missing required parameter: select_option=null")
+    if err := option.Validate(); err != nil {
+        return 0, fmt.Errorf("failed to count accounts: %w", err)
     }
 
-    // Build conditions.
-    conditions, args := buildAccountSelectCondition(option)
-
-    // Generate a SELECT query.
-    var query strings.Builder
-    query.WriteString("SELECT COUNT(*) FROM ")
-    query.WriteString(s.tableName)
-
-    if len(conditions) > 0 {
-        query.WriteString(" WHERE ")
-        query.WriteString(strings.Join(conditions, " AND "))
-    }
+    query, args := option.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     // Execute.
     var result int64
-    err := s.db.QueryRow(query.String(), args...).Scan(&result)
+    err := s.db.QueryRow(query, args...).Scan(&result)
     if err != nil {
         return 0, fmt.Errorf("failed to count accounts: %w", err)
     }
@@ -188,7 +290,7 @@ func (s *AccountStore) CreateTable() error {
         return fmt.Errorf("failed to create accounts table: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create accounts table: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to create accounts table: missing required parameter: table_name=%q", "empty")
     }
 
     // Generate a CREATE TABLE query.
@@ -242,7 +344,7 @@ func (s *AccountStore) DeleteByID(id uint64) error {
         return fmt.Errorf("failed to delete account by id: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to delete account by id: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to delete account by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
         return fmt.Errorf("failed to delete account by id: invalid parameter: id=0")
@@ -275,19 +377,19 @@ func (s *AccountStore) Insert(row *Account) error {
         return fmt.Errorf("failed to insert account: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to insert account: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to insert account: missing required parameter: table_name=%q", "empty")
     }
     if row == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: account=null table=%q", s.tableName)
     }
-    if !row.Status.IsValid() {
-        return fmt.Errorf("failed to insert account: invalid parameter: status=%d table=%q", row.Status, s.tableName)
+    if err := row.ValidateStatus(); err != nil {
+        return fmt.Errorf("failed to insert account: %w", err)
     }
-    if !row.Role.IsValid() {
-        return fmt.Errorf("failed to insert account: invalid parameter: role=%d table=%q", row.Role, s.tableName)
+    if err := row.ValidateRole(); err != nil {
+        return fmt.Errorf("failed to insert account: %w", err)
     }
-    if err := ValidateAccountName(row.Name); err != nil {
-        return fmt.Errorf("failed to insert account: %w table=%q", err, s.tableName)
+    if err := row.ValidateName(); err != nil {
+        return fmt.Errorf("failed to insert account: %w", err)
     }
 
     // Generate an INSERT query.
@@ -345,42 +447,16 @@ func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
         return nil, fmt.Errorf("failed to select accounts: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select accounts: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select accounts: missing required parameter: table_name=%q", "empty")
     }
-    if option == nil {
-        return nil, fmt.Errorf("failed to select accounts: missing required parameter: select_option=null")
-    }
-
-    // Build conditions.
-    conditions, args := buildAccountSelectCondition(option)
-
-    // Generate a SELECT query.
-    var query strings.Builder
-    query.WriteString("SELECT * FROM ")
-    query.WriteString(s.tableName)
-
-    if len(conditions) > 0 {
-        query.WriteString(" WHERE ")
-        query.WriteString(strings.Join(conditions, " AND "))
+    if err := option.Validate(); err != nil {
+        return nil, fmt.Errorf("failed to select accounts: %w", err)
     }
 
-    if option.OrderBy != "" {
-        query.WriteString(" ORDER BY " + option.OrderBy)
-        if option.OrderByDesc {
-            query.WriteString(" DESC")
-        }
-    }
-
-    if option.Limit > 0 {
-        if option.Offset < 0 {
-            return nil, fmt.Errorf("failed to select accounts: invalid parameter: offset=%d", option.Offset)
-        }
-        query.WriteString(" LIMIT ? OFFSET ?")
-        args = append(args, option.Limit, option.Offset)
-    }
+    query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
     // Execute.
-    rows, err := s.db.Query(query.String(), args...)
+    rows, err := s.db.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select accounts: %w", err)
     }
@@ -429,7 +505,7 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
         return nil, fmt.Errorf("failed to select account by id: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account by id: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
         return nil, fmt.Errorf("failed to select account by id: invalid parameter: id=empty")
@@ -478,7 +554,7 @@ func (s *AccountStore) Update(option *AccountUpdateOption) error {
         return fmt.Errorf("failed to update account: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update account: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to update account: missing required parameter: table_name=%q", "empty")
     }
     if option == nil {
         return fmt.Errorf("failed to update account: missing required parameter: option=null")
@@ -520,7 +596,7 @@ func (s *AccountStore) Update(option *AccountUpdateOption) error {
     }
 
     if len(assignments) == 0 {
-        return fmt.Errorf("failed to update account: invalid parameter: assignments=empty")
+        return fmt.Errorf("failed to update account: invalid parameter: assignments=%q", "empty")
     }
 
     args = append(args, option.ID)
@@ -552,7 +628,7 @@ func (s *AccountStore) UpdateLastLoggedIn(id uint64) error {
         return fmt.Errorf("failed to update account last logged in: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update account last logged in: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to update account last logged in: missing required parameter: table_name=%q", "empty")
     }
 	if id == 0 {
 		return fmt.Errorf("failed to update account last logged in: invalid parameter: id=0")
@@ -587,15 +663,141 @@ func buildAccountSelectCondition(option *AccountSelectOption) ([]string, []any) 
             conditions = append(conditions, ColName + " LIKE ?")
             args = append(args, "%" + *option.NameLike + "%")
         }
-        if option.IDOrLater != nil {
+        if option.IDGTE != nil {
             conditions = append(conditions, ColID + " >= ?")
-            args = append(args, *option.IDOrLater)
+            args = append(args, *option.IDGTE)
         }
-        if option.IDOrEarlier != nil {
+        if option.IDLTE != nil {
             conditions = append(conditions, ColID + " <= ?")
-            args = append(args, *option.IDOrEarlier)
+            args = append(args, *option.IDLTE)
         }
     }
 
     return conditions, args
+}
+
+
+//
+// Build query.
+//
+// Version:
+//   - 2025-05-09: Added.
+//
+func (o *AccountSelectOption) BuildQuery(selectFromClause string) (string, []any) {
+    // Guard.
+    if o == nil {
+        return selectFromClause, nil
+    }
+
+    var query strings.Builder
+    query.WriteString(selectFromClause)
+
+    conditions := make([]string, 0, 6)
+    args := make([]any, 0, 8)
+
+    if o.ID != nil {
+        conditions = append(conditions, ColID + " = ?")
+        args = append(args, *o.ID)
+    }
+    if o.Status != nil {
+        conditions = append(conditions, ColStatus + " = ?")
+        args = append(args, *o.Status)
+    }
+    if o.Role != nil {
+        conditions = append(conditions, ColRole + " = ?")
+        args = append(args, *o.Role)
+    }
+    if o.NameLike != nil {
+        conditions = append(conditions, ColName + " LIKE ?")
+        args = append(args, "%" + *o.NameLike + "%")
+    }
+    if o.IDGTE != nil {
+        conditions = append(conditions, ColID + " >= ?")
+        args = append(args, *o.IDGTE)
+    }
+    if o.IDLTE != nil {
+        conditions = append(conditions, ColID + " <= ?")
+        args = append(args, *o.IDLTE)
+    }
+
+    if len(conditions) > 0 {
+        query.WriteString(" WHERE ")
+        query.WriteString(strings.Join(conditions, " AND "))
+    }
+
+    if o.OrderBy != "" {
+        query.WriteString(" ORDER BY ")
+        query.WriteString(o.OrderBy)
+        if o.OrderByDesc {
+            query.WriteString(" DESC")
+        }
+    }
+
+    if o.Limit > 0 {
+        query.WriteString(" LIMIT ? OFFSET ?")
+        args = append(args, o.Limit, o.Offset)
+    }
+
+    return query.String(), args
+}
+
+
+//
+// Validate account email credential select option.
+//
+// Version:
+//   - 2025-05-09: Added.
+//
+func (o *AccountSelectOption) Validate() error {
+    // Guard.
+    if o == nil {
+        return fmt.Errorf("missing required parameter: account_select_option=null")
+    }
+
+    if o.ID != nil {
+        if err := ValidateAccountID(*o.ID); err != nil {
+            return err
+        }
+    }
+    if o.Status != nil {
+        if err := ValidateAccountStatus(*o.Status); err != nil {
+            return err
+        }
+    }
+    if o.Role != nil {
+        if err := ValidateAccountRole(*o.Role); err != nil {
+            return err
+        }
+    }
+    if o.NameLike != nil {
+        if err := ValidateAccountName(*o.NameLike); err != nil {
+            return err
+        }
+    }
+    if o.IDGTE != nil && o.IDLTE != nil && *o.IDGTE > *o.IDLTE {
+        return fmt.Errorf("invalid parameter: id_gte=%d id_lte=%d", *o.IDGTE, *o.IDLTE)
+    }
+
+    if o.OrderBy != "" {
+        switch o.OrderBy {
+        case ColID,
+            ColStatus,
+            ColRole,
+            ColName,
+            ColLastLoggedIn,
+            ColCreatedAt,
+            ColUpdatedAt:
+        default:
+            return fmt.Errorf("invalid parameter: order_by=%q", o.OrderBy)
+        }
+    }
+
+    if o.Limit < 0 {
+        return fmt.Errorf("invalid parameter: limit=%d", o.Limit)
+    }
+    if o.Offset < 0 {
+        return fmt.Errorf("invalid parameter: offset=%d", o.Offset)
+    }
+
+    return nil
 }
