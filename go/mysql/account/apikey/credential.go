@@ -815,10 +815,10 @@ func (s *CredentialStore) SelectByAccountIDAndName(accountID uint64, name string
     }
 
     // Generate a SELECT query.
-    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColAccountID, ColName)
 
     // Execute.
-    row := s.db.QueryRow(query, id)
+    row := s.db.QueryRow(query, accountID, name)
 
     // Scan.
     result := &Credential{}
