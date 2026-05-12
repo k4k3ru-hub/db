@@ -119,7 +119,7 @@ func DefaultExpiresAt() time.Time {
 //   - 2026-05-04: Added.
 //
 func GenerateCode(codeLength int) (string, error) {
-	// Calculate max value (10^DefaultCodeLength).
+	// Calculate max value (10^codeLength).
 	max := new(big.Int).Exp(
 		big.NewInt(10),
 		big.NewInt(int64(codeLength)),
@@ -171,7 +171,7 @@ func NewOTPStore(db *sql.DB, tableName string) (*OTPStore, error) {
         return nil, fmt.Errorf("failed to create account email otp store: missing required parameter: db=null")
     }
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create account email otp store: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to create account email otp store: missing required parameter: table_name=%q", "empty")
     }
 
     return &OTPStore{
@@ -182,139 +182,216 @@ func NewOTPStore(db *sql.DB, tableName string) (*OTPStore, error) {
 
 
 //
-// Validate email.
+// Validate account email OTP email.
 //
 // Version:
-//   - 2026-05-03: Added.
+//   - 2026-05-12: Added.
 //
-func (o *OTP) ValidateEmail() error {
-    if o == nil {
-        return fmt.Errorf("missing required parameter: otp=null")
+func ValidateOTPEmail(email string) error {
+    if email == "" {
+        return fmt.Errorf("email=%q", "empty")
     }
-    if o.Email == "" {
-        return fmt.Errorf("invalid parameter: email=empty")
-    }
-    if utf8.RuneCountInString(o.Email) > 255 {
-        return fmt.Errorf("invalid parameter: email=%q", helper.TruncateRunes(o.Email, 255))
+    if utf8.RuneCountInString(email) > 255 {
+        return fmt.Errorf("invalid parameter: max_length=255 email=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate OTP purpose.
+// Validate account email OTP email.
+//
+// Version:
+//   - 2026-05-12: Added.
+//
+func (o *OTP) ValidateEmail() error {
+    if o == nil {
+        return fmt.Errorf("missing required parameter: account_email_otp=null")
+    }
+    return ValidateOTPEmail(o.Email)
+}
+
+
+//
+// Validate account email OTP purpose.
+//
+// Version:
+//   - 2026-05-12: Added.
+//
+func ValidateOTPPurpose(purpose OTPPurpose) error {
+    if !purpose.IsValid() {
+        return fmt.Errorf("invalid parameter: purpose=%q", purpose)
+    }
+    return nil
+}
+
+
+//
+// Validate account email OTP purpose.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidatePurpose() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: otp=null")
+        return fmt.Errorf("missing required parameter: account_email_otp=null")
     }
-    if !o.Purpose.IsValid() {
-        return fmt.Errorf("invalid parameter: purpose=%s", o.Purpose)
+    return ValidateOTPPurpose(o.Purpose)
+}
+
+
+//
+// Validate account email OTP status.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func ValidateOTPStatus(status OTPStatus) error {
+    if !status.IsValid() {
+        return fmt.Errorf("invalid parameter: status=%d", status)
     }
     return nil
 }
 
 
 //
-// Validate status.
+// Validate account email OTP status.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func (o *OTP) ValidateStatus() error {
+    if o == nil {
+        return fmt.Errorf("missing required parameter: account_email_otp=null")
+    }
+    return ValidateOTPStatus(o.Status)
+}
+
+
+//
+// Validate account email OTP code hash.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
-func (o *OTP) ValidateStatus() error {
-    if o == nil {
-        return fmt.Errorf("missing required parameter: otp=null")
+func ValidateOTPCodeHash(codeHash string) error {
+    if codeHash == "" {
+        return fmt.Errorf("invalid parameter: code_hash=%q", "empty")
     }
-    if !o.Status.IsValid() {
-        return fmt.Errorf("invalid parameter: status=%d", o.Status)
+    if utf8.RuneCountInString(codeHash) > 128 {
+        return fmt.Errorf("invalid parameter: max_length=128 code_hash=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate code hash.
+// Validate account email OTP code hash.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateCodeHash() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: otp=null")
+        return fmt.Errorf("missing required parameter: account_email_otp=null")
     }
-    if o.CodeHash == "" {
-        return fmt.Errorf("invalid parameter: code_hash=empty")
+    return ValidateOTPCodeHash(o.CodeHash)
+}
+
+
+//
+// Validate account email OTP expires at.
+//
+// Version:
+//   - 2026-05-03: Added.
+//
+func ValidateOTPExpiresAt(expiresAt time.Time) error {
+    if expiresAt.IsZero() {
+        return fmt.Errorf("invalid parameter: expires_at=%q", "empty")
     }
-    if utf8.RuneCountInString(o.CodeHash) > 128 {
-        return fmt.Errorf("invalid parameter: code_hash=%q", helper.TruncateRunes(o.CodeHash, 128))
+    if !expiresAt.After(time.Now().UTC()) {
+        return fmt.Errorf("invalid parameter: expires_at=%q", expiresAt.Format(time.RFC3339))
     }
     return nil
 }
 
 
 //
-// Validate expires at.
+// Validate account email OTP expires at.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateExpiresAt() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: otp=null")
+        return fmt.Errorf("missing required parameter: account_email_otp=null")
     }
-    if o.ExpiresAt.IsZero() {
-        return fmt.Errorf("invalid parameter: expires_at=empty")
+    return ValidateOTPExpiresAt(o.ExpiresAt)
+}
+
+
+//
+// Validate account email OTP last sent at.
+//
+// Version:
+//   - 2026-05-03: Added.
+//
+func ValidateOTPLastSentAt(lastSentAt time.Time) error {
+    if lastSentAt.IsZero() {
+        return fmt.Errorf("invalid parameter: last_sent_at=%q", "empty")
     }
-    if !o.ExpiresAt.After(time.Now().UTC()) {
-        return fmt.Errorf("invalid parameter: expires_at=%s", o.ExpiresAt.Format(time.RFC3339))
+    if lastSentAt.After(time.Now().UTC()) {
+        return fmt.Errorf("invalid parameter: last_sent_at=%q", lastSentAt.Format(time.RFC3339))
     }
     return nil
 }
 
 
 //
-// Validate last sent at.
+// Validate account email OTP last sent at.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateLastSentAt() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: otp=null")
+        return fmt.Errorf("missing required parameter: account_email_otp=null")
     }
-    if o.LastSentAt.IsZero() {
-        return fmt.Errorf("invalid parameter: last_sent_at=empty")
+    return ValidateOTPLastSentAt(o.LastSentAt)
+}
+
+
+//
+// Validate account email OTP locked until.
+//
+// Version:
+//   - 2026-05-03: Added.
+//
+func ValidateOTPLockedUntil(lockedUntil *time.Time) error {
+    if lockedUntil == nil {
+        return nil
     }
-    if o.LastSentAt.After(time.Now().UTC()) {
-        return fmt.Errorf("invalid parameter: last_sent_at=%s", o.LastSentAt.Format(time.RFC3339))
+    if lockedUntil.IsZero() {
+        return fmt.Errorf("invalid parameter: locked_until=%q", "empty")
+    }
+    if !lockedUntil.After(time.Now().UTC()) {
+        return fmt.Errorf("invalid parameter: locked_until=%s", lockedUntil.Format(time.RFC3339))
     }
     return nil
 }
 
 
 //
-// Validate locked until.
+// Validate account email OTP locked until.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateLockedUntil() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: otp=null")
+        return fmt.Errorf("missing required parameter: account_email_otp=null")
     }
-    if o.LockedUntil == nil {
-        return nil
-    }
-    if o.LockedUntil.IsZero() {
-        return fmt.Errorf("invalid parameter: locked_until=empty")
-    }
-    if !o.LockedUntil.After(time.Now()) {
-        return fmt.Errorf("invalid parameter: locked_until=%s", o.LockedUntil.Format(time.RFC3339))
-    }
-    return nil
+    return ValidateOTPLockedUntil(o.LockedUntil)
 }
 
 
@@ -332,7 +409,7 @@ func (s *OTPStore) CreateTable() error {
         return fmt.Errorf("failed to create account email otps table: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create account email otps table: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to create account email otps table: missing required parameter: table_name=%q", "empty")
     }
 
     query := fmt.Sprintf(
@@ -383,7 +460,7 @@ func (s *OTPStore) Insert(row *OTP) error {
         return fmt.Errorf("failed to insert account email otp: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to insert account email otp: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to insert account email otp: missing required parameter: table_name=%q", "empty")
     }
     if row == nil {
         return fmt.Errorf("failed to insert account email otp: missing required parameter: otp=null")
@@ -455,7 +532,7 @@ func (s *OTPStore) Upsert(row *OTP) error {
         return fmt.Errorf("failed to upsert account email otp: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to upsert account email otp: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to upsert account email otp: missing required parameter: table_name=%q", "empty")
     }
     if row == nil {
         return fmt.Errorf("failed to upsert account email otp: missing required parameter: otp=null")
@@ -533,7 +610,7 @@ func (s *OTPStore) SelectByEmailAndPurpose(email string, purpose OTPPurpose) (*O
         return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: table_name=%q", "empty")
     }
     if err := (&OTP{Email: email}).ValidateEmail(); err != nil {
         return nil, fmt.Errorf("failed to select account email otp by email and purpose: %w", err)
@@ -580,7 +657,7 @@ func (s *OTPStore) Select(option *OTPSelectOption) ([]*OTP, error) {
         return nil, fmt.Errorf("failed to select account email otps: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account email otps: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account email otps: missing required parameter: table_name=%q", "empty")
     }
     if err := option.Validate(); err != nil {
         return nil, fmt.Errorf("failed to select account email otps: %w", err)
@@ -635,7 +712,7 @@ func (s *OTPStore) Count(option *OTPSelectOption) (int64, error) {
         return 0, fmt.Errorf("failed to count account email otps: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count account email otps: missing required parameter: table_name=empty")
+        return 0, fmt.Errorf("failed to count account email otps: missing required parameter: table_name=%q", "empty")
     }
     if err := option.Validate(); err != nil {
         return 0, fmt.Errorf("failed to count account email otps: %w", err)
@@ -666,7 +743,7 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
         return fmt.Errorf("failed to update account email otp: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update account email otp: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to update account email otp: missing required parameter: table_name=%q", "empty")
     }
     if err := option.Validate(); err != nil {
         return fmt.Errorf("failed to update account email otp: %w", err)
@@ -737,7 +814,7 @@ func (s *OTPStore) DeleteByEmail(email string) error {
         return fmt.Errorf("failed to delete account email otp by email: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to delete account email otp by email: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to delete account email otp by email: missing required parameter: table_name=%q", "empty")
     }
     if err := (&OTP{Email: email}).ValidateEmail(); err != nil {
         return fmt.Errorf("failed to delete account email otp by email: %w", err)

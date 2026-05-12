@@ -116,7 +116,7 @@ func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*Creden
         return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: db=null")
     }
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: table_name=%q", "empty")
     }
     if accountTableName == "" {
         return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: account_table_name=empty")
@@ -131,85 +131,166 @@ func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*Creden
 
 
 //
-// Validate ID.
+// Validate account email credential ID.
 //
 // Version:
-//   - 2026-05-03: Added.
+//   - 2026-05-09: Added.
 //
 func ValidateCredentialID(id uint64) error {
     if id == 0 {
-        return fmt.Errorf("id=0")
+        return fmt.Errorf("invalid parameter: id=0")
     }
     return nil
 }
 
 
 //
-// Validate account ID.
+// Validate account email credential ID.
 //
 // Version:
-//   - 2026-05-03: Added.
+//   - 2026-05-09: Added.
+//
+func (c *Credential) ValidateID() error {
+    if c == nil {
+        return fmt.Errorf("missing required parameter: account_email_credential=null")
+    }
+    return ValidateCredentialID(c.ID)
+}
+
+
+//
+// Validate account email credential account ID.
+//
+// Version:
+//   - 2026-05-09: Added.
 //
 func ValidateCredentialAccountID(accountID uint64) error {
     if accountID == 0 {
-        return fmt.Errorf("account_id=0")
+        return fmt.Errorf("invalid parameter: account_id=0")
     }
     return nil
 }
 
 
 //
-// Validate email.
+// Validate account email credential account ID.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func (c *Credential) ValidateAccountID() error {
+    if c == nil {
+        return fmt.Errorf("missing required parameter: account_email_credential=null")
+    }
+    return ValidateCredentialID(c.AccountID)
+}
+
+
+//
+// Validate account email credential email.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func ValidateCredentialEmail(email string) error {
     if email == "" {
-        return fmt.Errorf("email=empty")
+        return fmt.Errorf("email=%q", "empty")
     }
     if utf8.RuneCountInString(email) > 255 {
-        return fmt.Errorf("email exceeds max length: max_length=255 email=%q", helper.TruncateRunes(email, 255))
+        return fmt.Errorf("invalid parameter: max_length=255 email=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate status.
+// Validate account email credential email.
 //
 // Version:
 //   - 2026-05-03: Added.
+//
+func (c *Credential) ValidateEmail(email string) error {
+    if c == nil {
+        return fmt.Errorf("missing required parameter: account_email_credential=null")
+    }
+    return ValidateCredentialEmail(c.Email)
+}
+
+
+//
+// Validate account email credential status.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func ValidateCredentialStatus(status CredentialStatus) error {
+    if !status.IsValid() {
+        return fmt.Errorf("invalid parameter: status=%d", status)
+    }
+    return nil
+}
+
+
+//
+// Validate account email credential status.
+//
+// Version:
+//   - 2026-05-09: Added.
 //
 func (c *Credential) ValidateStatus() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: credential=null")
+        return fmt.Errorf("missing required parameter: account_email_credential=null")
     }
-    if !c.Status.IsValid() {
-        return fmt.Errorf("invalid parameter: status=%d", c.Status)
+    return ValidateCredentialStatus(c.Status)
+}
+
+
+//
+// Validate account email credential last used at.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func ValidateCredentialLastUsedAt(lastUsedAt *time.Time) error {
+    if lastUsedAt == nil {
+        return nil
+    }
+    if lastUsedAt.IsZero() {
+        return fmt.Errorf("invalid parameter: last_used_at=%q", "empty")
+    }
+    if lastUsedAt.After(time.Now().UTC()) {
+        return fmt.Errorf("invalid parameter: last_used_at=%q", lastUsedAt.Format(time.RFC3339))
     }
     return nil
 }
 
 
 //
-// Validate last used at.
+// Validate account email credential last used at.
 //
 // Version:
-//   - 2026-05-03: Added.
+//   - 2026-05-09: Added.
 //
 func (c *Credential) ValidateLastUsedAt() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: credential=null")
+        return fmt.Errorf("missing required parameter: account_email_credential=null")
     }
-    if c.LastUsedAt == nil {
+    return ValidateCredentialLastUsedAt(c.LastUsedAt)
+}
+
+
+//
+// Validate meta data.
+//
+// Version:
+//   - 2026-05-02: Added.
+//
+func ValidateCredentialMetaData(meta *string) error {
+    if meta == nil {
         return nil
     }
-    if c.LastUsedAt.IsZero() {
-        return fmt.Errorf("invalid parameter: last_used_at=empty")
-    }
-    if c.LastUsedAt.After(time.Now()) {
-        return fmt.Errorf("invalid parameter: last_used_at=%s", c.LastUsedAt.Format(time.RFC3339))
+    if !json.Valid([]byte(*meta)) {
+        return fmt.Errorf("invalid parameter: meta_data=%q", helper.TruncateRunes(*meta, 1024))
     }
     return nil
 }
@@ -223,15 +304,9 @@ func (c *Credential) ValidateLastUsedAt() error {
 //
 func (c *Credential) ValidateMetaData() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: credential=null")
+        return fmt.Errorf("missing required parameter: account_email_credential=null")
     }
-    if c.MetaData == nil {
-        return nil
-    }
-    if !json.Valid([]byte(*c.MetaData)) {
-        return fmt.Errorf("invalid parameter: meta_data=%q", helper.TruncateRunes(*c.MetaData, 1024))
-    }
-    return nil
+    return ValidateCredentialMetaData(c.MetaData)
 }
 
 
@@ -249,10 +324,10 @@ func (s *CredentialStore) CreateTable() error {
         return fmt.Errorf("failed to create account email credentials table: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create account email credentials table: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to create account email credentials table: missing required parameter: table_name=%q", "empty")
     }
     if s.accountTableName == "" {
-        return fmt.Errorf("failed to create account email credential table: missing required parameter: account_table_name=empty")
+        return fmt.Errorf("failed to create account email credential table: missing required parameter: account_table_name=%q", "empty")
     }
 
     query := fmt.Sprintf(
@@ -309,7 +384,7 @@ func (s *CredentialStore) Insert(row *Credential) error {
         return fmt.Errorf("failed to insert account email credential: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to insert account email credential: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to insert account email credential: missing required parameter: table_name=%q", "empty")
     }
     if row == nil {
         return fmt.Errorf("failed to insert account email credential: missing required parameter: credential=null")
@@ -387,7 +462,7 @@ func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
         return nil, fmt.Errorf("failed to select account email credential by id: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account email credential by id: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account email credential by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
         return nil, fmt.Errorf("failed to select account email credential by id: invalid parameter: id=0")
@@ -431,7 +506,7 @@ func (s *CredentialStore) SelectByEmail(email string) (*Credential, error) {
         return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: table_name=%q", "empty")
     }
     if err := ValidateCredentialEmail(email); err != nil {
         return nil, fmt.Errorf("failed to select account email credential by email: %w", err)
@@ -475,7 +550,7 @@ func (s *CredentialStore) Select(option *CredentialSelectOption) ([]*Credential,
         return nil, fmt.Errorf("failed to select account email credentials: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account email credentials: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account email credentials: missing required parameter: table_name=%q", "empty")
     }
     if err := option.Validate(); err != nil {
         return nil, fmt.Errorf("failed to select account email credentials: %w", err)
@@ -530,7 +605,7 @@ func (s *CredentialStore) Count(option *CredentialSelectOption) (int64, error) {
         return 0, fmt.Errorf("failed to count account email credentials: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count account email credentials: missing required parameter: table_name=empty")
+        return 0, fmt.Errorf("failed to count account email credentials: missing required parameter: table_name=%q", "empty")
     }
     if err := option.Validate(); err != nil {
         return 0, fmt.Errorf("failed to count account email credentials: %w", err)
@@ -561,7 +636,7 @@ func (s *CredentialStore) Update(option *CredentialUpdateOption) error {
         return fmt.Errorf("failed to update account email credential: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update account email credential: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to update account email credential: missing required parameter: table_name=%q", "empty")
     }
     if err := option.Validate(); err != nil {
         return fmt.Errorf("failed to update account email credential: %w", err)
@@ -596,7 +671,7 @@ func (s *CredentialStore) Update(option *CredentialUpdateOption) error {
     }
 
     if len(assignments) == 0 {
-        return fmt.Errorf("failed to update account email credential: invalid parameter: assignments=empty")
+        return fmt.Errorf("failed to update account email credential: invalid parameter: assignments=%q", "empty")
     }
 
     args = append(args, option.ID)
@@ -625,7 +700,7 @@ func (s *CredentialStore) DeleteByID(id uint64) error {
         return fmt.Errorf("failed to delete account email credential by id: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to delete account email credential by id: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to delete account email credential by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
         return fmt.Errorf("failed to delete account email credential by id: invalid parameter: id=0")
