@@ -119,7 +119,7 @@ func NewUsageLedgerEntryStore(db *sql.DB, tableName, accountTableName string) (*
         return nil, fmt.Errorf("failed to create account app usage ledger entry store: missing required parameter: db=null")
     }
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create account app usage ledger entry store: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to create account app usage ledger entry store: missing required parameter: table_name=%q", "empty")
     }
     if accountTableName == "" {
         return nil, fmt.Errorf("failed to create account app usage ledger entry store: missing required parameter: account_table_name=empty")
@@ -134,16 +134,13 @@ func NewUsageLedgerEntryStore(db *sql.DB, tableName, accountTableName string) (*
 
 
 //
-// Validate ID.
+// Validate account APP usage ledger entry ID.
 //
 // Version:
-//   - 2026-05-02: Added.
+//   - 2026-05-12: Added.
 //
-func (e *UsageLedgerEntry) ValidateID() error {
-    if e == nil {
-        return fmt.Errorf("missing required parameter: usage_ledger_entry=null")
-    }
-    if e.ID == 0 {
+func ValidateUsageLedgerEntryID(id uint64) error {
+    if id == 0 {
         return fmt.Errorf("invalid parameter: id=0")
     }
     return nil
@@ -151,16 +148,27 @@ func (e *UsageLedgerEntry) ValidateID() error {
 
 
 //
-// Validate account ID.
+// Validate account APP usage ledger entry ID.
 //
 // Version:
-//   - 2026-05-02: Added.
+//   - 2026-05-12: Added.
 //
-func (e *UsageLedgerEntry) ValidateAccountID() error {
+func (e *UsageLedgerEntry) ValidateID() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: usage_ledger_entry=null")
+        return fmt.Errorf("missing required parameter: account_app_usage_ledger_entry=null")
     }
-    if e.AccountID == 0 {
+    return ValidateUsageLedgerEntryID(e.ID)
+}
+
+
+//
+// Validate account APP usage ledger entry account ID.
+//
+// Version:
+//   - 2026-05-12: Added.
+//
+func ValidateUsageLedgerEntryAccountID(accountID uint64) error {
+    if accountID == 0 {
         return fmt.Errorf("invalid parameter: account_id=0")
     }
     return nil
@@ -168,59 +176,109 @@ func (e *UsageLedgerEntry) ValidateAccountID() error {
 
 
 //
-// Validate type.
+// Validate account APP usage ledger entry account ID.
 //
 // Version:
-//   - 2026-05-02: Added.
+//   - 2026-05-12: Added.
+//
+func (e *UsageLedgerEntry) ValidateAccountID() error {
+    if e == nil {
+        return fmt.Errorf("missing required parameter: account_app_usage_ledger_entry=null")
+    }
+    return ValidateUsageLedgerEntryAccountID(e.AccountID)
+}
+
+
+//
+// Validate account APP usage ledger entry type.
+//
+// Version:
+//   - 2026-05-12: Added.
+//
+func ValidateUsageLedgerEntryType(t UsageLedgerEntryType) error {
+    if !t.IsValid() {
+        return fmt.Errorf("invalid parameter: type=%d", t)
+    }
+    return nil
+}
+
+
+//
+// Validate account APP usage ledger entry type.
+//
+// Version:
+//   - 2026-05-12: Added.
 //
 func (e *UsageLedgerEntry) ValidateType() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: usage_ledger_entry=null")
+        return fmt.Errorf("missing required parameter: account_app_usage_ledger_entry=null")
     }
-    if !e.Type.IsValid() {
-        return fmt.Errorf("invalid parameter: type=%d", e.Type)
+    return ValidateUsageLedgerEntryType(e.Type)
+}
+
+
+//
+// Validate account APP usage ledger entry description.
+//
+// Version:
+//   - 2026-05-12: Added.
+//
+func ValidateUsageLedgerEntryDescription(description *string) error {
+    if description == nil {
+        return nil
+    }
+    if utf8.RuneCountInString(*description) > 255 {
+        return fmt.Errorf("invalid parameter: max_length=255 description=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate description.
+// Validate account APP usage ledger entry description.
 //
 // Version:
-//   - 2026-05-02: Added.
+//   - 2026-05-12: Added.
 //
 func (e *UsageLedgerEntry) ValidateDescription() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: usage_ledger_entry=null")
+        return fmt.Errorf("missing required parameter: account_app_usage_ledger_entry=null")
     }
-    if e.Description == nil {
+    return ValidateUsageLedgerEntryDescription(e.Description)
+}
+
+
+//
+// Validate account APP usage ledger entry meta data.
+//  
+// Version:
+//   - 2026-05-12: Added.
+//
+func ValidateUsageLedgerEntryMetaData(metaData *string) error {
+    if metaData == nil {
         return nil
     }
-    if utf8.RuneCountInString(*e.Description) > 254 {
-        return fmt.Errorf("invalid parameter: description=%q", helper.TruncateRunes(*e.Description, 254))
+    if len([]byte(*metaData)) > 4096 {
+        return fmt.Errorf("invalid parameter: max_size=4096 meta_data=%q", "too long")
+    }
+    if !json.Valid([]byte(*metaData)) {
+        return fmt.Errorf("invalid parameter: meta_data=%q", helper.TruncateRunes(*metaData, 1024))
     }
     return nil
 }
 
 
 //
-// Validate meta data.
+// Validate account APP usage ledger entry meta data.
 //
 // Version:
-//   - 2026-05-02: Added.
+//   - 2026-05-12: Added.
 //
 func (e *UsageLedgerEntry) ValidateMetaData() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: usage_ledger_entry=null")
+        return fmt.Errorf("missing required parameter: account_app_usage_ledger_entry=null")
     }
-    if e.MetaData == nil {
-        return nil
-    }
-    if !json.Valid([]byte(*e.MetaData)) {
-        return fmt.Errorf("invalid parameter: meta_data=%q", helper.TruncateRunes(*e.MetaData, 1024))
-    }
-    return nil
+    return ValidateUsageLedgerEntryMetaData(e.MetaData)
 }
 
 
@@ -238,10 +296,10 @@ func (s *UsageLedgerEntryStore) CreateTable() error {
         return fmt.Errorf("failed to create account app usage ledger entries table: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create account app usage ledger entries table: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to create account app usage ledger entries table: missing required parameter: table_name=%q", "empty")
     }
     if s.accountTableName == "" {
-        return fmt.Errorf("failed to create account app usage ledger entry table: missing required parameter: account_table_name=empty")
+        return fmt.Errorf("failed to create account app usage ledger entry table: missing required parameter: account_table_name=%q", "empty")
     }
 
     query := fmt.Sprintf(
@@ -251,7 +309,7 @@ func (s *UsageLedgerEntryStore) CreateTable() error {
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Type',
             %s BIGINT NOT NULL DEFAULT 0 COMMENT 'Credit delta ticks',
             %s BIGINT NOT NULL DEFAULT 0 COMMENT 'Bonus delta ticks',
-            %s VARCHAR(1024) NULL COMMENT 'Description',
+            %s VARCHAR(255) NULL COMMENT 'Description',
             %s JSON NULL COMMENT 'Meta data',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
@@ -300,7 +358,7 @@ func (s *UsageLedgerEntryStore) Insert(row *UsageLedgerEntry) error {
         return fmt.Errorf("failed to insert account app usage ledger entry: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to insert account app usage ledger entry: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to insert account app usage ledger entry: missing required parameter: table_name=%q", "empty")
     }
     if row == nil {
         return fmt.Errorf("failed to insert account app usage ledger entry: missing required parameter: usage_ledger_entry=null")
@@ -377,7 +435,7 @@ func (s *UsageLedgerEntryStore) SelectByID(id uint64) (*UsageLedgerEntry, error)
         return nil, fmt.Errorf("failed to select account app usage ledger entry by id: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account app usage ledger entry by id: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account app usage ledger entry by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
         return nil, fmt.Errorf("failed to select account app usage ledger entry by id: invalid parameter: id=0")
@@ -422,7 +480,7 @@ func (s *UsageLedgerEntryStore) Select(option *UsageLedgerEntrySelectOption) ([]
         return nil, fmt.Errorf("failed to select account app usage ledger entries: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select account app usage ledger entries: missing required parameter: table_name=empty")
+        return nil, fmt.Errorf("failed to select account app usage ledger entries: missing required parameter: table_name=%q", "empty")
     }
     if option == nil {
         return nil, fmt.Errorf("failed to select account app usage ledger entries: missing required parameter: select_option=null")
@@ -431,31 +489,9 @@ func (s *UsageLedgerEntryStore) Select(option *UsageLedgerEntrySelectOption) ([]
         return nil, fmt.Errorf("failed to select account app usage ledger entries: %w", err)
     }
 
-    conditions, args := option.BuildCondition()
+    query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
-    var query strings.Builder
-    query.WriteString("SELECT * FROM ")
-    query.WriteString(s.tableName)
-
-    if len(conditions) > 0 {
-        query.WriteString(" WHERE ")
-        query.WriteString(strings.Join(conditions, " AND "))
-    }
-
-    if option.OrderBy != "" {
-        query.WriteString(" ORDER BY ")
-        query.WriteString(option.OrderBy)
-        if option.OrderByDesc {
-            query.WriteString(" DESC")
-        }
-    }
-
-    if option.Limit > 0 {
-        query.WriteString(" LIMIT ? OFFSET ?")
-        args = append(args, option.Limit, option.Offset)
-    }
-
-    rows, err := s.db.Query(query.String(), args...)
+    rows, err := s.db.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select account app usage ledger entries: %w", err)
     }
@@ -503,7 +539,7 @@ func (s *UsageLedgerEntryStore) Count(option *UsageLedgerEntrySelectOption) (int
         return 0, fmt.Errorf("failed to count account app usage ledger entries: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count account app usage ledger entries: missing required parameter: table_name=empty")
+        return 0, fmt.Errorf("failed to count account app usage ledger entries: missing required parameter: table_name=%q", "empty")
     }
     if option == nil {
         return 0, fmt.Errorf("failed to count account app usage ledger entries: missing required parameter: select_option=null")
@@ -512,19 +548,10 @@ func (s *UsageLedgerEntryStore) Count(option *UsageLedgerEntrySelectOption) (int
         return 0, fmt.Errorf("failed to count account app usage ledger entries: %w", err)
     }
 
-    conditions, args := option.BuildCondition()
-
-    var query strings.Builder
-    query.WriteString("SELECT COUNT(*) FROM ")
-    query.WriteString(s.tableName)
-
-    if len(conditions) > 0 {
-        query.WriteString(" WHERE ")
-        query.WriteString(strings.Join(conditions, " AND "))
-    }
+    query, args := option.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     var result int64
-    if err := s.db.QueryRow(query.String(), args...).Scan(&result); err != nil {
+    if err := s.db.QueryRow(query, args...).Scan(&result); err != nil {
         return 0, fmt.Errorf("failed to count account app usage ledger entries: %w", err)
     }
 
@@ -546,7 +573,7 @@ func (s *UsageLedgerEntryStore) Update(option *UsageLedgerEntryUpdateOption) err
         return fmt.Errorf("failed to update account app usage ledger entry: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update account app usage ledger entry: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to update account app usage ledger entry: missing required parameter: table_name=%q", "empty")
     }
     if err := option.Validate(); err != nil {
         return fmt.Errorf("failed to update account app usage ledger: %w", err)
@@ -610,7 +637,7 @@ func (s *UsageLedgerEntryStore) DeleteByID(id uint64) error {
         return fmt.Errorf("failed to delete account app usage ledger entry by id: missing required parameter: db=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to delete account app usage ledger entry by id: missing required parameter: table_name=empty")
+        return fmt.Errorf("failed to delete account app usage ledger entry by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
         return fmt.Errorf("failed to delete account app usage ledger entry by id: invalid parameter: id=0")
@@ -627,19 +654,22 @@ func (s *UsageLedgerEntryStore) DeleteByID(id uint64) error {
 
 
 //      
-// Build condition.
+// Build query.
 //  
 // Version:
-//   - 2025-05-02: Added.
+//   - 2025-05-12: Added.
 //
-func (o *UsageLedgerEntrySelectOption) BuildCondition() ([]string, []any) {
+func (o *UsageLedgerEntrySelectOption) BuildQuery(selectFromClause string) (string, []any) {
     // Guard.
     if o == nil {
-        return nil, nil
+        return selectFromClause, nil
     }
 
+    var query strings.Builder
+    query.WriteString(selectFromClause)
+
     conditions := make([]string, 0, 10)
-    args := make([]any, 0, 10)
+    args := make([]any, 0, 12)
 
     if o.ID != nil {
         conditions = append(conditions, ColID + " = ?")
@@ -678,7 +708,25 @@ func (o *UsageLedgerEntrySelectOption) BuildCondition() ([]string, []any) {
         args = append(args, *o.CreatedAtLTE)
     }
 
-    return conditions, args
+    if len(conditions) > 0 {
+        query.WriteString(" WHERE ")
+        query.WriteString(strings.Join(conditions, " AND "))
+    }
+
+    if o.OrderBy != "" {
+        query.WriteString(" ORDER BY ")
+        query.WriteString(o.OrderBy)
+        if o.OrderByDesc {
+            query.WriteString(" DESC")
+        }
+    }
+
+    if o.Limit > 0 {
+        query.WriteString(" LIMIT ? OFFSET ?")
+        args = append(args, o.Limit, o.Offset)
+    }
+
+    return query.String(), args
 }
 
 
