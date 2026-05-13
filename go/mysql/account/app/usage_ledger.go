@@ -412,6 +412,42 @@ func (s *UsageLedgerStore) Insert(row *UsageLedger) error {
 
 
 //
+// Add bonus balance ticks.
+//
+// Version:
+//   - 2026-05-13: Added.
+//
+func (s *UsageLedgerStore) AddBonusBalanceTicks(accountID uint64, delta uint64) error {
+    if s == nil {
+        return fmt.Errorf("failed to add account app usage ledger bonus balance ticks: missing required parameter: usage_ledger_store=null")
+    }
+    if s.executor == nil {
+        return fmt.Errorf("failed to add account app usage ledger bonus balance ticks: missing required parameter: executor=null")
+    }
+    if s.tableName == "" {
+        return fmt.Errorf("failed to add account app usage ledger bonus balance ticks: missing required parameter: table_name=%q", "empty")
+    }
+    if err := ValidateUsageLedgerAccountID(accountID); err != nil {
+        return fmt.Errorf("failed to add account app usage ledger bonus balance ticks: %w", err)
+    }
+    
+    query := fmt.Sprintf(
+        "UPDATE %s SET %s = %s + ? WHERE %s = ?;",
+        s.tableName,
+        ColBonusBalanceTicks,
+        ColBonusBalanceTicks,
+        ColAccountID,
+    )
+
+    if _, err := s.executor.Exec(query, delta, accountID); err != nil {
+        return fmt.Errorf("failed to add account app usage ledger bonus balance ticks: %w", err)
+    }
+
+    return nil
+}
+
+
+//
 // Select account app usage ledger by account ID.
 //
 // Version:
