@@ -309,7 +309,7 @@ func ValidateOTPExpiresAt(expiresAt time.Time) error {
     if expiresAt.IsZero() {
         return fmt.Errorf("invalid parameter: expires_at=%q", "empty")
     }
-    if !expiresAt.After(time.Now().UTC()) {
+    if !expiresAt.UTC().After(time.Now().UTC()) {
         return fmt.Errorf("invalid parameter: expires_at=%q", expiresAt.Format(time.RFC3339))
     }
     return nil
@@ -340,7 +340,7 @@ func ValidateOTPLastSentAt(lastSentAt time.Time) error {
     if lastSentAt.IsZero() {
         return fmt.Errorf("invalid parameter: last_sent_at=%q", "empty")
     }
-    if lastSentAt.After(time.Now().UTC()) {
+    if lastSentAt.UTC().After(time.Now().UTC()) {
         return fmt.Errorf("invalid parameter: last_sent_at=%q", lastSentAt.Format(time.RFC3339))
     }
     return nil
@@ -374,7 +374,7 @@ func ValidateOTPLockedUntil(lockedUntil *time.Time) error {
     if lockedUntil.IsZero() {
         return fmt.Errorf("invalid parameter: locked_until=%q", "empty")
     }
-    if !lockedUntil.After(time.Now().UTC()) {
+    if !lockedUntil.UTC().After(time.Now().UTC()) {
         return fmt.Errorf("invalid parameter: locked_until=%s", lockedUntil.Format(time.RFC3339))
     }
     return nil
