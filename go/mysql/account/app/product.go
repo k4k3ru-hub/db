@@ -57,7 +57,7 @@ type Product struct {
 //   - 2026-05-02: Added.
 //
 type ProductStore struct {
-	db        *sql.DB
+	executor  helper.Executor
 	tableName string
 }
 
@@ -130,16 +130,16 @@ func GenerateProductID() uint64 {
 // Version:
 //   - 2026-05-02: Added.
 //
-func NewProductStore(db *sql.DB, tableName string) (*ProductStore, error) {
-	if db == nil {
-		return nil, fmt.Errorf("failed to create account app product store: missing required parameter: db=null")
+func NewProductStore(executor helper.Executor, tableName string) (*ProductStore, error) {
+	if executor == nil {
+		return nil, fmt.Errorf("failed to create account app product store: missing required parameter: executor=null")
 	}
 	if tableName == "" {
 		return nil, fmt.Errorf("failed to create account app product store: missing required parameter: table_name=%q", "empty")
 	}
 
 	return &ProductStore{
-		db:        db,
+		executor:  executor,
 		tableName: tableName,
 	}, nil
 }
@@ -363,8 +363,8 @@ func (s *ProductStore) CreateTable() error {
 	if s == nil {
 		return fmt.Errorf("failed to create account app product table: missing required parameter: product_store=null")
 	}
-	if s.db == nil {
-		return fmt.Errorf("failed to create account app product table: missing required parameter: db=null")
+	if s.executor == nil {
+		return fmt.Errorf("failed to create account app product table: missing required parameter: executor=null")
 	}
 	if s.tableName == "" {
 		return fmt.Errorf("failed to create account app product table: missing required parameter: table_name=%q", "empty")
@@ -414,7 +414,7 @@ func (s *ProductStore) CreateTable() error {
 		ColPriceCurrency,
 	)
 
-	if _, err := s.db.Exec(query); err != nil {
+	if _, err := s.executor.Exec(query); err != nil {
 		return fmt.Errorf("failed to create account app product table: %w", err)
 	}
 
@@ -432,8 +432,8 @@ func (s *ProductStore) Insert(row *Product) error {
 	if s == nil {
 		return fmt.Errorf("failed to insert account app product: missing required parameter: product_store=null")
 	}
-	if s.db == nil {
-		return fmt.Errorf("failed to insert account app product: missing required parameter: db=null")
+	if s.executor == nil {
+		return fmt.Errorf("failed to insert account app product: missing required parameter: executor=null")
 	}
 	if s.tableName == "" {
 		return fmt.Errorf("failed to insert account app product: missing required parameter: table_name=%q", "empty")
@@ -491,7 +491,7 @@ func (s *ProductStore) Insert(row *Product) error {
 		ColUpdatedAt,
 	)
 
-	if _, err := s.db.Exec(
+	if _, err := s.executor.Exec(
 		query,
 		row.ID,
 		row.Name,
@@ -525,8 +525,8 @@ func (s *ProductStore) SelectByID(id uint64) (*Product, error) {
 	if s == nil {
 		return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: product_store=null")
 	}
-	if s.db == nil {
-		return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: db=null")
+	if s.executor == nil {
+		return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: executor=null")
 	}
 	if s.tableName == "" {
 		return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: table_name=%q", "empty")
@@ -538,7 +538,7 @@ func (s *ProductStore) SelectByID(id uint64) (*Product, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
 	result := &Product{}
-	err := s.db.QueryRow(query, id).Scan(
+	err := s.executor.QueryRow(query, id).Scan(
 		&result.ID,
 		&result.Name,
 		&result.Status,
@@ -575,8 +575,8 @@ func (s *ProductStore) Select(option *ProductSelectOption) ([]*Product, error) {
 	if s == nil {
 		return nil, fmt.Errorf("failed to select account app products: missing required parameter: product_store=null")
 	}
-	if s.db == nil {
-		return nil, fmt.Errorf("failed to select account app products: missing required parameter: db=null")
+	if s.executor == nil {
+		return nil, fmt.Errorf("failed to select account app products: missing required parameter: executor=null")
 	}
 	if s.tableName == "" {
 		return nil, fmt.Errorf("failed to select account app products: missing required parameter: table_name=%q", "empty")
@@ -587,7 +587,7 @@ func (s *ProductStore) Select(option *ProductSelectOption) ([]*Product, error) {
 
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
-	rows, err := s.db.Query(query, args...)
+	rows, err := s.executor.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to select account app products: %w", err)
 	}
@@ -636,8 +636,8 @@ func (s *ProductStore) Count(option *ProductSelectOption) (int64, error) {
 	if s == nil {
 		return 0, fmt.Errorf("failed to count account app products: missing required parameter: product_store=null")
 	}
-	if s.db == nil {
-		return 0, fmt.Errorf("failed to count account app products: missing required parameter: db=null")
+	if s.executor == nil {
+		return 0, fmt.Errorf("failed to count account app products: missing required parameter: executor=null")
 	}
 	if s.tableName == "" {
 		return 0, fmt.Errorf("failed to count account app products: missing required parameter: table_name=%q", "empty")
@@ -649,7 +649,7 @@ func (s *ProductStore) Count(option *ProductSelectOption) (int64, error) {
     query, args := option.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
 	var result int64
-	if err := s.db.QueryRow(query, args...).Scan(&result); err != nil {
+	if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
 		return 0, fmt.Errorf("failed to count account app products: %w", err)
 	}
 
@@ -667,8 +667,8 @@ func (s *ProductStore) Update(option *ProductUpdateOption) error {
 	if s == nil {
 		return fmt.Errorf("failed to update account app product: missing required parameter: product_store=null")
 	}
-	if s.db == nil {
-		return fmt.Errorf("failed to update account app product: missing required parameter: db=null")
+	if s.executor == nil {
+		return fmt.Errorf("failed to update account app product: missing required parameter: executor=null")
 	}
 	if s.tableName == "" {
 		return fmt.Errorf("failed to update account app product: missing required parameter: table_name=%q", "empty")
@@ -743,7 +743,7 @@ func (s *ProductStore) Update(option *ProductUpdateOption) error {
 
 	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
-	if _, err := s.db.Exec(query, args...); err != nil {
+	if _, err := s.executor.Exec(query, args...); err != nil {
 		return fmt.Errorf("failed to update account app product: %w", err)
 	}
 
@@ -761,8 +761,8 @@ func (s *ProductStore) DeleteByID(id uint64) error {
 	if s == nil {
 		return fmt.Errorf("failed to delete account app product by id: missing required parameter: product_store=null")
 	}
-	if s.db == nil {
-		return fmt.Errorf("failed to delete account app product by id: missing required parameter: db=null")
+	if s.executor == nil {
+		return fmt.Errorf("failed to delete account app product by id: missing required parameter: executor=null")
 	}
 	if s.tableName == "" {
 		return fmt.Errorf("failed to delete account app product by id: missing required parameter: table_name=%q", "empty")
@@ -773,7 +773,7 @@ func (s *ProductStore) DeleteByID(id uint64) error {
 
 	query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
-	if _, err := s.db.Exec(query, id); err != nil {
+	if _, err := s.executor.Exec(query, id); err != nil {
 		return fmt.Errorf("failed to delete account app product by id: %w", err)
 	}
 
