@@ -4,6 +4,7 @@
 package helper
 
 import (
+    "database/sql"
     "fmt"
     "strconv"
     "strings"
@@ -38,6 +39,13 @@ type Condition struct {
 type UpdateField[T any] struct {
     SetNull bool `json:"setNull"`
     Value   T    `json:"value"`
+}
+
+
+type Executor interface {
+    Exec(query string, args ...any) (sql.Result, error)
+    Query(query string, args ...any) (*sql.Rows, error)
+    QueryRow(query string, args ...any) *sql.Row
 }
 
 
