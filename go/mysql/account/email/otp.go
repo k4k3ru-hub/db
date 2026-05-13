@@ -833,7 +833,7 @@ func (s *OTPStore) DeleteByEmail(email string) error {
 //
 // Select usable account email otp by email and purpose.
 //
-func (s *OTPStore) SelectUsableByEmailAndPurpose(email string, p OTPPurpose) (*OTP, error) {
+func (s *OTPStore) SelectUsableByEmailAndPurpose(email string, p OTPPurpose, now time.Time) (*OTP, error) {
     otp, err := s.SelectByEmailAndPurpose(email, p)
     if err != nil {
         return nil, err
@@ -842,8 +842,6 @@ func (s *OTPStore) SelectUsableByEmailAndPurpose(email string, p OTPPurpose) (*O
     if otp == nil {
         return nil, nil
     }
-
-    now := time.Now().UTC()
 
     // Check whether OTP has been locked.
     if otp.LockedUntil != nil && otp.LockedUntil.After(now) {
