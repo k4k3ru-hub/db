@@ -566,6 +566,56 @@ func (s *ProductStore) SelectByID(id uint64) (*Product, error) {
 
 
 //
+// Select account app product by name.
+//
+// Version:
+//   - 2026-05-13: Added.
+//
+func (s *ProductStore) SelectByName(name string) (*Product, error) {
+	if s == nil {
+		return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: product_store=null")
+	}
+	if s.executor == nil {
+		return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: executor=null")
+	}
+	if s.tableName == "" {
+		return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: table_name=%q", "empty")
+	}
+	if err := ValidateProductName(name); err != nil {
+		return nil, fmt.Errorf("failed to select account app product by name: %w", err)
+	}
+
+	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColName)
+
+	result := &Product{}
+	err := s.executor.QueryRow(query, name).Scan(
+		&result.ID,
+		&result.Name,
+		&result.Status,
+		&result.Type,
+		&result.CreditTicks,
+		&result.BonusTicks,
+		&result.PriceAmount,
+		&result.PriceCurrency,
+		&result.ExpiresInDays,
+		&result.PurchaseLimit,
+		&result.Description,
+		&result.MetaData,
+		&result.CreatedAt,
+		&result.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to select account app product by name: %w", err)
+	}
+
+	return result, nil
+}
+
+
+//
 // Select account app products.
 //
 // Version:

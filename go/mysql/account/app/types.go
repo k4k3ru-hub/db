@@ -75,31 +75,19 @@ type UsageLedgerEntryType uint8
 const (
     UsageTypeUnknown UsageLedgerEntryType = iota
     UsageTypeDeposit
+    UsageTypeBonusGrant
     UsageTypeRefund
     UsageTypeAdjustment
     UsageTypeExpiration
     UsageTypeHTTPRequest
     UsageTypeWSConnection
     UsageTypeWSSubscription
-    UsageTypeAgentCall
-    UsageTypeCompute
+    UsageTypeFIXSession
+    UsageTypeFIXMessage
 )
 
 func (t UsageLedgerEntryType) IsValid() bool {
-    switch t {
-    case UsageTypeDeposit,
-        UsageTypeRefund,
-        UsageTypeAdjustment,
-        UsageTypeExpiration,
-        UsageTypeHTTPRequest,
-        UsageTypeWSConnection,
-        UsageTypeWSSubscription,
-        UsageTypeAgentCall,
-        UsageTypeCompute:
-        return true
-    default:
-        return false
-    }
+    return t <= UsageTypeFIXMessage
 }
 
 
