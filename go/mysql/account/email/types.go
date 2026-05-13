@@ -121,6 +121,21 @@ const (
 
 
 //
+// Convert OTP status to string.
+//
+func (s OTPStatus) String() string {
+    switch s {
+    case OTPStatusActive:
+        return "active"
+    case OTPStatusVerified:
+        return "verified"
+    default:
+        return ""
+    }
+}
+
+
+//
 // Validate OTP status.
 //
 // Version:

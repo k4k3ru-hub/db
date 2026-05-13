@@ -51,7 +51,7 @@ type Credential struct {
 //   - 2026-05-03: Added.
 //
 type CredentialStore struct {
-    db               *sql.DB
+    executor         helper.Executor
     tableName        string
     accountTableName string
 }
@@ -111,9 +111,9 @@ func GenerateCredentialID() uint64 {
 // Version:
 //   - 2026-05-03: Added.
 //
-func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*CredentialStore, error) {
-    if db == nil {
-        return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: db=null")
+func NewCredentialStore(executor helper.Executor, tableName, accountTableName string) (*CredentialStore, error) {
+    if executor == nil {
+        return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: executor=null")
     }
     if tableName == "" {
         return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: table_name=%q", "empty")
@@ -123,7 +123,7 @@ func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*Creden
     }
 
     return &CredentialStore{
-        db:               db,
+        executor:               executor,
         tableName:        tableName,
         accountTableName: accountTableName,
     }, nil
@@ -320,8 +320,8 @@ func (s *CredentialStore) CreateTable() error {
     if s == nil {
         return fmt.Errorf("failed to create account email credentials table: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to create account email credentials table: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to create account email credentials table: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to create account email credentials table: missing required parameter: table_name=%q", "empty")
@@ -362,7 +362,7 @@ func (s *CredentialStore) CreateTable() error {
         ColAccountID, s.accountTableName, account.ColID,
     )
 
-    if _, err := s.db.Exec(query); err != nil {
+    if _, err := s.executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create account email credentials table: %w", err)
     }
 
@@ -380,8 +380,8 @@ func (s *CredentialStore) Insert(row *Credential) error {
     if s == nil {
         return fmt.Errorf("failed to insert account email credential: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to insert account email credential: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to insert account email credential: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to insert account email credential: missing required parameter: table_name=%q", "empty")
@@ -430,7 +430,7 @@ func (s *CredentialStore) Insert(row *Credential) error {
         ColUpdatedAt,
     )
 
-    if _, err := s.db.Exec(
+    if _, err := s.executor.Exec(
         query,
         row.ID,
         row.AccountID,
@@ -458,8 +458,8 @@ func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select account email credential by id: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select account email credential by id: missing required parameter: db=null")
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to select account email credential by id: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account email credential by id: missing required parameter: table_name=%q", "empty")
@@ -471,7 +471,7 @@ func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
     result := &Credential{}
-    err := s.db.QueryRow(query, id).Scan(
+    err := s.executor.QueryRow(query, id).Scan(
         &result.ID,
         &result.AccountID,
         &result.Email,
@@ -502,8 +502,8 @@ func (s *CredentialStore) SelectByEmail(email string) (*Credential, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: db=null")
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account email credential by email: missing required parameter: table_name=%q", "empty")
@@ -515,7 +515,7 @@ func (s *CredentialStore) SelectByEmail(email string) (*Credential, error) {
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColEmail)
 
     result := &Credential{}
-    err := s.db.QueryRow(query, email).Scan(
+    err := s.executor.QueryRow(query, email).Scan(
         &result.ID,
         &result.AccountID,
         &result.Email,
@@ -546,8 +546,8 @@ func (s *CredentialStore) Select(option *CredentialSelectOption) ([]*Credential,
     if s == nil {
         return nil, fmt.Errorf("failed to select account email credentials: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select account email credentials: missing required parameter: db=null")
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to select account email credentials: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account email credentials: missing required parameter: table_name=%q", "empty")
@@ -558,7 +558,7 @@ func (s *CredentialStore) Select(option *CredentialSelectOption) ([]*Credential,
 
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
-    rows, err := s.db.Query(query, args...)
+    rows, err := s.executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select account email credentials: %w", err)
     }
@@ -601,8 +601,8 @@ func (s *CredentialStore) Count(option *CredentialSelectOption) (int64, error) {
     if s == nil {
         return 0, fmt.Errorf("failed to count account email credentials: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return 0, fmt.Errorf("failed to count account email credentials: missing required parameter: db=null")
+    if s.executor == nil {
+        return 0, fmt.Errorf("failed to count account email credentials: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return 0, fmt.Errorf("failed to count account email credentials: missing required parameter: table_name=%q", "empty")
@@ -614,7 +614,7 @@ func (s *CredentialStore) Count(option *CredentialSelectOption) (int64, error) {
     query, args := option.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     var result int64
-    if err := s.db.QueryRow(query, args...).Scan(&result); err != nil {
+    if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
         return 0, fmt.Errorf("failed to count account email credentials: %w", err)
     }
 
@@ -632,8 +632,8 @@ func (s *CredentialStore) Update(option *CredentialUpdateOption) error {
     if s == nil {
         return fmt.Errorf("failed to update account email credential: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to update account email credential: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to update account email credential: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to update account email credential: missing required parameter: table_name=%q", "empty")
@@ -678,7 +678,7 @@ func (s *CredentialStore) Update(option *CredentialUpdateOption) error {
 
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
-    if _, err := s.db.Exec(query, args...); err != nil {
+    if _, err := s.executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update account email credential: %w", err)
     }
 
@@ -696,8 +696,8 @@ func (s *CredentialStore) DeleteByID(id uint64) error {
     if s == nil {
         return fmt.Errorf("failed to delete account email credential by id: missing required parameter: credential_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to delete account email credential by id: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to delete account email credential by id: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to delete account email credential by id: missing required parameter: table_name=%q", "empty")
@@ -708,7 +708,7 @@ func (s *CredentialStore) DeleteByID(id uint64) error {
 
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
-    if _, err := s.db.Exec(query, id); err != nil {
+    if _, err := s.executor.Exec(query, id); err != nil {
         return fmt.Errorf("failed to delete account email credential by id: %w", err)
     }
 

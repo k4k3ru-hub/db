@@ -43,7 +43,7 @@ type Account struct {
 
 
 type AccountStore struct {
-    db        *sql.DB
+    executor  myHelper.Executor
     tableName string
 }
 
@@ -225,17 +225,17 @@ func GenerateAccountID() uint64 {
 // Version:
 //   - 2026-04-30: Added.
 //
-func NewAccountStore(db *sql.DB, tableName string) (*AccountStore, error) {
+func NewAccountStore(executor myHelper.Executor, tableName string) (*AccountStore, error) {
     // Guard.
-    if db == nil {
-        return nil, fmt.Errorf("failed to create account store: missing required parameter: db=null")
+    if executor == nil {
+        return nil, fmt.Errorf("failed to create account store: missing required parameter: executor=null")
     }
     if tableName == "" {
         return nil, fmt.Errorf("failed to create account store: missing required parameter: table_name=%q", "empty")
     }
 
     return &AccountStore{
-        db:        db,
+        executor:  executor,
         tableName: tableName,
     }, nil
 }
@@ -252,8 +252,8 @@ func (s *AccountStore) Count(option *AccountSelectOption) (int64, error) {
     if s == nil {
         return 0, fmt.Errorf("failed to count accounts: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return 0, fmt.Errorf("failed to count accounts: missing required parameter: db=null")
+    if s.executor == nil {
+        return 0, fmt.Errorf("failed to count accounts: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return 0, fmt.Errorf("failed to count accounts: missing required parameter: table_name=%q", "empty")
@@ -266,7 +266,7 @@ func (s *AccountStore) Count(option *AccountSelectOption) (int64, error) {
 
     // Execute.
     var result int64
-    err := s.db.QueryRow(query, args...).Scan(&result)
+    err := s.executor.QueryRow(query, args...).Scan(&result)
     if err != nil {
         return 0, fmt.Errorf("failed to count accounts: %w", err)
     }
@@ -286,8 +286,8 @@ func (s *AccountStore) CreateTable() error {
     if s == nil {
         return fmt.Errorf("failed to create accounts table: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to create accounts table: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to create accounts table: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to create accounts table: missing required parameter: table_name=%q", "empty")
@@ -321,7 +321,7 @@ func (s *AccountStore) CreateTable() error {
     )
 
     // Execute the query.
-    if _, err := s.db.Exec(query); err != nil {
+    if _, err := s.executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create accounts table: %w", err)
     }
 
@@ -340,8 +340,8 @@ func (s *AccountStore) DeleteByID(id uint64) error {
     if s == nil {
         return fmt.Errorf("failed to delete account by id: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to delete account by id: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to delete account by id: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to delete account by id: missing required parameter: table_name=%q", "empty")
@@ -354,7 +354,7 @@ func (s *AccountStore) DeleteByID(id uint64) error {
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
     // Execute.
-    if _, err := s.db.Exec(query, id); err != nil {
+    if _, err := s.executor.Exec(query, id); err != nil {
         return fmt.Errorf("failed to delete account by id: %w", err)
     }
 
@@ -373,8 +373,8 @@ func (s *AccountStore) Insert(row *Account) error {
     if s == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to insert account: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to insert account: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to insert account: missing required parameter: table_name=%q", "empty")
@@ -418,7 +418,7 @@ func (s *AccountStore) Insert(row *Account) error {
     }
 
     // Execute.
-    if _, err := s.db.Exec(
+    if _, err := s.executor.Exec(
         query,
         row.ID,
         row.Status,
@@ -443,8 +443,8 @@ func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select accounts: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select accounts: missing required parameter: db=null")
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to select accounts: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select accounts: missing required parameter: table_name=%q", "empty")
@@ -456,7 +456,7 @@ func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
     // Execute.
-    rows, err := s.db.Query(query, args...)
+    rows, err := s.executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select accounts: %w", err)
     }
@@ -501,8 +501,8 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select account by id: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select account by id: missing required parameter: db=null")
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to select account by id: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account by id: missing required parameter: table_name=%q", "empty")
@@ -515,7 +515,7 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
     // Execute.
-    row := s.db.QueryRow(query, id)
+    row := s.executor.QueryRow(query, id)
 
     // Scan.
     result := &Account{}
@@ -550,8 +550,8 @@ func (s *AccountStore) Update(option *AccountUpdateOption) error {
     if s == nil {
         return fmt.Errorf("failed to update account: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to update account: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to update account: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to update account: missing required parameter: table_name=%q", "empty")
@@ -605,7 +605,7 @@ func (s *AccountStore) Update(option *AccountUpdateOption) error {
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
     // Execute.
-    if _, err := s.db.Exec(query, args...); err != nil {
+    if _, err := s.executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update account: %w", err)
     }
 
@@ -624,8 +624,8 @@ func (s *AccountStore) UpdateLastLoggedIn(id uint64) error {
     if s == nil {
         return fmt.Errorf("failed to update account last logged in: missing required parameter: account_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to update account last logged in: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to update account last logged in: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to update account last logged in: missing required parameter: table_name=%q", "empty")

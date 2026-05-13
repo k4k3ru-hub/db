@@ -57,7 +57,7 @@ type OTP struct {
 //   - 2026-05-03: Added.
 //
 type OTPStore struct {
-    db        *sql.DB
+    executor  helper.Executor
     tableName string
 }
 
@@ -166,16 +166,16 @@ func HashCode(code string, maxCodeLength int) (string, error) {
 // Version:
 //   - 2026-05-03: Added.
 //
-func NewOTPStore(db *sql.DB, tableName string) (*OTPStore, error) {
-    if db == nil {
-        return nil, fmt.Errorf("failed to create account email otp store: missing required parameter: db=null")
+func NewOTPStore(executor helper.Executor, tableName string) (*OTPStore, error) {
+    if executor == nil {
+        return nil, fmt.Errorf("failed to create account email otp store: missing required parameter: executor=null")
     }
     if tableName == "" {
         return nil, fmt.Errorf("failed to create account email otp store: missing required parameter: table_name=%q", "empty")
     }
 
     return &OTPStore{
-        db:        db,
+        executor:  executor,
         tableName: tableName,
     }, nil
 }
@@ -405,8 +405,8 @@ func (s *OTPStore) CreateTable() error {
     if s == nil {
         return fmt.Errorf("failed to create account email otps table: missing required parameter: otp_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to create account email otps table: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to create account email otps table: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to create account email otps table: missing required parameter: table_name=%q", "empty")
@@ -438,7 +438,7 @@ func (s *OTPStore) CreateTable() error {
         ColStatus,
     )
 
-    if _, err := s.db.Exec(query); err != nil {
+    if _, err := s.executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create account email otps table: %w", err)
     }
 
@@ -456,8 +456,8 @@ func (s *OTPStore) Insert(row *OTP) error {
     if s == nil {
         return fmt.Errorf("failed to insert account email otp: missing required parameter: otp_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to insert account email otp: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to insert account email otp: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to insert account email otp: missing required parameter: table_name=%q", "empty")
@@ -500,7 +500,7 @@ func (s *OTPStore) Insert(row *OTP) error {
         ColLockedUntil,
     )
 
-    if _, err := s.db.Exec(
+    if _, err := s.executor.Exec(
         query,
         row.Email,
         row.Purpose,
@@ -528,8 +528,8 @@ func (s *OTPStore) Upsert(row *OTP) error {
     if s == nil {
         return fmt.Errorf("failed to upsert account email otp: missing required parameter: otp_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to upsert account email otp: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to upsert account email otp: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to upsert account email otp: missing required parameter: table_name=%q", "empty")
@@ -578,7 +578,7 @@ func (s *OTPStore) Upsert(row *OTP) error {
         ColLockedUntil, ColLockedUntil,
     )
 
-    if _, err := s.db.Exec(
+    if _, err := s.executor.Exec(
         query,
         row.Email,
         row.Purpose,
@@ -606,8 +606,8 @@ func (s *OTPStore) SelectByEmailAndPurpose(email string, purpose OTPPurpose) (*O
     if s == nil {
         return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: otp_store=null")
     }   
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: db=null")
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account email otp by email and purpose: missing required parameter: table_name=%q", "empty")
@@ -622,7 +622,7 @@ func (s *OTPStore) SelectByEmailAndPurpose(email string, purpose OTPPurpose) (*O
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? and %s = ? LIMIT 1;", s.tableName, ColEmail, ColPurpose)
 
     result := &OTP{}
-    err := s.db.QueryRow(query, email, purpose).Scan(
+    err := s.executor.QueryRow(query, email, purpose).Scan(
         &result.Email,
         &result.Purpose,
         &result.Status,
@@ -653,8 +653,8 @@ func (s *OTPStore) Select(option *OTPSelectOption) ([]*OTP, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select account email otps: missing required parameter: otp_store=null")
     }
-    if s.db == nil {
-        return nil, fmt.Errorf("failed to select account email otps: missing required parameter: db=null")
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to select account email otps: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account email otps: missing required parameter: table_name=%q", "empty")
@@ -665,7 +665,7 @@ func (s *OTPStore) Select(option *OTPSelectOption) ([]*OTP, error) {
 
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
-    rows, err := s.db.Query(query, args...)
+    rows, err := s.executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select account email otps: %w", err)
     }
@@ -708,8 +708,8 @@ func (s *OTPStore) Count(option *OTPSelectOption) (int64, error) {
     if s == nil {
         return 0, fmt.Errorf("failed to count account email otps: missing required parameter: otp_store=null")
     }
-    if s.db == nil {
-        return 0, fmt.Errorf("failed to count account email otps: missing required parameter: db=null")
+    if s.executor == nil {
+        return 0, fmt.Errorf("failed to count account email otps: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return 0, fmt.Errorf("failed to count account email otps: missing required parameter: table_name=%q", "empty")
@@ -721,7 +721,7 @@ func (s *OTPStore) Count(option *OTPSelectOption) (int64, error) {
     query, args := option.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     var result int64
-    if err := s.db.QueryRow(query, args...).Scan(&result); err != nil {
+    if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
         return 0, fmt.Errorf("failed to count account email otps: %w", err)
     }
 
@@ -739,8 +739,8 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
     if s == nil {
         return fmt.Errorf("failed to update account email otp: missing required parameter: otp_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to update account email otp: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to update account email otp: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to update account email otp: missing required parameter: table_name=%q", "empty")
@@ -792,7 +792,7 @@ func (s *OTPStore) Update(option *OTPUpdateOption) error {
 
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ? AND %s = ?;", s.tableName, strings.Join(assignments, ", "), ColEmail, ColPurpose)
 
-    if _, err := s.db.Exec(query, args...); err != nil {
+    if _, err := s.executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update account email otp: %w", err)
     }
 
@@ -810,8 +810,8 @@ func (s *OTPStore) DeleteByEmail(email string) error {
     if s == nil {
         return fmt.Errorf("failed to delete account email otp by email: missing required parameter: otp_store=null")
     }
-    if s.db == nil {
-        return fmt.Errorf("failed to delete account email otp by email: missing required parameter: db=null")
+    if s.executor == nil {
+        return fmt.Errorf("failed to delete account email otp by email: missing required parameter: executor=null")
     }
     if s.tableName == "" {
         return fmt.Errorf("failed to delete account email otp by email: missing required parameter: table_name=%q", "empty")
@@ -822,12 +822,51 @@ func (s *OTPStore) DeleteByEmail(email string) error {
     
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColEmail)
 
-    if _, err := s.db.Exec(query, email); err != nil {
+    if _, err := s.executor.Exec(query, email); err != nil {
         return fmt.Errorf("failed to delete account email otp by email: %w", err)
     }   
     
     return nil
 } 
+
+
+//
+// Select usable account email otp by email and purpose.
+//
+func (s *OTPStore) SelectUsableByEmailAndPurpose(email string, p OTPPurpose) (*OTP, error) {
+    otp, err := s.SelectByEmailAndPurpose(email, p)
+    if err != nil {
+        return nil, err
+    }
+
+    if otp == nil {
+        return nil, nil
+    }
+
+    now := time.Now().UTC()
+
+    // Check whether OTP has been locked.
+    if otp.LockedUntil != nil && otp.LockedUntil.After(now) {
+        return otp, fmt.Errorf("forbidden: locked_until=%q", otp.LockedUntil)
+    }
+
+    // Check whether OTP is expired.
+    if !otp.ExpiresAt.After(now) {
+        return otp, fmt.Errorf("expired: expired_at=%q", otp.ExpiresAt)
+    }
+
+    // Check whether OTP is already verified.
+    if otp.Status == OTPStatusVerified {
+        return otp, fmt.Errorf("forbidden: otp=%q", "already verified")
+    }
+
+    // Check whether OTP is not active.
+    if otp.Status != OTPStatusActive {
+        return otp, fmt.Errorf("forbidden: otp=%q", "not active")
+    }
+
+    return otp, nil
+}
 
 
 //
