@@ -58,6 +58,21 @@ type UsageLedgerStore struct {
 }
 
 
+
+type UsageLedgerInsertParams struct {
+    AccountID          uint64            `json:"accountId,string"`
+    Status             UsageLedgerStatus `json:"status,string"`
+    CreditBalanceTicks uint64            `json:"creditBalanceTicks,string"`
+    BonusBalanceTicks  uint64            `json:"bonusBalanceTicks,string"`
+    CreditExpiresAt    *time.Time        `json:"creditExpiresAt"`
+    BonusExpiresAt     *time.Time        `json:"bonusExpiresAt"`
+    MetaData           *string           `json:"metaData"`
+    CreatedAt          time.Time         `json:"createdAt"`
+    UpdatedAt          time.Time         `json:"updatedAt"`
+    Ignore             bool              `json:"ignore"`
+}
+
+
 //
 // UsageLedgerSelectOption.
 //
@@ -341,7 +356,7 @@ func (s *UsageLedgerStore) CreateTable() error {
 // Version:
 //   - 2026-05-01: Added.
 //
-func (s *UsageLedgerStore) Insert(row *UsageLedger) error {
+func (s *UsageLedgerStore) Insert(p *UsageLedgerInsertParams) error {
     if s == nil {
         return fmt.Errorf("failed to insert account app usage ledger: missing required parameter: usage_ledger_store=null")
     }
@@ -351,35 +366,41 @@ func (s *UsageLedgerStore) Insert(row *UsageLedger) error {
     if s.tableName == "" {
         return fmt.Errorf("failed to insert account app usage ledger: missing required parameter: table_name=%q", "empty")
     }
-    if row == nil {
-        return fmt.Errorf("failed to insert account app usage ledger: missing required parameter: usage_ledger=null")
+    if p == nil {
+        return fmt.Errorf("failed to insert account app usage ledger: missing required parameter: usage_ledger_insert_params=null")
     }
-    if err := row.ValidateAccountID(); err != nil {
+    if err := ValidateUsageLedgerAccountID(p.AccountID); err != nil {
         return fmt.Errorf("failed to insert account app usage ledger: %w", err)
     }
-    if err := row.ValidateStatus(); err != nil {
+    if err := ValidateUsageLedgerStatus(p.Status); err != nil {
         return fmt.Errorf("failed to insert account app usage ledger: %w", err)
     }
-    if err := row.ValidateCreditExpiresAt(); err != nil {
+    if err := ValidateUsageLedgerCreditExpiresAt(p.CreditExpiresAt); err != nil {
         return fmt.Errorf("failed to insert account app usage ledger: %w", err)
     }
-    if err := row.ValidateBonusExpiresAt(); err != nil {
+    if err := ValidateUsageLedgerBonusExpiresAt(p.BonusExpiresAt); err != nil {
         return fmt.Errorf("failed to insert account app usage ledger: %w", err)
     }
-    if err := row.ValidateMetaData(); err != nil {
+    if err := ValidateUsageLedgerMetaData(p.MetaData); err != nil {
         return fmt.Errorf("failed to insert account app usage ledger: %w", err)
     }
 
     now := time.Now()
-    if row.CreatedAt.IsZero() {
-        row.CreatedAt = now
+    if p.CreatedAt.IsZero() {
+        p.CreatedAt = now
     }
-    if row.UpdatedAt.IsZero() {
-        row.UpdatedAt = now
+    if p.UpdatedAt.IsZero() {
+        p.UpdatedAt = now
+    }
+
+    queryPrefix := "INSERT"
+    if p.Ignore {
+        queryPrefix = "INSERT IGNORE"
     }
 
     query := fmt.Sprintf(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        queryPrefix,
         s.tableName,
         ColAccountID,
         ColStatus,
@@ -394,15 +415,15 @@ func (s *UsageLedgerStore) Insert(row *UsageLedger) error {
 
     if _, err := s.executor.Exec(
         query,
-        row.AccountID,
-        row.Status,
-        row.CreditBalanceTicks,
-        row.BonusBalanceTicks,
-        row.CreditExpiresAt,
-        row.BonusExpiresAt,
-        row.MetaData,
-        row.CreatedAt,
-        row.UpdatedAt,
+        p.AccountID,
+        p.Status,
+        p.CreditBalanceTicks,
+        p.BonusBalanceTicks,
+        p.CreditExpiresAt,
+        p.BonusExpiresAt,
+        p.MetaData,
+        p.CreatedAt,
+        p.UpdatedAt,
     ); err != nil {
         return fmt.Errorf("failed to insert account app usage ledger: %w", err)
     }
