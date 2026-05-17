@@ -8,7 +8,7 @@ import (
     "fmt"
     "strconv"
 
-    "github.com/k4k3ru-hub/db/go/mysql/helper"
+    k4k3ruOnchain "github.com/k4k3ru-hub/onchain/go"
 )
 
 
@@ -127,47 +127,24 @@ func (s *TxStatus) Scan(src any) error {
 }
 
 
-type Chain string
+type Chain k4k3ruOnchain.Chain
 
 const (
-    ChainBitcoin   Chain = "bitcoin"
-    ChainEthereum  Chain = "ethereum"
-    ChainBNB       Chain = "bnb"
-    ChainPolygon   Chain = "polygon"
-    ChainArbitrum  Chain = "arbitrum"
-    ChainOptimism  Chain = "optimism"
-    ChainBase      Chain = "base"
-    ChainAvalanche Chain = "avalanche"
-    ChainSui       Chain = "sui"
-    ChainSolana    Chain = "solana"
+    ChainEthereum  Chain = Chain(k4k3ruOnchain.ChainEthereum)
+	ChainBase      Chain = Chain(k4k3ruOnchain.ChainBase)
+	ChainBNB       Chain = Chain(k4k3ruOnchain.ChainBNB)
+	ChainPolygon   Chain = Chain(k4k3ruOnchain.ChainPolygon)
+	ChainAvalanche Chain = Chain(k4k3ruOnchain.ChainAvalanche)
+	ChainSolana    Chain = Chain(k4k3ruOnchain.ChainSolana)
+	ChainSui       Chain = Chain(k4k3ruOnchain.ChainSui)
 )
 
 func (c Chain) IsValid() bool {
-    switch c {
-    case ChainBitcoin,
-        ChainEthereum,
-        ChainBNB,
-        ChainPolygon,
-        ChainArbitrum,
-        ChainOptimism,
-        ChainBase,
-        ChainAvalanche,
-        ChainSui,
-        ChainSolana:
-        return true
-    default:
-        return false
-    }
+    return k4k3ruOnchain.Chain(c).IsValid()
 }
 
 func (c Chain) Validate() error {
-    if string(c) == "" {
-        return fmt.Errorf("invalid parameter: chain=%q", "empty")
-    }
-    if !c.IsValid() {
-        return fmt.Errorf("invalid parameter: chain=%q", helper.TruncateRunes(string(c), 16))
-    }
-    return nil
+    return k4k3ruOnchain.Chain(c).Validate()
 }
 
 func (c Chain) Value() (driver.Value, error) {
@@ -201,35 +178,22 @@ func (c *Chain) Scan(src any) error {
 }
 
 
-type Network string
+type Network k4k3ruOnchain.Network
 
 const (
-    NetworkMainnet     Network = "mainnet"
-    NetworkTestnet     Network = "testnet"
-    NetworkDevnet      Network = "devnet"
-    NetworkMainnetBeta Network = "mainnet-beta"
+    NetworkMainnet Network = Network(k4k3ruOnchain.NetworkMainnet)
+    NetworkTestnet Network = Network(k4k3ruOnchain.NetworkTestnet)
+    NetworkDevnet  Network = Network(k4k3ruOnchain.NetworkDevnet)
+    NetworkSepolia Network = Network(k4k3ruOnchain.NetworkSepolia)
+    NetworkHolesky Network = Network(k4k3ruOnchain.NetworkHolesky)
 )
 
 func (n Network) IsValid() bool {
-    switch n {
-    case NetworkMainnet,
-        NetworkTestnet,
-        NetworkDevnet,
-        NetworkMainnetBeta:
-        return true
-    default:
-        return false
-    }
+    return k4k3ruOnchain.Network(n).IsValid()
 }
 
 func (n Network) Validate() error {
-    if string(n) == "" {
-        return fmt.Errorf("invalid parameter: network=%q", "empty")
-    }
-    if !n.IsValid() {
-        return fmt.Errorf("invalid parameter: network=%q", helper.TruncateRunes(string(n), 16))
-    }
-    return nil
+    return k4k3ruOnchain.Network(n).Validate()
 }
 
 func (n Network) Value() (driver.Value, error) {
@@ -263,67 +227,51 @@ func (n *Network) Scan(src any) error {
 }
 
 
-type Asset string
+type Symbol k4k3ruOnchain.Symbol
 
 const (
-    AssetBTC  Asset = "btc"
-    AssetETH  Asset = "eth"
-    AssetBNB  Asset = "bnb"
-    AssetARB  Asset = "arb"
-    AssetSUI  Asset = "sui"
-    AssetSOL  Asset = "sol"
-    AssetUSDC Asset = "usdc"
+    SymbolAVAX Symbol = Symbol(k4k3ruOnchain.SymbolAVAX)
+    SymbolBNB  Symbol = Symbol(k4k3ruOnchain.SymbolBNB)
+    SymbolETH  Symbol = Symbol(k4k3ruOnchain.SymbolETH)
+    SymbolPOL  Symbol = Symbol(k4k3ruOnchain.SymbolPOL)
+    SymbolSOL  Symbol = Symbol(k4k3ruOnchain.SymbolSOL)
+    SymbolSUI  Symbol = Symbol(k4k3ruOnchain.SymbolSUI)
+    SymbolUSDC Symbol = Symbol(k4k3ruOnchain.SymbolUSDC)
+    SymbolUSDT Symbol = Symbol(k4k3ruOnchain.SymbolUSDT)
 )
 
-func (a Asset) IsValid() bool {
-    switch a {
-    case AssetBTC,
-        AssetETH,
-        AssetBNB,
-        AssetARB,
-        AssetSUI,
-        AssetSOL,
-        AssetUSDC:
-        return true
-    default:
-        return false
-    }
+func (s Symbol) IsValid() bool {
+    return k4k3ruOnchain.Symbol(s).IsValid()
 }
 
-func (a Asset) Validate() error {
-    if string(a) == "" {
-        return fmt.Errorf("invalid parameter: asset=%q", "empty")
-    }
-    if !a.IsValid() {
-        return fmt.Errorf("invalid parameter: asset=%q", helper.TruncateRunes(string(a), 16))
-    }
-    return nil
+func (s Symbol) Validate() error {
+    return k4k3ruOnchain.Symbol(s).Validate()
 }
 
-func (a Asset) Value() (driver.Value, error) {
-	if err := a.Validate(); err != nil {
+func (s Symbol) Value() (driver.Value, error) {
+	if err := s.Validate(); err != nil {
 		return nil, err
 	}
-	return string(a), nil
+	return string(s), nil
 }
 
-func (a *Asset) Scan(src any) error {
-	if a == nil {
-		return fmt.Errorf("missing required parameter: asset=null")
+func (s *Symbol) Scan(src any) error {
+	if s == nil {
+		return fmt.Errorf("missing required parameter: symbol=null")
 	}
 
 	switch v := src.(type) {
 	case string:
-		*a = Asset(v)
+		*s = Symbol(v)
 	case []byte:
-		*a = Asset(string(v))
+		*s = Symbol(string(v))
 	case nil:
-		return fmt.Errorf("missing required parameter: asset=null")
+		return fmt.Errorf("missing required parameter: symbol=null")
 	default:
 		return fmt.Errorf("unsupported parameter: type=%T", src)
 	}
 
-	if err := a.Validate(); err != nil {
+	if err := s.Validate(); err != nil {
         return err
 	}
 

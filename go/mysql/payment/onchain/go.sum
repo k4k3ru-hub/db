@@ -4,3 +4,5 @@ github.com/go-sql-driver/mysql v1.10.0 h1:Q+1LV8DkHJvSYAdR83XzuhDaTykuDx0l6fkXxo
 github.com/go-sql-driver/mysql v1.10.0/go.mod h1:M+cqaI7+xxXGG9swrdeUIoPG3Y3KCkF0pZej+SK+nWk=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260517021632-c6b132553fe4 h1:xufY3tyIktXm8gawq8rRw5AZB4B6iAmnRiI7vLf3goA=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260517021632-c6b132553fe4/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
+github.com/k4k3ru-hub/onchain/go v0.0.0-20260517094244-c1dcb7f4b740 h1:5uO0eo4oMPgKh8MTSbjUlOcyLx1cIvSWwSy2ugnUsCA=
+github.com/k4k3ru-hub/onchain/go v0.0.0-20260517094244-c1dcb7f4b740/go.mod h1:1TrdAvj8GvS9AAM5r6UR7KBAILRQxTcMt9fQUdQp8wA=

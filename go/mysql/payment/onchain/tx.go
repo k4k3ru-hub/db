@@ -30,7 +30,7 @@ type Tx struct {
     Status        TxStatus   `json:"status"`
     Chain         Chain      `json:"chain"`
     Network       Network    `json:"network"`
-    Asset         Asset      `json:"asset"`
+    Symbol         Symbol      `json:"symbol"`
     TxHash        string     `json:"txHash"`
     FromAddress   string     `json:"fromAddress,omitempty"`
     ToAddress     string     `json:"toAddress"`
@@ -55,7 +55,7 @@ type TxInsertParams struct {
     Status        TxStatus   `json:"status"`
     Chain         Chain      `json:"chain"`
     Network       Network    `json:"network"`
-    Asset         Asset      `json:"asset"`
+    Symbol         Symbol      `json:"symbol"`
     TxHash        string     `json:"txHash"`
     FromAddress   string     `json:"fromAddress,omitempty"`
     ToAddress     string     `json:"toAddress"`
@@ -74,7 +74,7 @@ type TxSelectParams struct {
     Status      *TxStatus `json:"status,omitempty"`
     Chain       *Chain    `json:"chain,omitempty"`
     Network     *Network  `json:"network,omitempty"`
-    Asset       *Asset    `json:"asset,omitempty"`
+    Symbol       *Symbol    `json:"symbol,omitempty"`
     TxHash      *string   `json:"txHash,omitempty"`
     ToAddress   *string   `json:"toAddress,omitempty"`
     OrderBy     string    `json:"orderBy"`
@@ -300,12 +300,12 @@ func (t *Tx) ValidateNetwork() error {
 
 
 //
-// Validate payment onchain tx asset.
+// Validate payment onchain tx symbol.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxAsset(a Asset) error {
+func ValidateTxSymbol(a Symbol) error {
     if err := a.Validate(); err != nil {
         return err
     }
@@ -314,16 +314,16 @@ func ValidateTxAsset(a Asset) error {
 
 
 //
-// Validate payment onchain tx asset.
+// Validate payment onchain tx symbol.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateAsset() error {
+func (t *Tx) ValidateSymbol() error {
     if t == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
     }
-    return ValidateTxAsset(t.Asset)
+    return ValidateTxSymbol(t.Symbol)
 }
 
 
@@ -538,7 +538,7 @@ func (s *TxStore) CreateTable() error {
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
-            %s VARCHAR(64) NOT NULL COMMENT 'Asset',
+            %s VARCHAR(64) NOT NULL COMMENT 'Symbol',
             %s VARCHAR(255) NOT NULL COMMENT 'Transaction hash',
             %s VARCHAR(255) NULL COMMENT 'Source address if available',
             %s VARCHAR(255) NOT NULL COMMENT 'Monitored recipient address',
@@ -554,7 +554,7 @@ func (s *TxStore) CreateTable() error {
             KEY idx_payment_onchain_txs_account_id (%s),
             KEY idx_payment_onchain_txs_status (%s),
             KEY idx_payment_onchain_txs_to_address (%s),
-            KEY idx_payment_onchain_txs_chain_network_asset (%s, %s, %s),
+            KEY idx_payment_onchain_txs_chain_network_symbol (%s, %s, %s),
             CONSTRAINT fk_payment_onchain_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE SET NULL ON UPDATE CASCADE;
         `,
         s.tableName,
@@ -564,7 +564,7 @@ func (s *TxStore) CreateTable() error {
         ColStatus,
         ColChain,
         ColNetwork,
-        ColAsset,
+        ColSymbol,
         ColTxHash,
         ColFromAddress,
         ColToAddress,
@@ -580,7 +580,7 @@ func (s *TxStore) CreateTable() error {
         ColAccountID,
         ColStatus,
         ColToAddress,
-        ColChain, ColNetwork, ColAsset,
+        ColChain, ColNetwork, ColSymbol,
         ColRequestID, s.requestTableName, ColID,
     )
 
@@ -626,7 +626,7 @@ func (s *TxStore) Insert(p *TxInsertParams) error {
     if err := ValidateTxNetwork(p.Network); err != nil {
         return fmt.Errorf("failed to insert payment onchain tx: %w", err)
     }
-    if err := ValidateTxAsset(p.Asset); err != nil {
+    if err := ValidateTxSymbol(p.Symbol); err != nil {
         return fmt.Errorf("failed to insert payment onchain tx: %w", err)
     }
     if err := ValidateTxTxHash(p.TxHash); err != nil {
@@ -675,7 +675,7 @@ func (s *TxStore) Insert(p *TxInsertParams) error {
         ColStatus,
         ColChain,
         ColNetwork,
-        ColAsset,
+        ColSymbol,
         ColTxHash,
         ColFromAddress,
         ColToAddress,
@@ -695,7 +695,7 @@ func (s *TxStore) Insert(p *TxInsertParams) error {
         p.Status,
         p.Chain,
         p.Network,
-        p.Asset,
+        p.Symbol,
         p.TxHash,
         p.FromAddress,
         p.ToAddress,
@@ -752,7 +752,7 @@ func (s *TxStore) Select(p *TxSelectParams) ([]*Tx, error) {
             &row.Status,
             &row.Chain,
             &row.Network,
-            &row.Asset,
+            &row.Symbol,
             &row.TxHash,
             &row.FromAddress,
             &row.ToAddress,
@@ -808,7 +808,7 @@ func (s *TxStore) SelectByID(id uint64) (*Tx, error) {
         &result.Status,
         &result.Chain,
         &result.Network,
-        &result.Asset,
+        &result.Symbol,
         &result.TxHash,
         &result.FromAddress,
         &result.ToAddress,
@@ -1014,9 +1014,9 @@ func (p *TxSelectParams) BuildQuery(selectFromClause string) (string, []any) {
         conditions = append(conditions, ColNetwork + " = ?")
         args = append(args, *p.Network)
     }
-    if p.Asset != nil {
-        conditions = append(conditions, ColAsset + " = ?")
-        args = append(args, *p.Asset)
+    if p.Symbol != nil {
+        conditions = append(conditions, ColSymbol + " = ?")
+        args = append(args, *p.Symbol)
     }
     if p.TxHash != nil {
         conditions = append(conditions, ColTxHash + " = ?")
@@ -1086,8 +1086,8 @@ func (p *TxSelectParams) Validate() error {
             return err
         }
     }
-    if p.Asset != nil {
-        if err := ValidateTxAsset(*p.Asset); err != nil {
+    if p.Symbol != nil {
+        if err := ValidateTxSymbol(*p.Symbol); err != nil {
             return err
         }
     }
@@ -1110,7 +1110,7 @@ func (p *TxSelectParams) Validate() error {
             ColStatus,
             ColChain,
             ColNetwork,
-            ColAsset,
+            ColSymbol,
             ColTxHash,
             ColFromAddress,
             ColToAddress,

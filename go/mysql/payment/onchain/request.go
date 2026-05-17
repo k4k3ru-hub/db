@@ -23,13 +23,14 @@ var (
     requestIDCounter = &helper.IdCounter{}
 )
 
+
 type Request struct {
     ID        uint64        `json:"id,string"`
     AccountID uint64        `json:"accountId,string"`
     Status    RequestStatus `json:"status"`
     Chain     Chain         `json:"chain"`
     Network   Network       `json:"network"`
-    Asset     Asset         `json:"asset"`
+    Symbol    Symbol        `json:"symbol"`
     Address   string        `json:"address"`
     Amount    string        `json:"amount"`
     Memo      *string       `json:"memo,omitempty"`
@@ -49,7 +50,7 @@ type RequestInsertParams struct {
     Status    RequestStatus `json:"status"`
     Chain     Chain         `json:"chain"`
     Network   Network       `json:"network"`
-    Asset     Asset         `json:"asset"`
+    Symbol     Symbol         `json:"symbol"`
     Address   string        `json:"address"`
     Amount    string        `json:"amount"`
     Memo      *string       `json:"memo,omitempty"`
@@ -64,7 +65,7 @@ type RequestSelectParams struct {
     Status      *RequestStatus `json:"status,omitempty"`
     Chain       *Chain         `json:"chain,omitempty"`
     Network     *Network       `json:"network,omitempty"`
-    Asset       *Asset         `json:"asset,omitempty"`
+    Symbol       *Symbol         `json:"symbol,omitempty"`
     Address     *string        `json:"address,omitempty"`
     OrderBy     string         `json:"orderBy"`
     OrderByDesc bool           `json:"orderByDesc"`
@@ -257,27 +258,27 @@ func (r *Request) ValidateNetwork() error {
 
 
 //
-// Validate payment onchain request asset.
+// Validate payment onchain request symbol.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateRequestAsset(a Asset) error {
-    return a.Validate()
+func ValidateRequestSymbol(s Symbol) error {
+    return s.Validate()
 }
 
 
 //
-// Validate payment onchain request asset.
+// Validate payment onchain request symbol.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Request) ValidateAsset() error {
+func (r *Request) ValidateSymbol() error {
     if r == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_request=null")
     }
-    return ValidateRequestAsset(r.Asset)
+    return ValidateRequestSymbol(r.Symbol)
 }
 
 
@@ -426,7 +427,7 @@ func (s *RequestStore) CreateTable() error {
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
-            %s VARCHAR(64) NOT NULL COMMENT 'Asset',
+            %s VARCHAR(64) NOT NULL COMMENT 'Symbol',
             %s VARCHAR(255) NOT NULL COMMENT 'Deposit address',
             %s VARCHAR(78) NOT NULL COMMENT 'Requested payment amount in token smallest units as decimal string',
             %s VARCHAR(255) NULL COMMENT 'Memo',
@@ -437,7 +438,7 @@ func (s *RequestStore) CreateTable() error {
             KEY idx_payment_onchain_requests_account_id (%s),
             KEY idx_payment_onchain_requests_status (%s),
             KEY idx_payment_onchain_requests_address (%s),
-            KEY idx_payment_onchain_requests_chain_network_asset (%s, %s, %s);
+            KEY idx_payment_onchain_requests_chain_network_symbol (%s, %s, %s);
         `,
         s.tableName,
         ColID,
@@ -445,7 +446,7 @@ func (s *RequestStore) CreateTable() error {
         ColStatus,
         ColChain,
         ColNetwork,
-        ColAsset,
+        ColSymbol,
         ColAddress,
         ColAmount,
         ColMemo,
@@ -456,7 +457,7 @@ func (s *RequestStore) CreateTable() error {
         ColAccountID,
         ColStatus,
         ColAddress,
-        ColChain, ColNetwork, ColAsset,
+        ColChain, ColNetwork, ColSymbol,
     )
 
     if _, err := s.executor.Exec(query); err != nil {
@@ -498,7 +499,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
     if err := ValidateRequestNetwork(p.Network); err != nil {
         return fmt.Errorf("failed to insert payment onchain request: %w", err)
     }
-    if err := ValidateRequestAsset(p.Asset); err != nil {
+    if err := ValidateRequestSymbol(p.Symbol); err != nil {
         return fmt.Errorf("failed to insert payment onchain request: %w", err)
     }
     if err := ValidateRequestAddress(p.Address); err != nil {
@@ -540,7 +541,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
         ColStatus,
         ColChain,
         ColNetwork,
-        ColAsset,
+        ColSymbol,
         ColAddress,
         ColAmount,
         ColMemo,
@@ -556,7 +557,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
         p.Status,
         p.Chain,
         p.Network,
-        p.Asset,
+        p.Symbol,
         p.Address,
         p.Amount,
         p.Memo,
@@ -609,7 +610,7 @@ func (s *RequestStore) Select(p *RequestSelectParams) ([]*Request, error) {
             &row.Status,
             &row.Chain,
             &row.Network,
-            &row.Asset,
+            &row.Symbol,
             &row.Address,
             &row.Amount,
             &row.Memo,
@@ -662,7 +663,7 @@ func (s *RequestStore) SelectByID(id uint64) (*Request, error) {
         &result.Status,
         &result.Chain,
         &result.Network,
-        &result.Asset,
+        &result.Symbol,
         &result.Address,
         &result.Amount,
         &result.Memo,
@@ -776,9 +777,9 @@ func (p *RequestSelectParams) BuildQuery(selectFromClause string) (string, []any
         conditions = append(conditions, ColNetwork + " = ?")
         args = append(args, *p.Network)
     }
-    if p.Asset != nil {
-        conditions = append(conditions, ColAsset + " = ?")
-        args = append(args, *p.Asset)
+    if p.Symbol != nil {
+        conditions = append(conditions, ColSymbol + " = ?")
+        args = append(args, *p.Symbol)
     }
     if p.Address != nil {
         conditions = append(conditions, ColAddress + " = ?")
@@ -839,8 +840,8 @@ func (p *RequestSelectParams) Validate() error {
             return err
         }
     }
-    if p.Asset != nil {
-        if err := ValidateRequestAsset(*p.Asset); err != nil {
+    if p.Symbol != nil {
+        if err := ValidateRequestSymbol(*p.Symbol); err != nil {
             return err
         }
     }
@@ -857,7 +858,7 @@ func (p *RequestSelectParams) Validate() error {
             ColStatus,
             ColChain,
             ColNetwork,
-            ColAsset,
+            ColSymbol,
             ColAddress,
             ColCreatedAt,
             ColUpdatedAt:
