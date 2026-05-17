@@ -7,6 +7,8 @@ import (
     "database/sql/driver"
     "fmt"
     "strconv"
+
+    "github.com/k4k3ru-hub/db/go/mysql/helper"
 )
 
 
@@ -24,9 +26,17 @@ func (s RequestStatus) IsValid() bool {
     return s <= RequestStatusFailed
 }
 
-func (s RequestStatus) Value() (driver.Value, error) {
+
+func (s RequestStatus) Validate() error {
     if !s.IsValid() {
-        return nil, fmt.Errorf("invalid parameter: request_status=%d", s)
+        return fmt.Errorf("invalid parameter: request_status=%d", s)
+    }
+    return nil
+}
+
+func (s RequestStatus) Value() (driver.Value, error) {
+    if err := s.Validate(); err != nil {
+        return nil, err
     }
     return int64(s), nil
 }
@@ -53,8 +63,8 @@ func (s *RequestStatus) Scan(src any) error {
         return fmt.Errorf("unsupported parameter: type=%T", src)
     }
 
-    if !s.IsValid() {
-        return fmt.Errorf("invalid parameter: request_status=%d", *s)
+    if err := s.Validate(); err != nil {
+        return err
     }
 
     return nil
@@ -73,9 +83,16 @@ func (s TxStatus) IsValid() bool {
     return s <= TxStatusFailed
 }
 
-func (s TxStatus) Value() (driver.Value, error) {
+func (s TxStatus) Validate() error {
     if !s.IsValid() {
-        return nil, fmt.Errorf("invalid parameter: tx_status=%d", s)
+        return fmt.Errorf("invalid parameter: tx_status=%d", s)
+    }
+    return nil
+}
+
+func (s TxStatus) Value() (driver.Value, error) {
+    if err := s.Validate(); err != nil {
+        return nil, err
     }
     return int64(s), nil
 }
@@ -102,8 +119,8 @@ func (s *TxStatus) Scan(src any) error {
         return fmt.Errorf("unsupported parameter: type=%T", src)
     }
 
-    if !s.IsValid() {
-        return fmt.Errorf("invalid parameter: tx_status=%d", *s)
+    if err := s.Validate(); err != nil {
+        return err
     }
 
     return nil
@@ -143,9 +160,19 @@ func (c Chain) IsValid() bool {
     }
 }
 
+func (c Chain) Validate() error {
+    if string(c) == "" {
+        return fmt.Errorf("invalid parameter: chain=%q", "empty")
+    }
+    if !c.IsValid() {
+        return fmt.Errorf("invalid parameter: chain=%q", helper.TruncateRunes(string(c), 16))
+    }
+    return nil
+}
+
 func (c Chain) Value() (driver.Value, error) {
-	if !c.IsValid() {
-		return nil, fmt.Errorf("invalid parameter: chain=%s", c)
+	if err := c.Validate(); err != nil {
+		return nil, err
 	}
 	return string(c), nil
 }
@@ -166,8 +193,8 @@ func (c *Chain) Scan(src any) error {
 		return fmt.Errorf("unsupported parameter: type=%T", src)
 	}
 
-	if !c.IsValid() {
-		return fmt.Errorf("invalid parameter: chain=%s", *c)
+	if err := c.Validate(); err != nil {
+        return err
 	}
 
 	return nil
@@ -195,9 +222,19 @@ func (n Network) IsValid() bool {
     }
 }
 
+func (n Network) Validate() error {
+    if string(n) == "" {
+        return fmt.Errorf("invalid parameter: network=%q", "empty")
+    }
+    if !n.IsValid() {
+        return fmt.Errorf("invalid parameter: network=%q", helper.TruncateRunes(string(n), 16))
+    }
+    return nil
+}
+
 func (n Network) Value() (driver.Value, error) {
-	if !n.IsValid() {
-		return nil, fmt.Errorf("invalid parameter: network=%s", n)
+	if err := n.Validate(); err != nil {
+        return nil, err
 	}
 	return string(n), nil
 }
@@ -218,9 +255,81 @@ func (n *Network) Scan(src any) error {
 		return fmt.Errorf("unsupported parameter: type=%T", src)
 	}
 
-	if !n.IsValid() {
-		return fmt.Errorf("invalid parameter: network=%s", *n)
+    if err := n.Validate(); err != nil {
+        return err
 	}
 
 	return nil
 }
+
+
+type Asset string
+
+const (
+    AssetBTC  Asset = "btc"
+    AssetETH  Asset = "eth"
+    AssetBNB  Asset = "bnb"
+    AssetARB  Asset = "arb"
+    AssetSUI  Asset = "sui"
+    AssetSOL  Asset = "sol"
+    AssetUSDC Asset = "usdc"
+)
+
+func (a Asset) IsValid() bool {
+    switch a {
+    case AssetBTC,
+        AssetETH,
+        AssetBNB,
+        AssetARB,
+        AssetSUI,
+        AssetSOL,
+        AssetUSDC:
+        return true
+    default:
+        return false
+    }
+}
+
+func (a Asset) Validate() error {
+    if string(a) == "" {
+        return fmt.Errorf("invalid parameter: asset=%q", "empty")
+    }
+    if !a.IsValid() {
+        return fmt.Errorf("invalid parameter: asset=%q", helper.TruncateRunes(string(a), 16))
+    }
+    return nil
+}
+
+func (a Asset) Value() (driver.Value, error) {
+	if err := a.Validate(); err != nil {
+		return nil, err
+	}
+	return string(a), nil
+}
+
+func (a *Asset) Scan(src any) error {
+	if a == nil {
+		return fmt.Errorf("missing required parameter: asset=null")
+	}
+
+	switch v := src.(type) {
+	case string:
+		*a = Asset(v)
+	case []byte:
+		*a = Asset(string(v))
+	case nil:
+		return fmt.Errorf("missing required parameter: asset=null")
+	default:
+		return fmt.Errorf("unsupported parameter: type=%T", src)
+	}
+
+	if err := a.Validate(); err != nil {
+        return err
+	}
+
+	return nil
+}
+
+
+
+
