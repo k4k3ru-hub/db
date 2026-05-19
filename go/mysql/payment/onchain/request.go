@@ -17,6 +17,8 @@ import (
 
 const (
     DefaultRequestTableName = "payment_onchain_requests"
+
+    DefaultRequestExpiresIn = 30 * time.Minute
 )
 
 var (
@@ -81,6 +83,17 @@ type RequestUpdateParams struct {
     Memo        *string        `json:"memo,omitempty"`
     MemoSetNull bool           `json:"memoSetNull"`
     ExpiresAt   *time.Time     `json:"expiresAt,omitempty"`
+}
+
+
+//
+// Generate default payment onchain request expires at.
+//
+// Version:
+//   - 2026-05-19: Added.
+//
+func DefaultExpiresAt() time.Time {
+    return time.Now().UTC().Add(DefaultRequestExpiresIn)
 }
 
 
