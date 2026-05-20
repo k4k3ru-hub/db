@@ -70,6 +70,30 @@ func (s *RequestStatus) Scan(src any) error {
     return nil
 }
 
+//
+// Convert request status to string.
+//
+// Version:
+//   - 2026-05-20: Added.
+//
+func (s RequestStatus) String() string {
+    switch s {
+    case RequestStatusPending:
+        return "pending"
+    case RequestStatusCompleted:
+        return "completed"
+    case RequestStatusExpired:
+        return "expired"
+    case RequestStatusCanceled:
+        return "canceled"
+    case RequestStatusFailed:
+        return "failed"
+    default:
+        return ""
+    }
+}
+
+
 type TxStatus uint8
 
 const (
@@ -124,6 +148,27 @@ func (s *TxStatus) Scan(src any) error {
     }
 
     return nil
+}
+
+//
+// Convert tx status to string.
+//
+// Version:
+//   - 2026-05-20: Added.
+//  
+func (s TxStatus) String() string {
+    switch s {
+    case TxStatusDetected:
+        return "detected"
+    case TxStatusConfirmed:
+        return "confirmed"
+    case TxStatusRejected:
+        return "rejected"
+    case TxStatusFailed:
+        return "failed"
+    default:
+        return ""
+    }
 }
 
 
