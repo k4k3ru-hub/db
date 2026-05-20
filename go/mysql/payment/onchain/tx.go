@@ -555,8 +555,8 @@ func (s *TxStore) CreateTable() error {
             KEY idx_payment_onchain_txs_status (%s),
             KEY idx_payment_onchain_txs_to_address (%s),
             KEY idx_payment_onchain_txs_chain_network_symbol (%s, %s, %s),
-            CONSTRAINT fk_payment_onchain_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE SET NULL ON UPDATE CASCADE;
-        `,
+            CONSTRAINT fk_payment_onchain_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE SET NULL ON UPDATE CASCADE
+        );`,
         s.tableName,
         ColID,
         ColRequestID,

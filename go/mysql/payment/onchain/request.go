@@ -451,8 +451,8 @@ func (s *RequestStore) CreateTable() error {
             KEY idx_payment_onchain_requests_account_id (%s),
             KEY idx_payment_onchain_requests_status (%s),
             KEY idx_payment_onchain_requests_address (%s),
-            KEY idx_payment_onchain_requests_chain_network_symbol (%s, %s, %s);
-        `,
+            KEY idx_payment_onchain_requests_chain_network_symbol (%s, %s, %s)
+        );`,
         s.tableName,
         ColID,
         ColAccountID,
