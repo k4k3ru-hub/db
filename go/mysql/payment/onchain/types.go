@@ -8,7 +8,7 @@ import (
     "fmt"
     "strconv"
 
-    k4k3ruOnchain "github.com/k4k3ru-hub/onchain/go"
+    k4k3ruOnchainCore "github.com/k4k3ru-hub/onchain/go/core"
 )
 
 
@@ -172,24 +172,24 @@ func (s TxStatus) String() string {
 }
 
 
-type Chain k4k3ruOnchain.Chain
+type Chain k4k3ruOnchainCore.Chain
 
 const (
-    ChainEthereum  Chain = Chain(k4k3ruOnchain.ChainEthereum)
-	ChainBase      Chain = Chain(k4k3ruOnchain.ChainBase)
-	ChainBNB       Chain = Chain(k4k3ruOnchain.ChainBNB)
-	ChainPolygon   Chain = Chain(k4k3ruOnchain.ChainPolygon)
-	ChainAvalanche Chain = Chain(k4k3ruOnchain.ChainAvalanche)
-	ChainSolana    Chain = Chain(k4k3ruOnchain.ChainSolana)
-	ChainSui       Chain = Chain(k4k3ruOnchain.ChainSui)
+    ChainEthereum  Chain = Chain(k4k3ruOnchainCore.ChainEthereum)
+	ChainBase      Chain = Chain(k4k3ruOnchainCore.ChainBase)
+	ChainBNB       Chain = Chain(k4k3ruOnchainCore.ChainBNB)
+	ChainPolygon   Chain = Chain(k4k3ruOnchainCore.ChainPolygon)
+	ChainAvalanche Chain = Chain(k4k3ruOnchainCore.ChainAvalanche)
+	ChainSolana    Chain = Chain(k4k3ruOnchainCore.ChainSolana)
+	ChainSui       Chain = Chain(k4k3ruOnchainCore.ChainSui)
 )
 
 func (c Chain) IsValid() bool {
-    return k4k3ruOnchain.Chain(c).IsValid()
+    return k4k3ruOnchainCore.Chain(c).IsValid()
 }
 
 func (c Chain) Validate() error {
-    return k4k3ruOnchain.Chain(c).Validate()
+    return k4k3ruOnchainCore.Chain(c).Validate()
 }
 
 func (c Chain) Value() (driver.Value, error) {
@@ -223,22 +223,22 @@ func (c *Chain) Scan(src any) error {
 }
 
 
-type Network k4k3ruOnchain.Network
+type Network k4k3ruOnchainCore.Network
 
 const (
-    NetworkMainnet Network = Network(k4k3ruOnchain.NetworkMainnet)
-    NetworkTestnet Network = Network(k4k3ruOnchain.NetworkTestnet)
-    NetworkDevnet  Network = Network(k4k3ruOnchain.NetworkDevnet)
-    NetworkSepolia Network = Network(k4k3ruOnchain.NetworkSepolia)
-    NetworkHolesky Network = Network(k4k3ruOnchain.NetworkHolesky)
+    NetworkMainnet Network = Network(k4k3ruOnchainCore.NetworkMainnet)
+    NetworkTestnet Network = Network(k4k3ruOnchainCore.NetworkTestnet)
+    NetworkDevnet  Network = Network(k4k3ruOnchainCore.NetworkDevnet)
+    NetworkSepolia Network = Network(k4k3ruOnchainCore.NetworkSepolia)
+    NetworkHolesky Network = Network(k4k3ruOnchainCore.NetworkHolesky)
 )
 
 func (n Network) IsValid() bool {
-    return k4k3ruOnchain.Network(n).IsValid()
+    return k4k3ruOnchainCore.Network(n).IsValid()
 }
 
 func (n Network) Validate() error {
-    return k4k3ruOnchain.Network(n).Validate()
+    return k4k3ruOnchainCore.Network(n).Validate()
 }
 
 func (n Network) Value() (driver.Value, error) {
@@ -272,25 +272,25 @@ func (n *Network) Scan(src any) error {
 }
 
 
-type Symbol k4k3ruOnchain.Symbol
+type Symbol k4k3ruOnchainCore.Symbol
 
 const (
-    SymbolAVAX Symbol = Symbol(k4k3ruOnchain.SymbolAVAX)
-    SymbolBNB  Symbol = Symbol(k4k3ruOnchain.SymbolBNB)
-    SymbolETH  Symbol = Symbol(k4k3ruOnchain.SymbolETH)
-    SymbolPOL  Symbol = Symbol(k4k3ruOnchain.SymbolPOL)
-    SymbolSOL  Symbol = Symbol(k4k3ruOnchain.SymbolSOL)
-    SymbolSUI  Symbol = Symbol(k4k3ruOnchain.SymbolSUI)
-    SymbolUSDC Symbol = Symbol(k4k3ruOnchain.SymbolUSDC)
-    SymbolUSDT Symbol = Symbol(k4k3ruOnchain.SymbolUSDT)
+    SymbolAVAX Symbol = Symbol(k4k3ruOnchainCore.SymbolAVAX)
+    SymbolBNB  Symbol = Symbol(k4k3ruOnchainCore.SymbolBNB)
+    SymbolETH  Symbol = Symbol(k4k3ruOnchainCore.SymbolETH)
+    SymbolPOL  Symbol = Symbol(k4k3ruOnchainCore.SymbolPOL)
+    SymbolSOL  Symbol = Symbol(k4k3ruOnchainCore.SymbolSOL)
+    SymbolSUI  Symbol = Symbol(k4k3ruOnchainCore.SymbolSUI)
+    SymbolUSDC Symbol = Symbol(k4k3ruOnchainCore.SymbolUSDC)
+    SymbolUSDT Symbol = Symbol(k4k3ruOnchainCore.SymbolUSDT)
 )
 
 func (s Symbol) IsValid() bool {
-    return k4k3ruOnchain.Symbol(s).IsValid()
+    return k4k3ruOnchainCore.Symbol(s).IsValid()
 }
 
 func (s Symbol) Validate() error {
-    return k4k3ruOnchain.Symbol(s).Validate()
+    return k4k3ruOnchainCore.Symbol(s).Validate()
 }
 
 func (s Symbol) Value() (driver.Value, error) {
