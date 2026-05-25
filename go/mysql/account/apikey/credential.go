@@ -411,6 +411,9 @@ func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*Creden
     if tableName == "" {
         return nil, fmt.Errorf("failed to create account api key credential store: missing required parameter: table_name=%q", "empty")
     }
+    if accountTableName == "" {
+        return nil, fmt.Errorf("failed to create account api key credential store: missing required parameter: account_table_name=%q", "empty")
+    }
 
     return &CredentialStore{
         db:               db,
