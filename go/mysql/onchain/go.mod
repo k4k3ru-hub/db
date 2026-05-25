@@ -1,4 +1,4 @@
-module github.com/k4k3ru-hub/db/go/mysql/account/onchain
+module github.com/k4k3ru-hub/db/go/mysql/onchain
 
 go 1.26.3
 

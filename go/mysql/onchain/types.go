@@ -13,12 +13,12 @@ import (
 
 
 
-type WalletStatus uint8
+type AccountWalletStatus uint8
 
 const (
-    WalletStatusActive WalletStatus = iota + 1
-    WalletStatusDisabled
-    WalletStatusArchived
+    AccountWalletStatusActive AccountWalletStatus = iota + 1
+    AccountWalletStatusDisabled
+    AccountWalletStatusArchived
 )
 
 
@@ -28,9 +28,9 @@ const (
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s WalletStatus) IsValid() bool {
+func (s AccountWalletStatus) IsValid() bool {
     switch s {
-    case WalletStatusActive, WalletStatusDisabled, WalletStatusArchived:
+    case AccountWalletStatusActive, AccountWalletStatusDisabled, AccountWalletStatusArchived:
         return true
     default:
         return false
@@ -44,7 +44,7 @@ func (s WalletStatus) IsValid() bool {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s WalletStatus) Validate() error {
+func (s AccountWalletStatus) Validate() error {
     if !s.IsValid() {
         return fmt.Errorf("invalid parameter: wallet_status=%d", s)
     }
@@ -58,7 +58,7 @@ func (s WalletStatus) Validate() error {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s WalletStatus) Value() (driver.Value, error) {
+func (s AccountWalletStatus) Value() (driver.Value, error) {
     if err := s.Validate(); err != nil {
         return nil, err
     }
@@ -72,22 +72,22 @@ func (s WalletStatus) Value() (driver.Value, error) {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *WalletStatus) Scan(src any) error {
+func (s *AccountWalletStatus) Scan(src any) error {
     if s == nil {
         return fmt.Errorf("missing required parameter: wallet_status=null")
     }
 
     switch v := src.(type) {
     case int64:
-        *s = WalletStatus(v)
+        *s = AccountWalletStatus(v)
     case []byte:
         n, err := strconv.ParseUint(string(v), 10, 8)
         if err != nil {
             return err
         }
-        *s = WalletStatus(n)
+        *s = AccountWalletStatus(n)
     case uint8:
-        *s = WalletStatus(v)
+        *s = AccountWalletStatus(v)
     case nil:
         return fmt.Errorf("missing required parameter: wallet_status=null")
     default:
