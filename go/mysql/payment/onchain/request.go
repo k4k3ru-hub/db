@@ -27,18 +27,18 @@ var (
 
 
 type Request struct {
-    ID        uint64        `json:"id,string"`
-    AccountID uint64        `json:"accountId,string"`
-    Status    RequestStatus `json:"status"`
-    Chain     Chain         `json:"chain"`
-    Network   Network       `json:"network"`
-    Symbol    Symbol        `json:"symbol"`
-    Address   string        `json:"address"`
-    Amount    string        `json:"amount"`
-    Memo      *string       `json:"memo,omitempty"`
-    ExpiresAt time.Time     `json:"expiresAt"`
-    CreatedAt time.Time     `json:"createdAt,omitempty"`
-    UpdatedAt time.Time     `json:"updatedAt,omitempty"`
+    ID               uint64        `json:"id,string"`
+    AccountID        uint64        `json:"accountId,string"`
+    Status           RequestStatus `json:"status"`
+    Chain            Chain         `json:"chain"`
+    Network          Network       `json:"network"`
+    Symbol           Symbol        `json:"symbol"`
+    RecipientAddress string        `json:"recipientAddress"`
+    Amount           string        `json:"amount"`
+    Memo             *string       `json:"memo,omitempty"`
+    ExpiresAt        time.Time     `json:"expiresAt"`
+    CreatedAt        time.Time     `json:"createdAt,omitempty"`
+    UpdatedAt        time.Time     `json:"updatedAt,omitempty"`
 }
 
 type RequestStore struct {
@@ -53,7 +53,7 @@ type RequestInsertParams struct {
     Chain     Chain         `json:"chain"`
     Network   Network       `json:"network"`
     Symbol     Symbol         `json:"symbol"`
-    Address   string        `json:"address"`
+    RecipientAddress   string        `json:"recipientAddress"`
     Amount    string        `json:"amount"`
     Memo      *string       `json:"memo,omitempty"`
     ExpiresAt time.Time     `json:"expiresAt"`
@@ -68,7 +68,7 @@ type RequestSelectParams struct {
     Chain       *Chain         `json:"chain,omitempty"`
     Network     *Network       `json:"network,omitempty"`
     Symbol       *Symbol         `json:"symbol,omitempty"`
-    Address     *string        `json:"address,omitempty"`
+    RecipientAddress     *string        `json:"recipientAddress,omitempty"`
     OrderBy     string         `json:"orderBy"`
     OrderByDesc bool           `json:"orderByDesc"`
     Limit       int            `json:"limit"`
@@ -78,7 +78,7 @@ type RequestSelectParams struct {
 type RequestUpdateParams struct {
     ID          uint64         `json:"id,string"`
     Status      *RequestStatus `json:"status,omitempty"`
-    Address     *string        `json:"address,omitempty"`
+    RecipientAddress     *string        `json:"recipientAddress,omitempty"`
     Amount      *string        `json:"amount,omitempty"`
     Memo        *string        `json:"memo,omitempty"`
     MemoSetNull bool           `json:"memoSetNull"`
@@ -296,33 +296,34 @@ func (r *Request) ValidateSymbol() error {
 
 
 //
-// Validate payment onchain request address.
+// Validate payment onchain request recipient address.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateRequestAddress(address string) error {
-    if address == "" {
-        return fmt.Errorf("invalid parameter: address=%q", "empty")
+func ValidateRequestRecipientAddress(recipientAddress string) error {
+    s := strings.TrimSpace(recipientAddress)
+    if s == "" {
+        return fmt.Errorf("invalid parameter: recipient_address=%q", "empty")
     }
-    if utf8.RuneCountInString(address) > 255 {
-        return fmt.Errorf("invalid parameter: address=%q", helper.TruncateRunes(address, 255))
+    if len(s) > 255 {
+        return fmt.Errorf("invalid parameter: recipient_address=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate payment onchain request address.
+// Validate payment onchain request recipient address.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Request) ValidateAddress() error {
+func (r *Request) ValidateRecipientAddress() error {
     if r == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_request=null")
     }
-    return ValidateRequestAddress(r.Address)
+    return ValidateRequestRecipientAddress(r.RecipientAddress)
 }
 
 
@@ -441,7 +442,7 @@ func (s *RequestStore) CreateTable() error {
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
             %s VARCHAR(64) NOT NULL COMMENT 'Symbol',
-            %s VARCHAR(255) NOT NULL COMMENT 'Deposit address',
+            %s VARCHAR(255) NOT NULL COMMENT 'Deposit recipient address',
             %s VARCHAR(78) NOT NULL COMMENT 'Requested payment amount in token smallest units as decimal string',
             %s VARCHAR(255) NULL COMMENT 'Memo',
             %s DATETIME NOT NULL COMMENT 'Expires at',
@@ -450,7 +451,7 @@ func (s *RequestStore) CreateTable() error {
             PRIMARY KEY (%s),
             KEY idx_payment_onchain_requests_account_id (%s),
             KEY idx_payment_onchain_requests_status (%s),
-            KEY idx_payment_onchain_requests_address (%s),
+            KEY idx_payment_onchain_requests_recipient_address (%s),
             KEY idx_payment_onchain_requests_chain_network_symbol (%s, %s, %s)
         );`,
         s.tableName,
@@ -460,7 +461,7 @@ func (s *RequestStore) CreateTable() error {
         ColChain,
         ColNetwork,
         ColSymbol,
-        ColAddress,
+        ColRecipientAddress,
         ColAmount,
         ColMemo,
         ColExpiresAt,
@@ -469,7 +470,7 @@ func (s *RequestStore) CreateTable() error {
         ColID,
         ColAccountID,
         ColStatus,
-        ColAddress,
+        ColRecipientAddress,
         ColChain, ColNetwork, ColSymbol,
     )
 
@@ -515,7 +516,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
     if err := ValidateRequestSymbol(p.Symbol); err != nil {
         return fmt.Errorf("failed to insert payment onchain request: %w", err)
     }
-    if err := ValidateRequestAddress(p.Address); err != nil {
+    if err := ValidateRequestRecipientAddress(p.RecipientAddress); err != nil {
         return fmt.Errorf("failed to insert payment onchain request: %w", err)
     }
     if err := ValidateRequestAmount(p.Amount); err != nil {
@@ -555,7 +556,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
         ColChain,
         ColNetwork,
         ColSymbol,
-        ColAddress,
+        ColRecipientAddress,
         ColAmount,
         ColMemo,
         ColExpiresAt,
@@ -571,7 +572,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
         p.Chain,
         p.Network,
         p.Symbol,
-        p.Address,
+        p.RecipientAddress,
         p.Amount,
         p.Memo,
         p.ExpiresAt,
@@ -624,7 +625,7 @@ func (s *RequestStore) Select(p *RequestSelectParams) ([]*Request, error) {
             &row.Chain,
             &row.Network,
             &row.Symbol,
-            &row.Address,
+            &row.RecipientAddress,
             &row.Amount,
             &row.Memo,
             &row.ExpiresAt,
@@ -677,7 +678,7 @@ func (s *RequestStore) SelectByID(id uint64) (*Request, error) {
         &result.Chain,
         &result.Network,
         &result.Symbol,
-        &result.Address,
+        &result.RecipientAddress,
         &result.Amount,
         &result.Memo,
         &result.ExpiresAt,
@@ -794,9 +795,9 @@ func (p *RequestSelectParams) BuildQuery(selectFromClause string) (string, []any
         conditions = append(conditions, ColSymbol + " = ?")
         args = append(args, *p.Symbol)
     }
-    if p.Address != nil {
-        conditions = append(conditions, ColAddress + " = ?")
-        args = append(args, *p.Address)
+    if p.RecipientAddress != nil {
+        conditions = append(conditions, ColRecipientAddress + " = ?")
+        args = append(args, *p.RecipientAddress)
     }
 
     if len(conditions) > 0 {
@@ -858,8 +859,8 @@ func (p *RequestSelectParams) Validate() error {
             return err
         }
     }
-    if p.Address != nil {
-        if err := ValidateRequestAddress(*p.Address); err != nil {
+    if p.RecipientAddress != nil {
+        if err := ValidateRequestRecipientAddress(*p.RecipientAddress); err != nil {
             return err
         }
     }
@@ -872,7 +873,7 @@ func (p *RequestSelectParams) Validate() error {
             ColChain,
             ColNetwork,
             ColSymbol,
-            ColAddress,
+            ColRecipientAddress,
             ColCreatedAt,
             ColUpdatedAt:
         default:
