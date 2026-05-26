@@ -13,12 +13,12 @@ import (
 
 
 
-type AccountWalletStatus uint8
+type DepositAddressStatus uint8
 
 const (
-    AccountWalletStatusActive AccountWalletStatus = iota + 1
-    AccountWalletStatusDisabled
-    AccountWalletStatusArchived
+    DepositAddressStatusActive DepositAddressStatus = iota + 1
+    DepositAddressStatusDisabled
+    DepositAddressStatusArchived
 )
 
 
@@ -28,9 +28,9 @@ const (
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s AccountWalletStatus) IsValid() bool {
+func (s DepositAddressStatus) IsValid() bool {
     switch s {
-    case AccountWalletStatusActive, AccountWalletStatusDisabled, AccountWalletStatusArchived:
+    case DepositAddressStatusActive, DepositAddressStatusDisabled, DepositAddressStatusArchived:
         return true
     default:
         return false
@@ -44,7 +44,7 @@ func (s AccountWalletStatus) IsValid() bool {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s AccountWalletStatus) Validate() error {
+func (s DepositAddressStatus) Validate() error {
     if !s.IsValid() {
         return fmt.Errorf("invalid parameter: wallet_status=%d", s)
     }
@@ -58,7 +58,7 @@ func (s AccountWalletStatus) Validate() error {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s AccountWalletStatus) Value() (driver.Value, error) {
+func (s DepositAddressStatus) Value() (driver.Value, error) {
     if err := s.Validate(); err != nil {
         return nil, err
     }
@@ -72,22 +72,22 @@ func (s AccountWalletStatus) Value() (driver.Value, error) {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *AccountWalletStatus) Scan(src any) error {
+func (s *DepositAddressStatus) Scan(src any) error {
     if s == nil {
         return fmt.Errorf("missing required parameter: wallet_status=null")
     }
 
     switch v := src.(type) {
     case int64:
-        *s = AccountWalletStatus(v)
+        *s = DepositAddressStatus(v)
     case []byte:
         n, err := strconv.ParseUint(string(v), 10, 8)
         if err != nil {
             return err
         }
-        *s = AccountWalletStatus(n)
+        *s = DepositAddressStatus(n)
     case uint8:
-        *s = AccountWalletStatus(v)
+        *s = DepositAddressStatus(v)
     case nil:
         return fmt.Errorf("missing required parameter: wallet_status=null")
     default:
