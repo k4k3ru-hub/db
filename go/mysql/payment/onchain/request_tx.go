@@ -1,5 +1,5 @@
 //
-// tx.go
+// request_tx.go
 //
 package onchain
 
@@ -499,7 +499,6 @@ func (s *RequestTxStore) CreateTable() error {
         ColChain, ColNetwork, ColTxHash,
         ColRequestID,
         ColAccountID,
-        ColToAddress,
         ColChain, ColNetwork, ColToAddress,
         ColChain, ColNetwork, ColSymbol,
         ColRequestID, s.requestTableName, ColID,
