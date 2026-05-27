@@ -479,7 +479,7 @@ func (s *RequestTxStore) CreateTable() error {
             KEY idx_payment_onchain_request_txs_account_id (%s),
             KEY idx_payment_onchain_request_txs_chain_network_to_address (%s, %s, %s),
             KEY idx_payment_onchain_request_txs_chain_network_symbol (%s, %s, %s),
-            CONSTRAINT fk_payment_onchain_request_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE SET CASCADE ON UPDATE CASCADE
+            CONSTRAINT fk_payment_onchain_request_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
         );`,
         s.tableName,
         ColID,

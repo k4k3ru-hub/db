@@ -43,35 +43,35 @@ type DepositAddressStore struct {
 }
 
 type DepositAddressInsertParams struct {
-    ID                  uint64              `json:"id,string"`
-    OwnerID             uint64              `json:"ownerId,string"`
+    ID                  uint64               `json:"id,string"`
+    OwnerID             uint64               `json:"ownerId,string"`
     Status              DepositAddressStatus `json:"status"`
-    Chain               Chain               `json:"chain"`
-    Network             Network             `json:"network"`
-    Address             string              `json:"address"`
-    SecretProviderKind  string              `json:"secretProviderKind"`
-    SecretKeyVersion    string              `json:"secretKeyVersion"`
-    EncryptedPrivateKey string              `json:"encryptedPrivateKey"`
-    CreatedAt           time.Time           `json:"createdAt,omitempty"`
-    UpdatedAt           time.Time           `json:"updatedAt,omitempty"`
-    Ignore              bool                `json:"ignore"`
+    Chain               Chain                `json:"chain"`
+    Network             Network              `json:"network"`
+    Address             string               `json:"address"`
+    SecretProviderKind  string               `json:"secretProviderKind"`
+    SecretKeyVersion    string               `json:"secretKeyVersion"`
+    EncryptedPrivateKey string               `json:"encryptedPrivateKey"`
+    CreatedAt           time.Time            `json:"createdAt,omitempty"`
+    UpdatedAt           time.Time            `json:"updatedAt,omitempty"`
+    Ignore              bool                 `json:"ignore"`
 }
 
 type DepositAddressSelectParams struct {
-    ID          *uint64              `json:"id,string,omitempty"`
-    OwnerID     *uint64              `json:"ownerId,string,omitempty"`
+    ID          *uint64               `json:"id,string,omitempty"`
+    OwnerID     *uint64               `json:"ownerId,string,omitempty"`
     Status      *DepositAddressStatus `json:"status,omitempty"`
-    Chain       *Chain               `json:"chain,omitempty"`
-    Network     *Network             `json:"network,omitempty"`
-    Address     *string              `json:"address,omitempty"`
-    OrderBy     string               `json:"orderBy"`
-    OrderByDesc bool                 `json:"orderByDesc"`
-    Limit       int                  `json:"limit"`
-    Offset      int                  `json:"offset"`
+    Chain       *Chain                `json:"chain,omitempty"`
+    Network     *Network              `json:"network,omitempty"`
+    Address     *string               `json:"address,omitempty"`
+    OrderBy     string                `json:"orderBy"`
+    OrderByDesc bool                  `json:"orderByDesc"`
+    Limit       int                   `json:"limit"`
+    Offset      int                   `json:"offset"`
 }
 
 type DepositAddressUpdateParams struct {
-    ID     uint64               `json:"id,string"`
+    ID     uint64                `json:"id,string"`
     Status *DepositAddressStatus `json:"status,omitempty"`
 }
 
