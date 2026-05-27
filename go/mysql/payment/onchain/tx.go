@@ -16,65 +16,58 @@ import (
 )
 
 const (
-    DefaultTxTableName = "payment_onchain_txs"
+    DefaultRequestTxTableName = "payment_onchain_request_txs"
 )
 
 var (
-    txIDCounter = &helper.IdCounter{}
+    requestTxIDCounter = &helper.IdCounter{}
 )
 
-type Tx struct {
-    ID            uint64     `json:"id,string"`
-    RequestID     *uint64    `json:"requestId,string,omitempty"`
-    AccountID     uint64     `json:"accountId,string"`
-    Status        TxStatus   `json:"status"`
-    Chain         Chain      `json:"chain"`
-    Network       Network    `json:"network"`
-    Symbol         Symbol      `json:"symbol"`
-    TxHash        string     `json:"txHash"`
-    FromAddress   string     `json:"fromAddress,omitempty"`
-    ToAddress     string     `json:"toAddress"`
-    Amount        string     `json:"amount"`
-    Confirmations uint64     `json:"confirmations,string"`
-    DetectedAt    time.Time  `json:"detectedAt"`
-    ConfirmedAt   *time.Time `json:"confirmedAt,omitempty"`
-    CreatedAt     time.Time  `json:"createdAt,omitempty"`
-    UpdatedAt     time.Time  `json:"updatedAt,omitempty"`
+type RequestTx struct {
+    ID          uint64    `json:"id,string"`
+    RequestID   uint64    `json:"requestId,string"`
+    AccountID   uint64    `json:"accountId,string"`
+    Chain       Chain     `json:"chain"`
+    Network     Network   `json:"network"`
+    Symbol      Symbol    `json:"symbol"`
+    BlockNumber uint64    `json:"blockNumber"`
+    TxHash      string    `json:"txHash"`
+    FromAddress string    `json:"fromAddress"`
+    ToAddress   string    `json:"toAddress"`
+    Amount      string    `json:"amount"`
+    CreatedAt   time.Time `json:"createdAt"`
+    UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-type TxStore struct {
+type RequestTxStore struct {
     executor         helper.Executor
     tableName        string
     requestTableName string
 }
 
-type TxInsertParams struct {
-    ID            uint64     `json:"id,string"`
-    RequestID     *uint64    `json:"requestId,string,omitempty"`
-    AccountID     uint64     `json:"accountId,string"`
-    Status        TxStatus   `json:"status"`
-    Chain         Chain      `json:"chain"`
-    Network       Network    `json:"network"`
-    Symbol         Symbol      `json:"symbol"`
-    TxHash        string     `json:"txHash"`
-    FromAddress   string     `json:"fromAddress,omitempty"`
-    ToAddress     string     `json:"toAddress"`
-    Amount        string     `json:"amount"`
-    Confirmations uint64     `json:"confirmations,string"`
-    DetectedAt    time.Time  `json:"detectedAt"`
-    ConfirmedAt   *time.Time `json:"confirmedAt,omitempty"`
-    CreatedAt     time.Time  `json:"createdAt"`
-    UpdatedAt     time.Time  `json:"updatedAt"`
-    Ignore        bool       `json:"ignore"`
+type RequestTxInsertParams struct {
+    ID          uint64    `json:"id,string"`
+    RequestID   uint64    `json:"requestId,string"`
+    AccountID   uint64    `json:"accountId,string"`
+    Chain       Chain     `json:"chain"`
+    Network     Network   `json:"network"`
+    Symbol      Symbol    `json:"symbol"`
+    BlockNumber uint64    `json:"blockNumber"`
+    TxHash      string    `json:"txHash"`
+    FromAddress string    `json:"fromAddress"`
+    ToAddress   string    `json:"toAddress"`
+    Amount      string    `json:"amount"`
+    CreatedAt   time.Time `json:"createdAt"`
+    UpdatedAt   time.Time `json:"updatedAt"`
+    Ignore      bool      `json:"ignore"`
 }
 
-type TxSelectParams struct {
+type RequestTxSelectParams struct {
     RequestID   *uint64   `json:"requestId,string,omitempty"`
     AccountID   *uint64   `json:"accountId,string,omitempty"`
-    Status      *TxStatus `json:"status,omitempty"`
     Chain       *Chain    `json:"chain,omitempty"`
     Network     *Network  `json:"network,omitempty"`
-    Symbol       *Symbol    `json:"symbol,omitempty"`
+    Symbol      *Symbol   `json:"symbol,omitempty"`
     TxHash      *string   `json:"txHash,omitempty"`
     ToAddress   *string   `json:"toAddress,omitempty"`
     OrderBy     string    `json:"orderBy"`
@@ -83,44 +76,41 @@ type TxSelectParams struct {
     Offset      int       `json:"offset"`
 }
 
-type TxUpdateParams struct {
+type RequestTxUpdateParams struct {
     ID            uint64     `json:"id,string"`
     RequestID     *uint64    `json:"requestId,string,omitempty"`
-    Status        *TxStatus  `json:"status,omitempty"`
-    Confirmations *uint64    `json:"confirmations,string,omitempty"`
-    ConfirmedAt   *time.Time `json:"confirmedAt,omitempty"`
 }
 
 
 //
-// Generate new payment onchain tx ID.
+// Generate payment onchain request tx ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func GenerateTxID() uint64 {
-    return txIDCounter.GenerateID()
+func GenerateRequestTxID() uint64 {
+    return requestTxIDCounter.GenerateID()
 }
 
 
 //
-// Create new payment onchain tx store.
+// Create new payment onchain request tx store.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func NewTxStore(executor helper.Executor, tableName, requestTableName string) (*TxStore, error) {
+func NewRequestTxStore(executor helper.Executor, tableName, requestTableName string) (*RequestTxStore, error) {
     if executor == nil {
-        return nil, fmt.Errorf("failed to create payment onchain tx store: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to create payment onchain request tx store: missing required parameter: executor=null")
     }
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create payment onchain tx store: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to create payment onchain request tx store: missing required parameter: table_name=%q", "empty")
     }
     if requestTableName == "" {
-        return nil, fmt.Errorf("failed to create payment onchain tx store: missing required parameter: request_table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to create payment onchain request tx store: missing required parameter: request_table_name=%q", "empty")
     }
 
-    return &TxStore{
+    return &RequestTxStore{
         executor:         executor,
         tableName:        tableName,
         requestTableName: requestTableName,
@@ -129,12 +119,12 @@ func NewTxStore(executor helper.Executor, tableName, requestTableName string) (*
 
 
 //
-// Validate payment onchain tx ID.
+// Validate payment onchain request tx ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxID(id uint64) error {
+func ValidateRequestTxID(id uint64) error {
     if id == 0 {
         return fmt.Errorf("invalid parameter: id=0")
     }
@@ -143,30 +133,27 @@ func ValidateTxID(id uint64) error {
 
 
 //
-// Validate payment onchain tx ID.
+// Validate payment onchain request tx ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateID() error {
+func (t *RequestTx) ValidateID() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxID(t.ID)
+    return ValidateRequestTxID(t.ID)
 }
 
 
 //
-// Validate payment onchain tx request ID.
+// Validate payment onchain request tx request ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxRequestID(requestID *uint64) error {
-    if requestID == nil {
-        return nil
-    }
-    if *requestID == 0 {
+func ValidateRequestTxRequestID(requestID uint64) error {
+    if requestID == 0 {
         return fmt.Errorf("invalid parameter: request_id=0")
     }
     return nil
@@ -174,26 +161,26 @@ func ValidateTxRequestID(requestID *uint64) error {
 
 
 //
-// Validate payment onchain tx request ID.
+// Validate payment onchain request tx request ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateRequestID() error {
+func (t *RequestTx) ValidateRequestID() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxRequestID(t.RequestID)
+    return ValidateRequestTxRequestID(t.RequestID)
 }
 
 
 //
-// Validate payment onchain tx account ID.
+// Validate payment onchain request tx account ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxAccountID(accountID uint64) error {
+func ValidateRequestTxAccountID(accountID uint64) error {
     if accountID == 0 {
         return fmt.Errorf("invalid parameter: account_id=0")
     }
@@ -202,54 +189,26 @@ func ValidateTxAccountID(accountID uint64) error {
 
 
 //
-// Validate payment onchain tx account ID.
+// Validate payment onchain request tx account ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateAccountID() error {
+func (t *RequestTx) ValidateAccountID() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxAccountID(t.AccountID)
+    return ValidateRequestTxAccountID(t.AccountID)
 }
 
 
 //
-// Validate payment onchain tx status.
+// Validate payment onchain request tx chain.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxStatus(s TxStatus) error {
-    if err := s.Validate(); err != nil {
-        return err
-    }
-    return nil
-}
-
-
-//
-// Validate payment onchain tx status.
-//
-// Version:
-//   - 2026-05-16: Added.
-//
-func (t *Tx) ValidateStatus() error {
-    if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
-    }
-    return ValidateTxStatus(t.Status)
-}
-
-
-//
-// Validate payment onchain tx chain.
-//
-// Version:
-//   - 2026-05-16: Added.
-//
-func ValidateTxChain(c Chain) error {
+func ValidateRequestTxChain(c Chain) error {
     if err := c.Validate(); err != nil {
         return err
 	}
@@ -258,26 +217,26 @@ func ValidateTxChain(c Chain) error {
 
 
 //
-// Validate payment onchain tx chain.
+// Validate payment onchain request tx chain.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateChain() error {
+func (t *RequestTx) ValidateChain() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxChain(t.Chain)
+    return ValidateRequestTxChain(t.Chain)
 }
 
 
 //
-// Validate payment onchain tx network.
+// Validate payment onchain request tx network.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxNetwork(n Network) error {
+func ValidateRequestTxNetwork(n Network) error {
     if err := n.Validate(); err != nil {
         return err
     }
@@ -286,26 +245,26 @@ func ValidateTxNetwork(n Network) error {
 
 
 //
-// Validate payment onchain tx network.
+// Validate payment onchain request tx network.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateNetwork() error {
+func (t *RequestTx) ValidateNetwork() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxNetwork(t.Network)
+    return ValidateRequestTxNetwork(t.Network)
 }
 
 
 //
-// Validate payment onchain tx symbol.
+// Validate payment onchain request tx symbol.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxSymbol(a Symbol) error {
+func ValidateRequestTxSymbol(a Symbol) error {
     if err := a.Validate(); err != nil {
         return err
     }
@@ -314,26 +273,54 @@ func ValidateTxSymbol(a Symbol) error {
 
 
 //
-// Validate payment onchain tx symbol.
+// Validate payment onchain request tx symbol.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateSymbol() error {
+func (t *RequestTx) ValidateSymbol() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxSymbol(t.Symbol)
+    return ValidateRequestTxSymbol(t.Symbol)
 }
 
 
 //
-// Validate payment onchain tx tx hash.
+// Validate payment onchain request tx block number.
+//
+// Version:
+//   - 2026-05-27: Added.
+//
+func ValidateRequestTxBlockNumber(blockNumber uint64) error {
+    if blockNumber == 0 {
+        return fmt.Errorf("invalid parameter: block_number=0")
+    }
+    return nil
+}
+
+
+//
+// Validate payment onchain request tx block number.
+//
+// Version:
+//   - 2026-05-27: Added.
+//
+func (t *RequestTx) ValidateBlockNumber() error {
+    if t == nil {
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
+    }
+    return ValidateRequestTxBlockNumber(t.BlockNumber)
+}
+
+
+//
+// Validate payment onchain request tx tx hash.
 //  
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxTxHash(txHash string) error {
+func ValidateRequestTxTxHash(txHash string) error {
     if txHash == "" {
         return fmt.Errorf("invalid parameter: tx_hash=%q", "empty")
     }
@@ -345,26 +332,26 @@ func ValidateTxTxHash(txHash string) error {
 
 
 //
-// Validate payment onchain tx tx hash.
+// Validate payment onchain request tx tx hash.
 //  
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateTxHash() error {
+func (t *RequestTx) ValidateRequestTxTxHash() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxTxHash(t.TxHash)
+    return ValidateRequestTxTxHash(t.TxHash)
 }
 
 
 //
-// Validate payment onchain tx from address.
+// Validate payment onchain request tx from address.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxFromAddress(fromAddress string) error {
+func ValidateRequestTxFromAddress(fromAddress string) error {
     if fromAddress == "" {
         return nil
     }
@@ -376,26 +363,26 @@ func ValidateTxFromAddress(fromAddress string) error {
 
 
 //
-// Validate payment onchain tx from address.
+// Validate payment onchain request tx from address.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateFromAddress() error {
+func (t *RequestTx) ValidateFromAddress() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxFromAddress(t.FromAddress)
+    return ValidateRequestTxFromAddress(t.FromAddress)
 }
 
 
 //
-// Validate payment onchain tx to address.
+// Validate payment onchain request tx to address.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxToAddress(toAddress string) error {
+func ValidateRequestTxToAddress(toAddress string) error {
     if toAddress == "" {
         return fmt.Errorf("invalid parameter: to_address=empty")
     }
@@ -407,26 +394,26 @@ func ValidateTxToAddress(toAddress string) error {
 
 
 //
-// Validate payment onchain tx to address.
+// Validate payment onchain request tx to address.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateToAddress() error {
+func (t *RequestTx) ValidateToAddress() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxToAddress(t.ToAddress)
+    return ValidateRequestTxToAddress(t.ToAddress)
 }
 
 
 //
-// Validate payment onchain tx amount.
+// Validate payment onchain request tx amount.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxAmount(amount string) error {
+func ValidateRequestTxAmount(amount string) error {
     if amount == "" {
         return fmt.Errorf("invalid parameter: amount=%q", "empty")
     }
@@ -438,154 +425,87 @@ func ValidateTxAmount(amount string) error {
 
 
 //
-// Validate payment onchain tx amount.
+// Validate payment onchain request tx amount.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *Tx) ValidateAmount() error {
+func (t *RequestTx) ValidateAmount() error {
     if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateTxAmount(t.Amount)
+    return ValidateRequestTxAmount(t.Amount)
 }
 
 
 //
-// Validate payment onchain tx detected at.
+// Create payment onchain request txs table.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateTxDetectedAt(detectedAt time.Time) error {
-    if detectedAt.IsZero() {
-        return fmt.Errorf("invalid parameter: detected_at=%q", "empty")
-    }
-    return nil
-}
-
-
-//
-// Validate payment onchain tx detected at.
-//
-// Version:
-//   - 2026-05-16: Added.
-//
-func (t *Tx) ValidateDetectedAt() error {
-    if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
-    }
-    return ValidateTxDetectedAt(t.DetectedAt)
-}
-
-
-//
-// Validate payment onchain tx confirmed at.
-//
-// Version:
-//   - 2026-05-16: Added.
-//
-func ValidateTxConfirmedAt(confirmedAt *time.Time) error {
-    if confirmedAt == nil {
-        return nil
-    }
-    if confirmedAt.IsZero() {
-        return fmt.Errorf("invalid parameter: confirmed_at=%q", "empty")
-    }
-    return nil
-}
-
-
-//
-// Validate payment onchain tx confirmed at.
-//
-// Version:
-//   - 2026-05-16: Added.
-//
-func (t *Tx) ValidateConfirmedAt() error {
-    if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx=null")
-    }
-    return ValidateTxConfirmedAt(t.ConfirmedAt)
-}
-
-
-//
-// Create payment onchain txs table.
-//
-// Version:
-//   - 2026-05-16: Added.
-//
-func (s *TxStore) CreateTable() error {
+func (s *RequestTxStore) CreateTable() error {
     if s == nil {
-        return fmt.Errorf("failed to create payment onchain txs table: missing required parameter: tx_store=null")
+        return fmt.Errorf("failed to create payment onchain request txs table: missing required parameter: tx_store=null")
     }
     if s.executor == nil {
-        return fmt.Errorf("failed to create payment onchain txs table: missing required parameter: executor=null")
+        return fmt.Errorf("failed to create payment onchain request txs table: missing required parameter: executor=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create payment onchain txs table: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to create payment onchain request txs table: missing required parameter: table_name=%q", "empty")
     }
     if s.requestTableName == "" {
-        return fmt.Errorf("failed to create payment onchain txs table: missing required parameter: request_table_name=%q", "empty")
+        return fmt.Errorf("failed to create payment onchain request txs table: missing required parameter: request_table_name=%q", "empty")
     }
 
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
-            %s BIGINT UNSIGNED NULL COMMENT 'Request ID',
+            %s BIGINT UNSIGNED NOT NULL COMMENT 'Request ID',
             %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
-            %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
             %s VARCHAR(64) NOT NULL COMMENT 'Symbol',
+            %s BIGINT UNSIGNED NOT NULL COMMENT 'Block number',
             %s VARCHAR(255) NOT NULL COMMENT 'Transaction hash',
-            %s VARCHAR(255) NULL COMMENT 'Source address if available',
+            %s VARCHAR(255) NOT NULL COMMENT 'From address',
             %s VARCHAR(255) NOT NULL COMMENT 'Monitored recipient address',
             %s VARCHAR(78) NOT NULL COMMENT 'Amount',
-            %s BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Confirmations',
-            %s DATETIME NOT NULL COMMENT 'First detected at',
-            %s DATETIME NULL COMMENT 'Reached required confirmations at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            UNIQUE KEY uk_payment_onchain_txs_chain_network_tx_hash (%s, %s, %s),
-            KEY idx_payment_onchain_txs_request_id (%s),
-            KEY idx_payment_onchain_txs_account_id (%s),
-            KEY idx_payment_onchain_txs_status (%s),
-            KEY idx_payment_onchain_txs_to_address (%s),
-            KEY idx_payment_onchain_txs_chain_network_symbol (%s, %s, %s),
-            CONSTRAINT fk_payment_onchain_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE SET NULL ON UPDATE CASCADE
+            UNIQUE KEY uk_payment_onchain_request_txs_chain_network_tx_hash (%s, %s, %s),
+            KEY idx_payment_onchain_request_txs_request_id (%s),
+            KEY idx_payment_onchain_request_txs_account_id (%s),
+            KEY idx_payment_onchain_request_txs_to_address (%s),
+            KEY idx_payment_onchain_request_txs_chain_network_symbol (%s, %s, %s),
+            CONSTRAINT fk_payment_onchain_request_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE SET NULL ON UPDATE CASCADE
         );`,
         s.tableName,
         ColID,
         ColRequestID,
         ColAccountID,
-        ColStatus,
         ColChain,
         ColNetwork,
         ColSymbol,
+        ColBlockNumber,
         ColTxHash,
         ColFromAddress,
         ColToAddress,
         ColAmount,
-        ColConfirmations,
-        ColDetectedAt,
-        ColConfirmedAt,
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
         ColChain, ColNetwork, ColTxHash,
         ColRequestID,
         ColAccountID,
-        ColStatus,
         ColToAddress,
         ColChain, ColNetwork, ColSymbol,
         ColRequestID, s.requestTableName, ColID,
     )
 
     if _, err := s.executor.Exec(query); err != nil {
-        return fmt.Errorf("failed to create payment onchain txs table: %w", err)
+        return fmt.Errorf("failed to create payment onchain request txs table: %w", err)
     }
 
     return nil
@@ -593,63 +513,57 @@ func (s *TxStore) CreateTable() error {
 
 
 //
-// Insert payment onchain tx.
+// Insert payment onchain request tx.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *TxStore) Insert(p *TxInsertParams) error {
+func (s *RequestTxStore) Insert(p *RequestTxInsertParams) error {
     if s == nil {
-        return fmt.Errorf("failed to insert payment onchain tx: missing required parameter: tx_store=null")
+        return fmt.Errorf("failed to insert payment onchain request tx: missing required parameter: tx_store=null")
     }
     if s.executor == nil {
-        return fmt.Errorf("failed to insert payment onchain tx: missing required parameter: executor=null")
+        return fmt.Errorf("failed to insert payment onchain request tx: missing required parameter: executor=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to insert payment onchain tx: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to insert payment onchain request tx: missing required parameter: table_name=%q", "empty")
     }
     if p == nil {
-        return fmt.Errorf("failed to insert payment onchain tx: missing required parameter: tx_insert_params=null")
+        return fmt.Errorf("failed to insert payment onchain request tx: missing required parameter: tx_insert_params=null")
     }
-    if err := ValidateTxAccountID(p.AccountID); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxAccountID(p.AccountID); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxRequestID(p.RequestID); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxRequestID(p.RequestID); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxStatus(p.Status); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxChain(p.Chain); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxChain(p.Chain); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxNetwork(p.Network); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxNetwork(p.Network); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxSymbol(p.Symbol); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxSymbol(p.Symbol); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxBlockNumber(p.BlockNumber); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxTxHash(p.TxHash); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxTxHash(p.TxHash); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxFromAddress(p.FromAddress); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxFromAddress(p.FromAddress); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxToAddress(p.ToAddress); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxToAddress(p.ToAddress); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateTxAmount(p.Amount); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
-    }
-    if err := ValidateTxDetectedAt(p.DetectedAt); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
-    }
-    if err := ValidateTxConfirmedAt(p.ConfirmedAt); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+    if err := ValidateRequestTxAmount(p.Amount); err != nil {
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
 
     if p.ID == 0 {
-        p.ID = GenerateTxID()
+        p.ID = GenerateRequestTxID()
     }
 
     now := time.Now()
@@ -666,23 +580,20 @@ func (s *TxStore) Insert(p *TxInsertParams) error {
     }
 
     query := fmt.Sprintf(
-        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
         queryPrefix,
         s.tableName,
         ColID,
         ColRequestID,
         ColAccountID,
-        ColStatus,
         ColChain,
         ColNetwork,
         ColSymbol,
+        ColBlockNumber,
         ColTxHash,
         ColFromAddress,
         ColToAddress,
         ColAmount,
-        ColConfirmations,
-        ColDetectedAt,
-        ColConfirmedAt,
         ColCreatedAt,
         ColUpdatedAt,
     )
@@ -692,21 +603,18 @@ func (s *TxStore) Insert(p *TxInsertParams) error {
         p.ID,
         p.RequestID,
         p.AccountID,
-        p.Status,
         p.Chain,
         p.Network,
         p.Symbol,
+        p.BlockNumber,
         p.TxHash,
         p.FromAddress,
         p.ToAddress,
         p.Amount,
-        p.Confirmations,
-        p.DetectedAt,
-        p.ConfirmedAt,
         p.CreatedAt,
         p.UpdatedAt,
     ); err != nil {
-        return fmt.Errorf("failed to insert payment onchain tx: %w", err)
+        return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
 
     return nil
@@ -714,20 +622,20 @@ func (s *TxStore) Insert(p *TxInsertParams) error {
 
 
 //
-// Select payment onchain txs.
+// Select payment onchain request txs.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *TxStore) Select(p *TxSelectParams) ([]*Tx, error) {
+func (s *RequestTxStore) Select(p *RequestTxSelectParams) ([]*RequestTx, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select payment onchain txs: missing required parameter: tx_store=null")
+        return nil, fmt.Errorf("failed to select payment onchain request txs: missing required parameter: tx_store=null")
     }
     if s.executor == nil {
-        return nil, fmt.Errorf("failed to select payment onchain txs: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select payment onchain request txs: missing required parameter: executor=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select payment onchain txs: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment onchain request txs: missing required parameter: table_name=%q", "empty")
     }
     if err := p.Validate(); err != nil {
         return nil, fmt.Errorf("failed to select payment onchain request txs: %w", err)
@@ -738,40 +646,37 @@ func (s *TxStore) Select(p *TxSelectParams) ([]*Tx, error) {
     // Execute.
     rows, err := s.executor.Query(query, args...)
     if err != nil {
-        return nil, fmt.Errorf("failed to select payment onchain txs: %w", err)
+        return nil, fmt.Errorf("failed to select payment onchain request txs: %w", err)
     }
     defer rows.Close()
 
-    var result []*Tx
+    var result []*RequestTx
     for rows.Next() {
-        row := &Tx{}
+        row := &RequestTx{}
         err := rows.Scan(
             &row.ID,
             &row.RequestID,
             &row.AccountID,
-            &row.Status,
             &row.Chain,
             &row.Network,
             &row.Symbol,
+            &row.BlockNumber,
             &row.TxHash,
             &row.FromAddress,
             &row.ToAddress,
             &row.Amount,
-            &row.Confirmations,
-            &row.DetectedAt,
-            &row.ConfirmedAt,
             &row.CreatedAt,
             &row.UpdatedAt,
         )
         if err != nil {
-            return nil, fmt.Errorf("failed to select payment onchain txs: %w", err)
+            return nil, fmt.Errorf("failed to select payment onchain request txs: %w", err)
         }
 
         result = append(result, row)
     }
 
     if err := rows.Err(); err != nil {
-        return nil, fmt.Errorf("failed to select payment onchain txs: %w", err)
+        return nil, fmt.Errorf("failed to select payment onchain request txs: %w", err)
     }
 
     return result, nil
@@ -779,43 +684,40 @@ func (s *TxStore) Select(p *TxSelectParams) ([]*Tx, error) {
 
 
 //
-// Select payment onchain tx by ID.
+// Select payment onchain request tx by ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *TxStore) SelectByID(id uint64) (*Tx, error) {
+func (s *RequestTxStore) SelectByID(id uint64) (*RequestTx, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select payment onchain tx by id: missing required parameter: tx_store=null")
+        return nil, fmt.Errorf("failed to select payment onchain request tx by id: missing required parameter: tx_store=null")
     }
     if s.executor == nil {
-        return nil, fmt.Errorf("failed to select payment onchain tx by id: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select payment onchain request tx by id: missing required parameter: executor=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select payment onchain tx by id: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment onchain request tx by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
-        return nil, fmt.Errorf("failed to select payment onchain tx by id: invalid parameter: id=0")
+        return nil, fmt.Errorf("failed to select payment onchain request tx by id: invalid parameter: id=0")
     }
 
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
-    result := &Tx{}
+    result := &RequestTx{}
     err := s.executor.QueryRow(query, id).Scan(
         &result.ID,
         &result.RequestID,
         &result.AccountID,
-        &result.Status,
         &result.Chain,
         &result.Network,
         &result.Symbol,
+        &result.BlockNumber,
         &result.TxHash,
         &result.FromAddress,
         &result.ToAddress,
         &result.Amount,
-        &result.Confirmations,
-        &result.DetectedAt,
-        &result.ConfirmedAt,
         &result.CreatedAt,
         &result.UpdatedAt,
     )
@@ -823,7 +725,7 @@ func (s *TxStore) SelectByID(id uint64) (*Tx, error) {
         if err == sql.ErrNoRows {
             return nil, nil
         }
-        return nil, fmt.Errorf("failed to select payment onchain tx by id: %w", err)
+        return nil, fmt.Errorf("failed to select payment onchain request tx by id: %w", err)
     }
 
     return result, nil
@@ -831,23 +733,23 @@ func (s *TxStore) SelectByID(id uint64) (*Tx, error) {
 
 
 //
-// Count payment onchain txs.
+// Count payment onchain request txs.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *TxStore) Count(p *TxSelectParams) (int64, error) {
+func (s *RequestTxStore) Count(p *RequestTxSelectParams) (int64, error) {
     if s == nil {
-        return 0, fmt.Errorf("failed to count payment onchain txs: missing required parameter: tx_store=null")
+        return 0, fmt.Errorf("failed to count payment onchain request txs: missing required parameter: tx_store=null")
     }
     if s.executor == nil {
-        return 0, fmt.Errorf("failed to count payment onchain txs: missing required parameter: executor=null")
+        return 0, fmt.Errorf("failed to count payment onchain request txs: missing required parameter: executor=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count payment onchain txs: missing required parameter: table_name=%q", "empty")
+        return 0, fmt.Errorf("failed to count payment onchain request txs: missing required parameter: table_name=%q", "empty")
     }
     if err := p.Validate(); err != nil {
-        return 0, fmt.Errorf("failed to count payment onchain txs: %w", err)
+        return 0, fmt.Errorf("failed to count payment onchain request txs: %w", err)
     }
 
     query, args := p.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
@@ -855,7 +757,7 @@ func (s *TxStore) Count(p *TxSelectParams) (int64, error) {
     // Execute.
     var result int64
     if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
-        return 0, fmt.Errorf("failed to count payment onchain txs: %w", err)
+        return 0, fmt.Errorf("failed to count payment onchain request txs: %w", err)
     }
 
     return result, nil
@@ -863,29 +765,29 @@ func (s *TxStore) Count(p *TxSelectParams) (int64, error) {
 
 
 //
-// Delete payment onchain tx by ID.
+// Delete payment onchain request tx by ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *TxStore) DeleteByID(id uint64) error {
+func (s *RequestTxStore) DeleteByID(id uint64) error {
     if s == nil {
-        return fmt.Errorf("failed to delete payment onchain tx by id: missing required parameter: tx_store=null")
+        return fmt.Errorf("failed to delete payment onchain request tx by id: missing required parameter: tx_store=null")
     }
     if s.executor == nil {
-        return fmt.Errorf("failed to delete payment onchain tx by id: missing required parameter: executor=null")
+        return fmt.Errorf("failed to delete payment onchain request tx by id: missing required parameter: executor=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to delete payment onchain tx by id: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to delete payment onchain request tx by id: missing required parameter: table_name=%q", "empty")
     }
     if id == 0 {
-        return fmt.Errorf("failed to delete payment onchain tx by id: invalid parameter: id=0")
+        return fmt.Errorf("failed to delete payment onchain request tx by id: invalid parameter: id=0")
     }
 
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
     if _, err := s.executor.Exec(query, id); err != nil {
-        return fmt.Errorf("failed to delete payment onchain tx by id: %w", err)
+        return fmt.Errorf("failed to delete payment onchain request tx by id: %w", err)
     }
 
     return nil
@@ -893,21 +795,21 @@ func (s *TxStore) DeleteByID(id uint64) error {
 
 
 
-func (s *TxStore) Update(option *TxUpdateParams) error {
+func (s *RequestTxStore) Update(option *RequestTxUpdateParams) error {
     if s == nil {
-        return fmt.Errorf("failed to update payment onchain tx: missing required parameter: tx_store=null")
+        return fmt.Errorf("failed to update payment onchain request tx: missing required parameter: tx_store=null")
     }
     if s.executor == nil {
-        return fmt.Errorf("failed to update payment onchain tx: missing required parameter: executor=null")
+        return fmt.Errorf("failed to update payment onchain request tx: missing required parameter: executor=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update payment onchain tx: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to update payment onchain request tx: missing required parameter: table_name=%q", "empty")
     }
     if option == nil {
-        return fmt.Errorf("failed to update payment onchain tx: missing required parameter: option=null")
+        return fmt.Errorf("failed to update payment onchain request tx: missing required parameter: option=null")
     }
     if option.ID == 0 {
-        return fmt.Errorf("failed to update payment onchain tx: invalid parameter: id=0")
+        return fmt.Errorf("failed to update payment onchain request tx: invalid parameter: id=0")
     }
 
     assignments := make([]string, 0, 4)
@@ -915,37 +817,14 @@ func (s *TxStore) Update(option *TxUpdateParams) error {
 
     if option.RequestID != nil {
         if *option.RequestID == 0 {
-            return fmt.Errorf("failed to update payment onchain tx: invalid parameter: request_id=0")
+            return fmt.Errorf("failed to update payment onchain request tx: invalid parameter: request_id=0")
         }
         assignments = append(assignments, ColRequestID+" = ?")
         args = append(args, *option.RequestID)
     }
 
-    if option.Status != nil {
-        t := Tx{Status: *option.Status}
-        if err := t.ValidateStatus(); err != nil {
-            return fmt.Errorf("failed to update payment onchain tx: %w", err)
-        }
-        assignments = append(assignments, ColStatus+" = ?")
-        args = append(args, *option.Status)
-    }
-
-    if option.Confirmations != nil {
-        assignments = append(assignments, ColConfirmations+" = ?")
-        args = append(args, *option.Confirmations)
-    }
-
-    if option.ConfirmedAt != nil {
-        t := Tx{ConfirmedAt: option.ConfirmedAt}
-        if err := t.ValidateConfirmedAt(); err != nil {
-            return fmt.Errorf("failed to update payment onchain tx: %w", err)
-        }
-        assignments = append(assignments, ColConfirmedAt+" = ?")
-        args = append(args, *option.ConfirmedAt)
-    }
-
     if len(assignments) == 0 {
-        return fmt.Errorf("failed to update payment onchain tx: invalid parameter: assignments=empty")
+        return fmt.Errorf("failed to update payment onchain request tx: invalid parameter: assignments=empty")
     }
 
     args = append(args, option.ID)
@@ -953,26 +832,10 @@ func (s *TxStore) Update(option *TxUpdateParams) error {
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
     if _, err := s.executor.Exec(query, args...); err != nil {
-        return fmt.Errorf("failed to update payment onchain tx: %w", err)
+        return fmt.Errorf("failed to update payment onchain request tx: %w", err)
     }
 
     return nil
-}
-
-func (s *TxStore) UpdateConfirmed(id uint64, confirmations uint64) error {
-    if id == 0 {
-        return fmt.Errorf("failed to update payment onchain tx confirmed: invalid parameter: id=0")
-    }
-
-    status := TxStatusConfirmed
-    now := time.Now()
-
-    return s.Update(&TxUpdateParams{
-        ID:            id,
-        Status:        &status,
-        Confirmations: &confirmations,
-        ConfirmedAt:   &now,
-    })
 }
 
 
@@ -982,7 +845,7 @@ func (s *TxStore) UpdateConfirmed(id uint64, confirmations uint64) error {
 // Version:
 //   - 2025-05-16: Added.
 //
-func (p *TxSelectParams) BuildQuery(selectFromClause string) (string, []any) {
+func (p *RequestTxSelectParams) BuildQuery(selectFromClause string) (string, []any) {
     // Guard.
     if p == nil {
         return selectFromClause, nil
@@ -1001,10 +864,6 @@ func (p *TxSelectParams) BuildQuery(selectFromClause string) (string, []any) {
     if p.AccountID != nil {
         conditions = append(conditions, ColAccountID + " = ?")
         args = append(args, *p.AccountID)
-    }
-    if p.Status != nil {
-        conditions = append(conditions, ColStatus + " = ?")
-        args = append(args, *p.Status)
     }
     if p.Chain != nil {
         conditions = append(conditions, ColChain + " = ?")
@@ -1055,49 +914,44 @@ func (p *TxSelectParams) BuildQuery(selectFromClause string) (string, []any) {
 // Version:
 //   - 2025-05-16: Added.
 //
-func (p *TxSelectParams) Validate() error {
+func (p *RequestTxSelectParams) Validate() error {
     // Guard.
     if p == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_tx_select_params=null")
+        return fmt.Errorf("missing required parameter: payment_onchain_request_tx_select_params=null")
     }
 
     if p.RequestID != nil {
-        if err := ValidateTxRequestID(p.RequestID); err != nil {
+        if err := ValidateRequestTxRequestID(*p.RequestID); err != nil {
             return err
         }
     }
     if p.AccountID != nil {
-        if err := ValidateTxAccountID(*p.AccountID); err != nil {
-            return err
-        }
-    }
-    if p.Status != nil {
-        if err := ValidateTxStatus(*p.Status); err != nil {
+        if err := ValidateRequestTxAccountID(*p.AccountID); err != nil {
             return err
         }
     }
     if p.Chain != nil {
-        if err := ValidateTxChain(*p.Chain); err != nil {
+        if err := ValidateRequestTxChain(*p.Chain); err != nil {
             return err
         }
     }
     if p.Network != nil {
-        if err := ValidateTxNetwork(*p.Network); err != nil {
+        if err := ValidateRequestTxNetwork(*p.Network); err != nil {
             return err
         }
     }
     if p.Symbol != nil {
-        if err := ValidateTxSymbol(*p.Symbol); err != nil {
+        if err := ValidateRequestTxSymbol(*p.Symbol); err != nil {
             return err
         }
     }
     if p.TxHash != nil {
-        if err := ValidateTxTxHash(*p.TxHash); err != nil {
+        if err := ValidateRequestTxTxHash(*p.TxHash); err != nil {
             return err
         }
     }
     if p.ToAddress != nil {
-        if err := ValidateTxToAddress(*p.ToAddress); err != nil {
+        if err := ValidateRequestTxToAddress(*p.ToAddress); err != nil {
             return err
         }
     }
@@ -1107,17 +961,14 @@ func (p *TxSelectParams) Validate() error {
         case ColID,
             ColRequestID,
             ColAccountID,
-            ColStatus,
             ColChain,
             ColNetwork,
             ColSymbol,
+            ColBlockNumber,
             ColTxHash,
             ColFromAddress,
             ColToAddress,
             ColAmount,
-            ColConfirmations,
-            ColDetectedAt,
-            ColConfirmedAt,
             ColCreatedAt,
             ColUpdatedAt:
         default:
