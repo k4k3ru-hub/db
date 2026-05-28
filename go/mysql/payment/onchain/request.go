@@ -758,6 +758,44 @@ func (s *RequestStore) DeleteByID(id uint64) error {
 
 
 //
+// Update payment onchain request status by ID.
+//
+func (s *RequestStore) UpdateStatusByID(id uint64, status RequestStatus) error {
+    if s == nil {
+        return fmt.Errorf("failed to update payment onchain request status by id: missing required parameter: request_store=null")
+    }
+    if s.executor == nil {
+        return fmt.Errorf("failed to update payment onchain request status by id: missing required parameter: executor=null")
+    }
+    if s.tableName == "" {
+        return fmt.Errorf("failed to update payment onchain request status by id: missing required parameter: table_name=%q", "empty")
+    }
+    if id == 0 {
+        return fmt.Errorf("failed to update payment onchain request status by id: invalid parameter: id=0")
+    }
+    if err := status.Validate(); err != nil {
+        return fmt.Errorf("failed to update payment onchain request status by id: %w", err)
+    }
+
+    query := fmt.Sprintf(
+        "UPDATE %s SET %s = ? WHERE %s = ?;",
+        s.tableName,
+        ColStatus,
+        ColID,
+    )
+
+    args := make([]any, 0, 2)
+    args = append(args, status, id)
+
+    if _, err := s.executor.Exec(query, args...); err != nil {
+        return fmt.Errorf("failed to update payment onchain request status by id: %w", err)
+    }
+
+    return nil
+}
+
+
+//
 // Build query.
 //
 // Version:
