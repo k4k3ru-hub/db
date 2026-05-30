@@ -6,6 +6,7 @@ package onchain
 import (
     "database/sql"
     "fmt"
+    "math/big"
     "strings"
     "time"
     "unicode/utf8"
@@ -959,6 +960,75 @@ func (s *RequestTxStore) Update(option *RequestTxUpdateParams) error {
     }
 
     return nil
+}
+
+
+//
+// Sum confirmed amount by request ID.
+//
+// Version:
+//   - 2026-05-30: Added.
+//
+func (s *RequestTxStore) SumConfirmedAmountByRequestID(requestID uint64, latestBlockNumber uint64, requiredConfirmations uint64) (*big.Int, error) {
+    if s == nil {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: missing required parameter: request_tx_store=null")
+    }
+    if s.executor == nil {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: missing required parameter: executor=null")
+    }
+    if s.tableName == "" {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: missing required parameter: table_name=%q", "empty")
+    }
+    if requestID == 0 {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: invalid parameter: request_id=0")
+    }
+    if latestBlockNumber == 0 {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: invalid parameter: latest_block_number=0")
+    }
+    if requiredConfirmations == 0 {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: invalid parameter: required_confirmations=0")
+    }
+
+    query := fmt.Sprintf(
+        "SELECT %s FROM %s WHERE %s = ? AND ? >= %s AND (? - %s + 1) >= ?;",
+        ColAmount,
+        s.tableName,
+        ColRequestID,
+        ColBlockNumber,
+        ColBlockNumber,
+    )
+
+    args := make([]any, 0, 4)
+    args = append(args, requestID, latestBlockNumber, latestBlockNumber, requiredConfirmations)
+
+    // Execute.
+    rows, err := s.executor.Query(query, args...)
+    if err != nil {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: %w", err)
+    }
+    defer rows.Close()
+
+    result := new(big.Int)
+
+    for rows.Next() {
+        var amountStr string
+        if err := rows.Scan(&amountStr); err != nil {
+            return nil, fmt.Errorf("failed to sum confirmed amount by request id: %w", err)
+        }
+
+        amount, ok := new(big.Int).SetString(amountStr, 10)
+        if !ok {
+            return nil, fmt.Errorf("invalid amount: %q", amountStr)
+        }
+
+        result.Add(result, amount)
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: %w", err)
+    }
+
+    return result, nil
 }
 
 
