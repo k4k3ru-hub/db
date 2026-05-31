@@ -32,7 +32,7 @@ type Request struct {
     Status           RequestStatus `json:"status"`
     Chain            Chain         `json:"chain"`
     Network          Network       `json:"network"`
-    Symbol           Symbol        `json:"symbol"`
+    Token            Token         `json:"token"`
     RecipientAddress string        `json:"recipientAddress"`
     Amount           string        `json:"amount"`
     Memo             *string       `json:"memo,omitempty"`
@@ -47,42 +47,42 @@ type RequestStore struct {
 }
 
 type RequestInsertParams struct {
-    ID        uint64        `json:"id,string"`
-    AccountID uint64        `json:"accountId,string"`
-    Status    RequestStatus `json:"status"`
-    Chain     Chain         `json:"chain"`
-    Network   Network       `json:"network"`
-    Symbol     Symbol         `json:"symbol"`
-    RecipientAddress   string        `json:"recipientAddress"`
-    Amount    string        `json:"amount"`
-    Memo      *string       `json:"memo,omitempty"`
-    ExpiresAt time.Time     `json:"expiresAt"`
-    CreatedAt time.Time     `json:"createdAt,omitempty"`
-    UpdatedAt time.Time     `json:"updatedAt,omitempty"`
-    Ignore    bool          `json:"ignore"`
+    ID               uint64        `json:"id,string"`
+    AccountID        uint64        `json:"accountId,string"`
+    Status           RequestStatus `json:"status"`
+    Chain            Chain         `json:"chain"`
+    Network          Network       `json:"network"`
+    Token            Token         `json:"token"`
+    RecipientAddress string        `json:"recipientAddress"`
+    Amount           string        `json:"amount"`
+    Memo             *string       `json:"memo,omitempty"`
+    ExpiresAt        time.Time     `json:"expiresAt"`
+    CreatedAt        time.Time     `json:"createdAt,omitempty"`
+    UpdatedAt        time.Time     `json:"updatedAt,omitempty"`
+    Ignore           bool          `json:"ignore"`
 }
 
 type RequestSelectParams struct {
-    AccountID   *uint64        `json:"accountId,string,omitempty"`
-    Status      *RequestStatus `json:"status,omitempty"`
-    Chain       *Chain         `json:"chain,omitempty"`
-    Network     *Network       `json:"network,omitempty"`
-    Symbol       *Symbol         `json:"symbol,omitempty"`
-    RecipientAddress     *string        `json:"recipientAddress,omitempty"`
-    OrderBy     string         `json:"orderBy"`
-    OrderByDesc bool           `json:"orderByDesc"`
-    Limit       int            `json:"limit"`
-    Offset      int            `json:"offset"`
+    AccountID        *uint64        `json:"accountId,string,omitempty"`
+    Status           *RequestStatus `json:"status,omitempty"`
+    Chain            *Chain         `json:"chain,omitempty"`
+    Network          *Network       `json:"network,omitempty"`
+    Token            *Token         `json:"token,omitempty"`
+    RecipientAddress *string        `json:"recipientAddress,omitempty"`
+    OrderBy          string         `json:"orderBy"`
+    OrderByDesc      bool           `json:"orderByDesc"`
+    Limit            int            `json:"limit"`
+    Offset           int            `json:"offset"`
 }
 
 type RequestUpdateParams struct {
-    ID          uint64         `json:"id,string"`
-    Status      *RequestStatus `json:"status,omitempty"`
-    RecipientAddress     *string        `json:"recipientAddress,omitempty"`
-    Amount      *string        `json:"amount,omitempty"`
-    Memo        *string        `json:"memo,omitempty"`
-    MemoSetNull bool           `json:"memoSetNull"`
-    ExpiresAt   *time.Time     `json:"expiresAt,omitempty"`
+    ID               uint64         `json:"id,string"`
+    Status           *RequestStatus `json:"status,omitempty"`
+    RecipientAddress *string        `json:"recipientAddress,omitempty"`
+    Amount           *string        `json:"amount,omitempty"`
+    Memo             *string        `json:"memo,omitempty"`
+    MemoSetNull      bool           `json:"memoSetNull"`
+    ExpiresAt        *time.Time     `json:"expiresAt,omitempty"`
 }
 
 
@@ -271,27 +271,27 @@ func (r *Request) ValidateNetwork() error {
 
 
 //
-// Validate payment onchain request symbol.
+// Validate payment onchain request token.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateRequestSymbol(s Symbol) error {
-    return s.Validate()
+func ValidateRequestToken(t Token) error {
+    return t.Validate()
 }
 
 
 //
-// Validate payment onchain request symbol.
+// Validate payment onchain request token.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Request) ValidateSymbol() error {
+func (r *Request) ValidateToken() error {
     if r == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_request=null")
     }
-    return ValidateRequestSymbol(r.Symbol)
+    return ValidateRequestToken(r.Token)
 }
 
 
@@ -441,7 +441,7 @@ func (s *RequestStore) CreateTable() error {
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
-            %s VARCHAR(64) NOT NULL COMMENT 'Symbol',
+            %s VARCHAR(64) NOT NULL COMMENT 'Token',
             %s VARCHAR(255) NOT NULL COMMENT 'Deposit recipient address',
             %s VARCHAR(78) NOT NULL COMMENT 'Requested payment amount in token smallest units as decimal string',
             %s VARCHAR(255) NULL COMMENT 'Memo',
@@ -452,7 +452,7 @@ func (s *RequestStore) CreateTable() error {
             KEY idx_payment_onchain_requests_account_id (%s),
             KEY idx_payment_onchain_requests_status (%s),
             KEY idx_payment_onchain_requests_recipient_address (%s),
-            KEY idx_payment_onchain_requests_chain_network_symbol (%s, %s, %s)
+            KEY idx_payment_onchain_requests_chain_network_token (%s, %s, %s)
         );`,
         s.tableName,
         ColID,
@@ -460,7 +460,7 @@ func (s *RequestStore) CreateTable() error {
         ColStatus,
         ColChain,
         ColNetwork,
-        ColSymbol,
+        ColToken,
         ColRecipientAddress,
         ColAmount,
         ColMemo,
@@ -471,7 +471,7 @@ func (s *RequestStore) CreateTable() error {
         ColAccountID,
         ColStatus,
         ColRecipientAddress,
-        ColChain, ColNetwork, ColSymbol,
+        ColChain, ColNetwork, ColToken,
     )
 
     if _, err := s.executor.Exec(query); err != nil {
@@ -513,7 +513,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
     if err := ValidateRequestNetwork(p.Network); err != nil {
         return fmt.Errorf("failed to insert payment onchain request: %w", err)
     }
-    if err := ValidateRequestSymbol(p.Symbol); err != nil {
+    if err := ValidateRequestToken(p.Token); err != nil {
         return fmt.Errorf("failed to insert payment onchain request: %w", err)
     }
     if err := ValidateRequestRecipientAddress(p.RecipientAddress); err != nil {
@@ -555,7 +555,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
         ColStatus,
         ColChain,
         ColNetwork,
-        ColSymbol,
+        ColToken,
         ColRecipientAddress,
         ColAmount,
         ColMemo,
@@ -571,7 +571,7 @@ func (s *RequestStore) Insert(p *RequestInsertParams) error {
         p.Status,
         p.Chain,
         p.Network,
-        p.Symbol,
+        p.Token,
         p.RecipientAddress,
         p.Amount,
         p.Memo,
@@ -624,7 +624,7 @@ func (s *RequestStore) Select(p *RequestSelectParams) ([]*Request, error) {
             &row.Status,
             &row.Chain,
             &row.Network,
-            &row.Symbol,
+            &row.Token,
             &row.RecipientAddress,
             &row.Amount,
             &row.Memo,
@@ -677,7 +677,7 @@ func (s *RequestStore) SelectByID(id uint64) (*Request, error) {
         &result.Status,
         &result.Chain,
         &result.Network,
-        &result.Symbol,
+        &result.Token,
         &result.RecipientAddress,
         &result.Amount,
         &result.Memo,
@@ -829,9 +829,9 @@ func (p *RequestSelectParams) BuildQuery(selectFromClause string) (string, []any
         conditions = append(conditions, ColNetwork + " = ?")
         args = append(args, *p.Network)
     }
-    if p.Symbol != nil {
-        conditions = append(conditions, ColSymbol + " = ?")
-        args = append(args, *p.Symbol)
+    if p.Token != nil {
+        conditions = append(conditions, ColToken + " = ?")
+        args = append(args, *p.Token)
     }
     if p.RecipientAddress != nil {
         conditions = append(conditions, ColRecipientAddress + " = ?")
@@ -892,8 +892,8 @@ func (p *RequestSelectParams) Validate() error {
             return err
         }
     }
-    if p.Symbol != nil {
-        if err := ValidateRequestSymbol(*p.Symbol); err != nil {
+    if p.Token != nil {
+        if err := ValidateRequestToken(*p.Token); err != nil {
             return err
         }
     }
@@ -910,7 +910,7 @@ func (p *RequestSelectParams) Validate() error {
             ColStatus,
             ColChain,
             ColNetwork,
-            ColSymbol,
+            ColToken,
             ColRecipientAddress,
             ColCreatedAt,
             ColUpdatedAt:

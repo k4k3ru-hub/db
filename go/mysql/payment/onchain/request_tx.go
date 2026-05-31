@@ -30,7 +30,7 @@ type RequestTx struct {
     AccountID   uint64    `json:"accountId,string"`
     Chain       Chain     `json:"chain"`
     Network     Network   `json:"network"`
-    Symbol      Symbol    `json:"symbol"`
+    Token       Token     `json:"token"`
     BlockNumber uint64    `json:"blockNumber"`
     TxHash      string    `json:"txHash"`
     FromAddress string    `json:"fromAddress"`
@@ -52,7 +52,7 @@ type RequestTxInsertParams struct {
     AccountID   uint64    `json:"accountId,string"`
     Chain       Chain     `json:"chain"`
     Network     Network   `json:"network"`
-    Symbol      Symbol    `json:"symbol"`
+    Token       Token     `json:"token"`
     BlockNumber uint64    `json:"blockNumber"`
     TxHash      string    `json:"txHash"`
     FromAddress string    `json:"fromAddress"`
@@ -68,7 +68,7 @@ type RequestTxSelectParams struct {
     AccountID   *uint64   `json:"accountId,string,omitempty"`
     Chain       *Chain    `json:"chain,omitempty"`
     Network     *Network  `json:"network,omitempty"`
-    Symbol      *Symbol   `json:"symbol,omitempty"`
+    Token       *Token    `json:"token,omitempty"`
     TxHash      *string   `json:"txHash,omitempty"`
     ToAddress   *string   `json:"toAddress,omitempty"`
     OrderBy     string    `json:"orderBy"`
@@ -260,13 +260,13 @@ func (t *RequestTx) ValidateNetwork() error {
 
 
 //
-// Validate payment onchain request tx symbol.
+// Validate payment onchain request tx token.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateRequestTxSymbol(a Symbol) error {
-    if err := a.Validate(); err != nil {
+func ValidateRequestTxToken(t Token) error {
+    if err := t.Validate(); err != nil {
         return err
     }
     return nil
@@ -274,16 +274,16 @@ func ValidateRequestTxSymbol(a Symbol) error {
 
 
 //
-// Validate payment onchain request tx symbol.
+// Validate payment onchain request tx token.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *RequestTx) ValidateSymbol() error {
+func (t *RequestTx) ValidateToken() error {
     if t == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_request_tx=null")
     }
-    return ValidateRequestTxSymbol(t.Symbol)
+    return ValidateRequestTxToken(t.Token)
 }
 
 
@@ -466,7 +466,7 @@ func (s *RequestTxStore) CreateTable() error {
             %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
-            %s VARCHAR(64) NOT NULL COMMENT 'Symbol',
+            %s VARCHAR(64) NOT NULL COMMENT 'Token',
             %s BIGINT UNSIGNED NOT NULL COMMENT 'Block number',
             %s VARCHAR(255) NOT NULL COMMENT 'Transaction hash',
             %s VARCHAR(255) NOT NULL COMMENT 'From address',
@@ -479,7 +479,7 @@ func (s *RequestTxStore) CreateTable() error {
             KEY idx_payment_onchain_request_txs_request_id (%s),
             KEY idx_payment_onchain_request_txs_account_id (%s),
             KEY idx_payment_onchain_request_txs_chain_network_to_address (%s, %s, %s),
-            KEY idx_payment_onchain_request_txs_chain_network_symbol (%s, %s, %s),
+            KEY idx_payment_onchain_request_txs_chain_network_token (%s, %s, %s),
             CONSTRAINT fk_payment_onchain_request_txs_request_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
         );`,
         s.tableName,
@@ -488,7 +488,7 @@ func (s *RequestTxStore) CreateTable() error {
         ColAccountID,
         ColChain,
         ColNetwork,
-        ColSymbol,
+        ColToken,
         ColBlockNumber,
         ColTxHash,
         ColFromAddress,
@@ -501,7 +501,7 @@ func (s *RequestTxStore) CreateTable() error {
         ColRequestID,
         ColAccountID,
         ColChain, ColNetwork, ColToAddress,
-        ColChain, ColNetwork, ColSymbol,
+        ColChain, ColNetwork, ColToken,
         ColRequestID, s.requestTableName, ColID,
     )
 
@@ -544,7 +544,7 @@ func (s *RequestTxStore) Insert(p *RequestTxInsertParams) error {
     if err := ValidateRequestTxNetwork(p.Network); err != nil {
         return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
-    if err := ValidateRequestTxSymbol(p.Symbol); err != nil {
+    if err := ValidateRequestTxToken(p.Token); err != nil {
         return fmt.Errorf("failed to insert payment onchain request tx: %w", err)
     }
     if err := ValidateRequestTxBlockNumber(p.BlockNumber); err != nil {
@@ -589,7 +589,7 @@ func (s *RequestTxStore) Insert(p *RequestTxInsertParams) error {
         ColAccountID,
         ColChain,
         ColNetwork,
-        ColSymbol,
+        ColToken,
         ColBlockNumber,
         ColTxHash,
         ColFromAddress,
@@ -606,7 +606,7 @@ func (s *RequestTxStore) Insert(p *RequestTxInsertParams) error {
         p.AccountID,
         p.Chain,
         p.Network,
-        p.Symbol,
+        p.Token,
         p.BlockNumber,
         p.TxHash,
         p.FromAddress,
@@ -653,7 +653,7 @@ func (s *RequestTxStore) Upsert(p *RequestTxInsertParams) error {
     if err := ValidateRequestTxNetwork(p.Network); err != nil {
         return fmt.Errorf("failed to upsert payment onchain request tx: %w", err)
     }
-    if err := ValidateRequestTxSymbol(p.Symbol); err != nil {
+    if err := ValidateRequestTxToken(p.Token); err != nil {
         return fmt.Errorf("failed to upsert payment onchain request tx: %w", err)
     }
     if err := ValidateRequestTxBlockNumber(p.BlockNumber); err != nil {
@@ -703,7 +703,7 @@ func (s *RequestTxStore) Upsert(p *RequestTxInsertParams) error {
         ColAccountID,
         ColChain,
         ColNetwork,
-        ColSymbol,
+        ColToken,
         ColBlockNumber,
         ColTxHash,
         ColFromAddress,
@@ -715,7 +715,7 @@ func (s *RequestTxStore) Upsert(p *RequestTxInsertParams) error {
         ColAccountID, ColAccountID,
         ColChain, ColChain,
         ColNetwork, ColNetwork,
-        ColSymbol, ColSymbol,
+        ColToken, ColToken,
         ColBlockNumber, ColBlockNumber,
         ColFromAddress, ColFromAddress,
         ColToAddress, ColToAddress,
@@ -729,7 +729,7 @@ func (s *RequestTxStore) Upsert(p *RequestTxInsertParams) error {
         p.AccountID,
         p.Chain,
         p.Network,
-        p.Symbol,
+        p.Token,
         p.BlockNumber,
         p.TxHash,
         p.FromAddress,
@@ -783,7 +783,7 @@ func (s *RequestTxStore) Select(p *RequestTxSelectParams) ([]*RequestTx, error) 
             &row.AccountID,
             &row.Chain,
             &row.Network,
-            &row.Symbol,
+            &row.Token,
             &row.BlockNumber,
             &row.TxHash,
             &row.FromAddress,
@@ -836,7 +836,7 @@ func (s *RequestTxStore) SelectByID(id uint64) (*RequestTx, error) {
         &result.AccountID,
         &result.Chain,
         &result.Network,
-        &result.Symbol,
+        &result.Token,
         &result.BlockNumber,
         &result.TxHash,
         &result.FromAddress,
@@ -1066,9 +1066,9 @@ func (p *RequestTxSelectParams) BuildQuery(selectFromClause string) (string, []a
         conditions = append(conditions, ColNetwork + " = ?")
         args = append(args, *p.Network)
     }
-    if p.Symbol != nil {
-        conditions = append(conditions, ColSymbol + " = ?")
-        args = append(args, *p.Symbol)
+    if p.Token != nil {
+        conditions = append(conditions, ColToken + " = ?")
+        args = append(args, *p.Token)
     }
     if p.TxHash != nil {
         conditions = append(conditions, ColTxHash + " = ?")
@@ -1133,8 +1133,8 @@ func (p *RequestTxSelectParams) Validate() error {
             return err
         }
     }
-    if p.Symbol != nil {
-        if err := ValidateRequestTxSymbol(*p.Symbol); err != nil {
+    if p.Token != nil {
+        if err := ValidateRequestTxToken(*p.Token); err != nil {
             return err
         }
     }
@@ -1156,7 +1156,7 @@ func (p *RequestTxSelectParams) Validate() error {
             ColAccountID,
             ColChain,
             ColNetwork,
-            ColSymbol,
+            ColToken,
             ColBlockNumber,
             ColTxHash,
             ColFromAddress,

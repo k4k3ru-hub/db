@@ -272,51 +272,51 @@ func (n *Network) Scan(src any) error {
 }
 
 
-type Symbol k4k3ruOnchainCore.Symbol
+type Token k4k3ruOnchainCore.Token
 
 const (
-    SymbolAVAX Symbol = Symbol(k4k3ruOnchainCore.SymbolAVAX)
-    SymbolBNB  Symbol = Symbol(k4k3ruOnchainCore.SymbolBNB)
-    SymbolETH  Symbol = Symbol(k4k3ruOnchainCore.SymbolETH)
-    SymbolPOL  Symbol = Symbol(k4k3ruOnchainCore.SymbolPOL)
-    SymbolSOL  Symbol = Symbol(k4k3ruOnchainCore.SymbolSOL)
-    SymbolSUI  Symbol = Symbol(k4k3ruOnchainCore.SymbolSUI)
-    SymbolUSDC Symbol = Symbol(k4k3ruOnchainCore.SymbolUSDC)
-    SymbolUSDT Symbol = Symbol(k4k3ruOnchainCore.SymbolUSDT)
+    TokenAVAX Token = Token(k4k3ruOnchainCore.TokenAVAX)
+    TokenBNB  Token = Token(k4k3ruOnchainCore.TokenBNB)
+    TokenETH  Token = Token(k4k3ruOnchainCore.TokenETH)
+    TokenPOL  Token = Token(k4k3ruOnchainCore.TokenPOL)
+    TokenSOL  Token = Token(k4k3ruOnchainCore.TokenSOL)
+    TokenSUI  Token = Token(k4k3ruOnchainCore.TokenSUI)
+    TokenUSDC Token = Token(k4k3ruOnchainCore.TokenUSDC)
+    TokenUSDT Token = Token(k4k3ruOnchainCore.TokenUSDT)
 )
 
-func (s Symbol) IsValid() bool {
-    return k4k3ruOnchainCore.Symbol(s).IsValid()
+func (t Token) IsValid() bool {
+    return k4k3ruOnchainCore.Token(t).IsValid()
 }
 
-func (s Symbol) Validate() error {
-    return k4k3ruOnchainCore.Symbol(s).Validate()
+func (t Token) Validate() error {
+    return k4k3ruOnchainCore.Token(t).Validate()
 }
 
-func (s Symbol) Value() (driver.Value, error) {
-	if err := s.Validate(); err != nil {
+func (t Token) Value() (driver.Value, error) {
+	if err := t.Validate(); err != nil {
 		return nil, err
 	}
-	return string(s), nil
+	return string(t), nil
 }
 
-func (s *Symbol) Scan(src any) error {
-	if s == nil {
-		return fmt.Errorf("missing required parameter: symbol=null")
+func (t *Token) Scan(src any) error {
+	if t == nil {
+		return fmt.Errorf("missing required parameter: token=null")
 	}
 
 	switch v := src.(type) {
 	case string:
-		*s = Symbol(v)
+		*t = Token(v)
 	case []byte:
-		*s = Symbol(string(v))
+		*t = Token(string(v))
 	case nil:
-		return fmt.Errorf("missing required parameter: symbol=null")
+		return fmt.Errorf("missing required parameter: token=null")
 	default:
-		return fmt.Errorf("unsupported parameter: type=%T", src)
+		return fmt.Errorf("unsupported parameter: token: type=%T", src)
 	}
 
-	if err := s.Validate(); err != nil {
+	if err := t.Validate(); err != nil {
         return err
 	}
 

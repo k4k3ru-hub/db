@@ -4,7 +4,7 @@ const (
     ColAccountID        = "account_id"
     ColAmount           = "amount"
     ColBlockNumber      = "block_number"
-    ColSymbol           = "symbol"
+    ColToken            = "token"
     ColChain            = "chain"
     ColConfirmations    = "confirmations"
     ColConfirmedAt      = "confirmed_at"
