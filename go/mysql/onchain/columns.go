@@ -5,7 +5,7 @@ package onchain
 
 
 const (
-    ColOwnerID             = "owner_id"
+    ColOwnerRef            = "owner_ref"
     ColAddress             = "address"
     ColChain               = "chain"
     ColCreatedAt           = "created_at"

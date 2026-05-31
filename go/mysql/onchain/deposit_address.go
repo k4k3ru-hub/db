@@ -19,13 +19,13 @@ const (
 )
 
 var (
-    accountWalletIDCounter = &helper.IdCounter{}
+    depositAddressIDCounter = &helper.IdCounter{}
 )
 
 
 type DepositAddress struct {
     ID                  uint64               `json:"id,string"`
-    OwnerID             uint64               `json:"ownerId,string"`
+    OwnerRef            string               `json:"ownerRef"`
     Status              DepositAddressStatus `json:"status"`
     Chain               Chain                `json:"chain"`
     Network             Network              `json:"network"`
@@ -44,7 +44,7 @@ type DepositAddressStore struct {
 
 type DepositAddressInsertParams struct {
     ID                  uint64               `json:"id,string"`
-    OwnerID             uint64               `json:"ownerId,string"`
+    OwnerRef            string               `json:"ownerRef"`
     Status              DepositAddressStatus `json:"status"`
     Chain               Chain                `json:"chain"`
     Network             Network              `json:"network"`
@@ -59,7 +59,7 @@ type DepositAddressInsertParams struct {
 
 type DepositAddressSelectParams struct {
     ID          *uint64               `json:"id,string,omitempty"`
-    OwnerID     *uint64               `json:"ownerId,string,omitempty"`
+    OwnerRef    *string               `json:"ownerRef,omitempty"`
     Status      *DepositAddressStatus `json:"status,omitempty"`
     Chain       *Chain                `json:"chain,omitempty"`
     Network     *Network              `json:"network,omitempty"`
@@ -83,7 +83,7 @@ type DepositAddressUpdateParams struct {
 //   - 2026-05-25: Added.
 //
 func GenerateDepositAddressID() uint64 {
-    return accountWalletIDCounter.GenerateID()
+    return depositAddressIDCounter.GenerateID()
 }
 
 
@@ -129,39 +129,43 @@ func ValidateDepositAddressID(id uint64) error {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (w *DepositAddress) ValidateID() error {
-    if w == nil {
+func (da *DepositAddress) ValidateID() error {
+    if da == nil {
         return fmt.Errorf("missing required parameter: wallet=null")
     }
-    return ValidateDepositAddressID(w.ID)
+    return ValidateDepositAddressID(da.ID)
 }
 
 
 //
-// Validate onchain deposit address owner ID.
+// Validate onchain deposit address owner ref.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func ValidateDepositAddressOwnerID(ownerID uint64) error {
-    if ownerID == 0 {
-        return fmt.Errorf("invalid parameter: owner_id=0")
+func ValidateDepositAddressOwnerRef(ownerRef string) error {
+    s := strings.TrimSpace(ownerRef)
+    if s == "" {
+        return fmt.Errorf("invalid parameter: owner_ref=%q", "empty")
+    }
+    if len(s) > 128 {
+        return fmt.Errorf("invalid parameter: owner_ref=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate onchain deposit address owner ID.
+// Validate onchain deposit address owner ref.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func (w *DepositAddress) ValidateOwnerID() error {
-    if w == nil {
+func (da *DepositAddress) ValidateOwnerRef() error {
+    if da == nil {
         return fmt.Errorf("missing required parameter: wallet=null")
     }
-    return ValidateDepositAddressID(w.OwnerID)
+    return ValidateDepositAddressOwnerRef(da.OwnerRef)
 }
 
 
@@ -241,11 +245,11 @@ func ValidateDepositAddressNetwork(n Network) error {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (w *DepositAddress) ValidateNetwork() error {
-    if w == nil {
-        return fmt.Errorf("missing required parameter: wallet=null")
+func (da *DepositAddress) ValidateNetwork() error {
+    if da == nil {
+        return fmt.Errorf("missing required parameter: network=null")
     }
-    return ValidateDepositAddressNetwork(w.Network)
+    return ValidateDepositAddressNetwork(da.Network)
 }
 
 
@@ -397,7 +401,7 @@ func (s *DepositAddressStore) CreateTable() error {
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
-            %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
+            %s VARCHAR(128) NOT NULL COMMENT 'Owner reference',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
@@ -413,7 +417,7 @@ func (s *DepositAddressStore) CreateTable() error {
         );`,
         s.tableName,
         ColID,
-        ColOwnerID,
+        ColOwnerRef,
         ColStatus,
         ColChain,
         ColNetwork,
@@ -425,7 +429,7 @@ func (s *DepositAddressStore) CreateTable() error {
         ColUpdatedAt,
         ColID,
         ColChain, ColNetwork, ColAddress,
-        ColOwnerID, ColChain, ColNetwork, ColStatus,
+        ColOwnerRef, ColChain, ColNetwork, ColStatus,
     )
 
     if _, err := s.executor.Exec(query); err != nil {
@@ -455,7 +459,7 @@ func (s *DepositAddressStore) Insert(p *DepositAddressInsertParams) error {
     if p == nil {
         return fmt.Errorf("failed to insert onchain deposit address: missing required parameter: wallet_insert_params=null")
     }
-    if err := ValidateDepositAddressOwnerID(p.OwnerID); err != nil {
+    if err := ValidateDepositAddressOwnerRef(p.OwnerRef); err != nil {
         return fmt.Errorf("failed to insert onchain deposit address: %w", err)
     }
     if err := ValidateDepositAddressStatus(p.Status); err != nil {
@@ -502,7 +506,7 @@ func (s *DepositAddressStore) Insert(p *DepositAddressInsertParams) error {
         queryPrefix,
         s.tableName,
         ColID,
-        ColOwnerID,
+        ColOwnerRef,
         ColStatus,
         ColChain,
         ColNetwork,
@@ -517,7 +521,7 @@ func (s *DepositAddressStore) Insert(p *DepositAddressInsertParams) error {
     if _, err := s.executor.Exec(
         query,
         p.ID,
-        p.OwnerID,
+        p.OwnerRef,
         p.Status,
         p.Chain,
         p.Network,
@@ -569,7 +573,7 @@ func (s *DepositAddressStore) Select(p *DepositAddressSelectParams) ([]*DepositA
         row := &DepositAddress{}
         if err := rows.Scan(
             &row.ID,
-            &row.OwnerID,
+            &row.OwnerRef,
             &row.Status,
             &row.Chain,
             &row.Network,
@@ -621,7 +625,7 @@ func (s *DepositAddressStore) SelectByID(id uint64) (*DepositAddress, error) {
     result := &DepositAddress{}
     err := row.Scan(
         &result.ID,
-        &result.OwnerID,
+        &result.OwnerRef,
         &result.Status,
         &result.Chain,
         &result.Network,
@@ -777,9 +781,9 @@ func (p *DepositAddressSelectParams) BuildQuery(selectFromClause string) (string
         conditions = append(conditions, ColID + " = ?")
         args = append(args, *p.ID)
     }
-    if p.OwnerID != nil {
-        conditions = append(conditions, ColOwnerID + " = ?")
-        args = append(args, *p.OwnerID)
+    if p.OwnerRef != nil {
+        conditions = append(conditions, ColOwnerRef + " = ?")
+        args = append(args, *p.OwnerRef)
     }
     if p.Status != nil {
         conditions = append(conditions, ColStatus + " = ?")
@@ -837,8 +841,8 @@ func (p *DepositAddressSelectParams) Validate() error {
             return err
         }
     }
-    if p.OwnerID != nil {
-        if err := ValidateDepositAddressOwnerID(*p.OwnerID); err != nil {
+    if p.OwnerRef != nil {
+        if err := ValidateDepositAddressOwnerRef(*p.OwnerRef); err != nil {
             return err
         }
     }
@@ -866,7 +870,7 @@ func (p *DepositAddressSelectParams) Validate() error {
     if p.OrderBy != "" {
         switch p.OrderBy {
         case ColID,
-            ColOwnerID,
+            ColOwnerRef,
             ColStatus,
             ColChain,
             ColNetwork,
