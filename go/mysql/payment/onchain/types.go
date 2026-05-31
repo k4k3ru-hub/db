@@ -7,56 +7,57 @@ import (
     "database/sql/driver"
     "fmt"
     "strconv"
+    "strings"
 
     k4k3ruOnchainCore "github.com/k4k3ru-hub/onchain/go/core"
 )
 
 
-type RequestStatus uint8
+type IntentStatus uint8
 
 const (
-    RequestStatusPending RequestStatus = iota
-    RequestStatusCompleted
-    RequestStatusExpired
-    RequestStatusCanceled
-    RequestStatusFailed
+    IntentStatusPending IntentStatus = iota
+    IntentStatusCompleted
+    IntentStatusExpired
+    IntentStatusCanceled
+    IntentStatusFailed
 )
 
-func (s RequestStatus) IsValid() bool {
-    return s <= RequestStatusFailed
+func (s IntentStatus) IsValid() bool {
+    return s <= IntentStatusFailed
 }
 
 
-func (s RequestStatus) Validate() error {
+func (s IntentStatus) Validate() error {
     if !s.IsValid() {
         return fmt.Errorf("invalid parameter: request_status=%d", s)
     }
     return nil
 }
 
-func (s RequestStatus) Value() (driver.Value, error) {
+func (s IntentStatus) Value() (driver.Value, error) {
     if err := s.Validate(); err != nil {
         return nil, err
     }
     return int64(s), nil
 }
 
-func (s *RequestStatus) Scan(src any) error {
+func (s *IntentStatus) Scan(src any) error {
     if s == nil {
         return fmt.Errorf("missing required parameter: request_status=null")
     }
 
     switch v := src.(type) {
     case int64:
-        *s = RequestStatus(v)
+        *s = IntentStatus(v)
     case []byte:
         n, err := strconv.ParseUint(string(v), 10, 8)
         if err != nil {
             return err
         }
-        *s = RequestStatus(n)
+        *s = IntentStatus(n)
     case uint8:
-        *s = RequestStatus(v)
+        *s = IntentStatus(v)
     case nil:
         return fmt.Errorf("missing required parameter: request_status=null")
     default:
@@ -76,17 +77,17 @@ func (s *RequestStatus) Scan(src any) error {
 // Version:
 //   - 2026-05-20: Added.
 //
-func (s RequestStatus) String() string {
+func (s IntentStatus) String() string {
     switch s {
-    case RequestStatusPending:
+    case IntentStatusPending:
         return "pending"
-    case RequestStatusCompleted:
+    case IntentStatusCompleted:
         return "completed"
-    case RequestStatusExpired:
+    case IntentStatusExpired:
         return "expired"
-    case RequestStatusCanceled:
+    case IntentStatusCanceled:
         return "canceled"
-    case RequestStatusFailed:
+    case IntentStatusFailed:
         return "failed"
     default:
         return ""
@@ -324,5 +325,91 @@ func (t *Token) Scan(src any) error {
 }
 
 
+type RecipientType string
+
+const (
+    RecipientTypeManaged  RecipientType = "managed"
+    RecipientTypeExternal RecipientType = "external"
+)
+
+//
+// Check whether recipient type is valid.
+//
+// Version:
+//   - 2026-05-30: Added.
+//
+func (t RecipientType) IsValid() bool {
+    switch t {
+    case RecipientTypeManaged, RecipientTypeExternal:
+        return true
+    default:
+        return false
+    }
+}
+
+
+//
+// Validate recipient type.
+//
+// Version:
+//   - 2026-05-30: Added.
+//
+func (t RecipientType) Validate() error {
+    s := strings.TrimSpace(string(t))
+    if s == "" {
+        return fmt.Errorf("missing required parameter: recipient_type=%q", "empty")
+    }
+    if len(s) > 16 {
+        return fmt.Errorf("invalid parameter: recipient_type=%q", "too long")
+    }
+    if !t.IsValid() {
+        return fmt.Errorf("invalid parameter: recipient_type=%q", string(t))
+    }
+    return nil
+}
+
+
+//
+// Get recipient type as driver.Valuer.
+//
+// Version:
+//   - 2026-05-25: Added.
+//
+func (t RecipientType) Value() (driver.Value, error) {
+    if err := t.Validate(); err != nil {
+        return nil, err
+    }
+    return string(t), nil
+}
+
+
+//
+// Scan recipient type as sql.Scanner.
+//
+// Version:
+//   - 2026-05-25: Added.
+//
+func (t *RecipientType) Scan(src any) error {
+    if t == nil {
+        return fmt.Errorf("missing required parameter: recipient_type=null")
+    }
+
+    switch v := src.(type) {
+    case string:
+        *t = RecipientType(v)
+    case []byte:
+        *t = RecipientType(string(v))
+    case nil:
+        return fmt.Errorf("missing required parameter: recipient_type=null")
+    default:
+        return fmt.Errorf("unsupported parameter: recipient_type: data_type=%T", src)
+    }
+
+    if err := t.Validate(); err != nil {
+        return err
+    }
+
+    return nil
+}
 
 
