@@ -568,7 +568,7 @@ func (s *IntentStore) CreateTable() error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
             KEY idx_payment_onchain_intents_owner_ref (%s),
-            KEY idx_payment_onchain_intents_recipient_address_chain_network_token_status (%s, %s, %s, %s, %s)
+            KEY idx_payment_onchain_intents_rec_add_cha_net_tok_sta (%s, %s, %s, %s, %s)
         );`,
         s.tableName,
         ColID,
