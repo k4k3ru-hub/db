@@ -511,7 +511,7 @@ func (s *IntentTransferStore) CreateTable() error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            UNIQUE KEY uk_payment_onchain_intent_transfers_chain_network_tx_hash_event_index (%s, %s, %s, %s),
+            UNIQUE KEY uk_payment_onchain_intent_transfers_cha_net_tx_has_eve_ind (%s, %s, %s, %s),
             KEY idx_payment_onchain_intent_transfers_intent_id (%s),
             KEY idx_payment_onchain_intent_transfers_cha_net_to_add (%s, %s, %s),
             KEY idx_payment_onchain_intent_transfers_cha_net_tok (%s, %s, %s),
