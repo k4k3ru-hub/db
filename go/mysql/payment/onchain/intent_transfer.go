@@ -513,8 +513,8 @@ func (s *IntentTransferStore) CreateTable() error {
             PRIMARY KEY (%s),
             UNIQUE KEY uk_payment_onchain_intent_transfers_chain_network_tx_hash_event_index (%s, %s, %s, %s),
             KEY idx_payment_onchain_intent_transfers_intent_id (%s),
-            KEY idx_payment_onchain_intent_transfers_chain_network_to_address (%s, %s, %s),
-            KEY idx_payment_onchain_intent_transfers_chain_network_token (%s, %s, %s),
+            KEY idx_payment_onchain_intent_transfers_cha_net_to_add (%s, %s, %s),
+            KEY idx_payment_onchain_intent_transfers_cha_net_tok (%s, %s, %s),
             CONSTRAINT fk_payment_onchain_intent_transfers_intent_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
         );`,
         s.tableName,
