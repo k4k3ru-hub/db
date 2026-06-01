@@ -1,5 +1,5 @@
 //
-// intent_transfers.go
+// intent_transfer.go
 //
 package onchain
 
