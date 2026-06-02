@@ -328,7 +328,7 @@ func (t *Token) Scan(src any) error {
 type RecipientType string
 
 const (
-    RecipientTypeManaged  RecipientType = "managed"
+    RecipientTypeHosted   RecipientType = "hosted"
     RecipientTypeExternal RecipientType = "external"
 )
 
@@ -340,7 +340,7 @@ const (
 //
 func (t RecipientType) IsValid() bool {
     switch t {
-    case RecipientTypeManaged, RecipientTypeExternal:
+    case RecipientTypeHosted, RecipientTypeExternal:
         return true
     default:
         return false
