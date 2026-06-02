@@ -11,7 +11,7 @@ import (
     "unicode/utf8"
     _ "github.com/go-sql-driver/mysql"
 
-    myHelper "github.com/k4k3ru-hub/db/go/mysql/helper"
+    "github.com/k4k3ru-hub/db/go/mysql/helper"
 )
 
 
@@ -21,7 +21,7 @@ const (
 
 
 var (
-    accountIDCounter = &myHelper.IdCounter{}
+    accountIDCounter = &helper.IdCounter{}
 )
 
 
@@ -32,26 +32,31 @@ var (
 //   - 2026-05-09: Added.
 //
 type Account struct {
-    ID           uint64     `json:"id,string"`
-    Status       Status     `json:"status"`
-    Role         Role       `json:"role"`
-    Name         string     `json:"name"`
-    LastLoggedIn *time.Time `json:"lastLoggedIn,omitempty"`
-    CreatedAt    time.Time  `json:"createdAt"`
-    UpdatedAt    time.Time  `json:"updatedAt"`
+    ID        uint64    `json:"id,string"`
+    Status    Status    `json:"status"`
+    Name      string    `json:"name"`
+    CreatedAt time.Time `json:"createdAt"`
+    UpdatedAt time.Time `json:"updatedAt"`
 }
 
 
 type AccountStore struct {
-    executor  myHelper.Executor
+    executor  helper.Executor
     tableName string
 }
 
+type AccountInsertParams struct {
+    ID        uint64    `json:"id,string"`
+    Status    Status    `json:"status"`
+    Name      string    `json:"name"`
+    CreatedAt time.Time `json:"createdAt"`
+    UpdatedAt time.Time `json:"updatedAt"`
+    Ignore    bool      `json:"ignore"`
+}
 
 type AccountSelectOption struct {
     ID          *uint64 `json:"id,string,omitempty"`
     Status      *Status `json:"status,omitempty"`
-    Role        *Role   `json:"role,omitempty"`
     NameLike    *string `json:"nameLike,omitempty"`
     IDGTE       *uint64 `json:"idGte,omitempty"`
     IDLTE       *uint64 `json:"idLte,omitempty"`
@@ -63,16 +68,8 @@ type AccountSelectOption struct {
 
 
 type AccountUpdateOption struct {
-    ID           uint64     `json:"id,string"`
-    Status       *Status    `json:"status"`
-    Role         *Role      `json:"role"`
-    Name         *string    `json:"name,omitempty"`
-    LastLoggedIn *time.Time `json:"lastLoggedIn,omitempty"`
-}
-
-
-type AccountDeleteOption struct {
-    ID uint64 `json:"id,string"`
+    Status *Status `json:"status,omitempty"`
+    Name   *string `json:"name,omitempty"`
 }
 
 
@@ -133,34 +130,6 @@ func (a *Account) ValidateStatus() error {
 
 
 //
-// Validate account role.
-//
-// Version:
-//   - 2026-05-08: Added.
-//
-func ValidateAccountRole(role Role) error {
-    if !role.IsValid() {
-        return fmt.Errorf("invalid parameter: role=%d", role)
-    }
-    return nil
-}
-
-
-//
-// Validate account role.
-//
-// Version:
-//   - 2026-05-08: Added.
-//
-func (a *Account) ValidateRole() error {
-    if a == nil {
-        return fmt.Errorf("missing required parameter: account=null")
-    }
-    return ValidateAccountRole(a.Role)
-}
-
-
-//
 // Validate account name.
 //
 func ValidateAccountName(name string) error {
@@ -168,9 +137,8 @@ func ValidateAccountName(name string) error {
         return fmt.Errorf("invalid parameter: name=%q", "empty")
     }
     if utf8.RuneCountInString(name) > 64 {
-        return fmt.Errorf("invalid parameter: max_length=64 name=%q", "too long")
+        return fmt.Errorf("invalid parameter: name=%q max_length=64", "too long")
     }
-
     return nil
 }
 
@@ -187,32 +155,10 @@ func (a *Account) ValidateName() error {
 
 
 //
-// Validate account last logged in.
-//
-func ValidateAccountLastLoggedIn(lastLoggedIn *time.Time) error {
-    if lastLoggedIn == nil {
-        return nil
-    }
-    if lastLoggedIn.IsZero() {
-        return fmt.Errorf("invalid parameter: last_logged_in=%q", "empty")
-    }
-    return nil
-}
-
-
-//
-// Validate account last logged in.
-//
-func (a *Account) ValidateLastLoggedIn() error {
-    if a == nil {
-        return fmt.Errorf("missing required parameter: account=null")
-    }
-    return ValidateAccountLastLoggedIn(a.LastLoggedIn)
-}
-
-
-//
 // Generate account ID.
+//
+// Version:
+//   - 2026-04-30: Added.
 //
 func GenerateAccountID() uint64 {
     return accountIDCounter.GenerateID()
@@ -225,7 +171,7 @@ func GenerateAccountID() uint64 {
 // Version:
 //   - 2026-04-30: Added.
 //
-func NewAccountStore(executor myHelper.Executor, tableName string) (*AccountStore, error) {
+func NewAccountStore(executor helper.Executor, tableName string) (*AccountStore, error) {
     // Guard.
     if executor == nil {
         return nil, fmt.Errorf("failed to create account store: missing required parameter: executor=null")
@@ -264,7 +210,7 @@ func (s *AccountStore) Count(option *AccountSelectOption) (int64, error) {
 
     query, args := option.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
-    // Execute.
+    // Execute query.
     var result int64
     err := s.executor.QueryRow(query, args...).Scan(&result)
     if err != nil {
@@ -293,34 +239,28 @@ func (s *AccountStore) CreateTable() error {
         return fmt.Errorf("failed to create accounts table: missing required parameter: table_name=%q", "empty")
     }
 
-    // Generate a CREATE TABLE query.
+    // Generate CREATE TABLE query.
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
-            %s TINYINT UNSIGNED NOT NULL COMMENT 'Role',
             %s VARCHAR(64) NOT NULL COMMENT 'Name',
-            %s DATETIME COMMENT 'Last logged at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            KEY idx_accounts_status (%s),
-            KEY idx_accounts_role (%s));
-        `,
+            KEY idx_accounts_status (%s)
+        );`,
         s.tableName,
         ColID,
         ColStatus,
-        ColRole,
         ColName,
-        ColLastLoggedIn,
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
         ColStatus,
-        ColRole,
     )
 
-    // Execute the query.
+    // Execute query.
     if _, err := s.executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create accounts table: %w", err)
     }
@@ -350,10 +290,10 @@ func (s *AccountStore) DeleteByID(id uint64) error {
         return fmt.Errorf("failed to delete account by id: invalid parameter: id=0")
     }
 
-    // Generate a DELETE query.
+    // Generate DELETE query.
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
-    // Execute.
+    // Execute query.
     if _, err := s.executor.Exec(query, id); err != nil {
         return fmt.Errorf("failed to delete account by id: %w", err)
     }
@@ -368,7 +308,7 @@ func (s *AccountStore) DeleteByID(id uint64) error {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) Insert(row *Account) error {
+func (s *AccountStore) Insert(p *AccountInsertParams) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: account_store=null")
@@ -379,54 +319,47 @@ func (s *AccountStore) Insert(row *Account) error {
     if s.tableName == "" {
         return fmt.Errorf("failed to insert account: missing required parameter: table_name=%q", "empty")
     }
-    if row == nil {
-        return fmt.Errorf("failed to insert account: missing required parameter: account=null table=%q", s.tableName)
+    if p == nil {
+        return fmt.Errorf("failed to insert account: missing required parameter: account_insert_params=null")
     }
-    if err := row.ValidateStatus(); err != nil {
+    if err := ValidateAccountStatus(p.Status); err != nil {
         return fmt.Errorf("failed to insert account: %w", err)
     }
-    if err := row.ValidateRole(); err != nil {
-        return fmt.Errorf("failed to insert account: %w", err)
-    }
-    if err := row.ValidateName(); err != nil {
+    if err := ValidateAccountName(p.Name); err != nil {
         return fmt.Errorf("failed to insert account: %w", err)
     }
 
-    // Generate an INSERT query.
+    // Generate INSERT query.
     query := fmt.Sprintf(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?);",
+        "INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?);",
         s.tableName,
         ColID,
         ColStatus,
-        ColRole,
         ColName,
-        ColLastLoggedIn,
         ColCreatedAt,
         ColUpdatedAt,
     )
 
-    if row.ID == 0 {
-        row.ID = GenerateAccountID()
+    if p.ID == 0 {
+        p.ID = GenerateAccountID()
     }
 
     now := time.Now()
-    if row.CreatedAt.IsZero() {
-        row.CreatedAt = now
+    if p.CreatedAt.IsZero() {
+        p.CreatedAt = now
     }
-    if row.UpdatedAt.IsZero() {
-        row.UpdatedAt = now
+    if p.UpdatedAt.IsZero() {
+        p.UpdatedAt = now
     }
 
-    // Execute.
+    // Execute query.
     if _, err := s.executor.Exec(
         query,
-        row.ID,
-        row.Status,
-        row.Role,
-        row.Name,
-        row.LastLoggedIn,
-        row.CreatedAt,
-        row.UpdatedAt,
+        p.ID,
+        p.Status,
+        p.Name,
+        p.CreatedAt,
+        p.UpdatedAt,
     ); err != nil {
         return fmt.Errorf("failed to insert account: %w", err)
     }
@@ -455,7 +388,7 @@ func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
 
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
-    // Execute.
+    // Execute query.
     rows, err := s.executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select accounts: %w", err)
@@ -470,9 +403,7 @@ func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
         err := rows.Scan(
             &row.ID,
             &row.Status,
-            &row.Role,
             &row.Name,
-            &row.LastLoggedIn,
             &row.CreatedAt,
             &row.UpdatedAt,
         )
@@ -522,9 +453,7 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
     err := row.Scan(
         &result.ID,
         &result.Status,
-        &result.Role,
         &result.Name,
-        &result.LastLoggedIn,
         &result.CreatedAt,
         &result.UpdatedAt,
     )
@@ -545,7 +474,7 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) Update(option *AccountUpdateOption) error {
+func (s *AccountStore) Update(id uint64, option *AccountUpdateOption) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to update account: missing required parameter: account_store=null")
@@ -559,29 +488,20 @@ func (s *AccountStore) Update(option *AccountUpdateOption) error {
     if option == nil {
         return fmt.Errorf("failed to update account: missing required parameter: option=null")
     }
-    if option.ID == 0 {
+    if id == 0 {
         return fmt.Errorf("failed to update account: invalid parameter: id=0")
     }
 
-    assignments := make([]string, 0, 4)
-    args := make([]interface{}, 0, 4)
+    assignments := make([]string, 0, 2)
+    args := make([]any, 0, 3)
 
     if option.Status != nil {
-        if !option.Status.IsValid() {
-            return fmt.Errorf("failed to update account: invalid parameter: status=%d", *option.Status)
+        if err := ValidateAccountStatus(*option.Status); err != nil {
+            return fmt.Errorf("failed to update account: %w", err)
         }
         assignments = append(assignments, ColStatus + " = ?")
         args = append(args, *option.Status)
     }
-
-    if option.Role != nil {
-        if !option.Role.IsValid() {
-            return fmt.Errorf("failed to update account: invalid parameter: role=%d", *option.Role)
-        }
-        assignments = append(assignments, ColRole + " = ?")
-        args = append(args, *option.Role)
-    }
-
     if option.Name != nil {
         if err := ValidateAccountName(*option.Name); err != nil {
             return fmt.Errorf("failed to update account: %w", err)
@@ -590,90 +510,21 @@ func (s *AccountStore) Update(option *AccountUpdateOption) error {
         args = append(args, *option.Name)
     }
 
-    if option.LastLoggedIn != nil {
-        assignments = append(assignments, ColLastLoggedIn + " = ?")
-        args = append(args, *option.LastLoggedIn)
-    }
-
     if len(assignments) == 0 {
         return fmt.Errorf("failed to update account: invalid parameter: assignments=%q", "empty")
     }
 
-    args = append(args, option.ID)
+    args = append(args, id)
 
-    // Generate a UPDATE query.
+    // Generate UPDATE query.
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
-    // Execute.
+    // Execute query.
     if _, err := s.executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update account: %w", err)
     }
 
     return nil
-}
-
-
-//
-// Update last logged in.
-//
-// Version:
-//   - 2026-04-29: Added.
-//
-func (s *AccountStore) UpdateLastLoggedIn(id uint64) error {
-    // Guard.
-    if s == nil {
-        return fmt.Errorf("failed to update account last logged in: missing required parameter: account_store=null")
-    }
-    if s.executor == nil {
-        return fmt.Errorf("failed to update account last logged in: missing required parameter: executor=null")
-    }
-    if s.tableName == "" {
-        return fmt.Errorf("failed to update account last logged in: missing required parameter: table_name=%q", "empty")
-    }
-	if id == 0 {
-		return fmt.Errorf("failed to update account last logged in: invalid parameter: id=0")
-	}
-
-	now := time.Now()
-
-	return s.Update(&AccountUpdateOption{
-		ID:           id,
-		LastLoggedIn: &now,
-	})
-}
-
-
-//
-// Build account select conditions.
-//
-func buildAccountSelectCondition(option *AccountSelectOption) ([]string, []any) {
-    conditions := make([]string, 0, 5)
-    args := make([]any, 0, 5)
-
-    if option != nil {
-        if option.Status != nil {
-            conditions = append(conditions, ColStatus + " = ?")
-            args = append(args, *option.Status)
-        }
-        if option.Role != nil {
-            conditions = append(conditions, ColRole + " = ?")
-            args = append(args, *option.Role)
-        }
-        if option.NameLike != nil {
-            conditions = append(conditions, ColName + " LIKE ?")
-            args = append(args, "%" + *option.NameLike + "%")
-        }
-        if option.IDGTE != nil {
-            conditions = append(conditions, ColID + " >= ?")
-            args = append(args, *option.IDGTE)
-        }
-        if option.IDLTE != nil {
-            conditions = append(conditions, ColID + " <= ?")
-            args = append(args, *option.IDLTE)
-        }
-    }
-
-    return conditions, args
 }
 
 
@@ -692,8 +543,8 @@ func (o *AccountSelectOption) BuildQuery(selectFromClause string) (string, []any
     var query strings.Builder
     query.WriteString(selectFromClause)
 
-    conditions := make([]string, 0, 6)
-    args := make([]any, 0, 8)
+    conditions := make([]string, 0, 5)
+    args := make([]any, 0, 7)
 
     if o.ID != nil {
         conditions = append(conditions, ColID + " = ?")
@@ -702,10 +553,6 @@ func (o *AccountSelectOption) BuildQuery(selectFromClause string) (string, []any
     if o.Status != nil {
         conditions = append(conditions, ColStatus + " = ?")
         args = append(args, *o.Status)
-    }
-    if o.Role != nil {
-        conditions = append(conditions, ColRole + " = ?")
-        args = append(args, *o.Role)
     }
     if o.NameLike != nil {
         conditions = append(conditions, ColName + " LIKE ?")
@@ -764,11 +611,6 @@ func (o *AccountSelectOption) Validate() error {
             return err
         }
     }
-    if o.Role != nil {
-        if err := ValidateAccountRole(*o.Role); err != nil {
-            return err
-        }
-    }
     if o.NameLike != nil {
         if err := ValidateAccountName(*o.NameLike); err != nil {
             return err
@@ -782,9 +624,7 @@ func (o *AccountSelectOption) Validate() error {
         switch o.OrderBy {
         case ColID,
             ColStatus,
-            ColRole,
             ColName,
-            ColLastLoggedIn,
             ColCreatedAt,
             ColUpdatedAt:
         default:
