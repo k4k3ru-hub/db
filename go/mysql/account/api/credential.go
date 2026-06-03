@@ -4,7 +4,9 @@
 package api
 
 import (
+    "crypto/rand"
     "database/sql"
+    "encoding/base64"
     "fmt"
     "strings"
     "time"
@@ -127,6 +129,63 @@ type CredentialUpdateParams struct {
     SetNullEncryptedSecretKey bool                 `json:"setNullEncryptedSecretKey"`
     SetNullSecretProviderKind bool                 `json:"setNullSecretProviderKind"`
     SetNullSecretKeyVersion   bool                 `json:"setNullSecretKeyVersion"`
+}
+
+
+//
+// Generate account API credential ID.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func GenerateCredentialID() uint64 {
+    return credentialIDCounter.GenerateID()
+}
+
+
+//
+// Generate account API credential API key.
+//
+// Version:
+//   - 2026-06-03: Added.
+//
+func GenerateCredentialAPIKey(prefix string) (string, error) {
+    if prefix == "" {
+        return "", fmt.Errorf("failed to generate api key: missing required parameter: prefix=%q", "empty")
+    }
+
+    b := make([]byte, 32)
+    if _, err := rand.Read(b); err != nil {
+        return "", fmt.Errorf("failed to generate api key: %w", err)
+    }
+
+    return prefix + base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+
+//
+// Create new account API credential store.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*CredentialStore, error) {
+    // Guard.
+    if db == nil {
+        return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: db=null")
+    }
+    if tableName == "" {
+        return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: table_name=%q", "empty")
+    }
+    if accountTableName == "" {
+        return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: account_table_name=%q", "empty")
+    }
+
+    return &CredentialStore{
+        db:               db,
+        tableName:        tableName,
+        accountTableName: accountTableName,
+    }, nil
 }
 
 
@@ -490,43 +549,6 @@ func (c *Credential) ValidateScopes() error {
         return fmt.Errorf("missing required parameter: account_api_key_credential=null")
     }
     return ValidateCredentialScopes(c.Scopes)
-}
-
-
-//
-// Generate account API credential ID.
-//
-// Version:
-//   - 2026-05-09: Added.
-//
-func GenerateCredentialID() uint64 {
-    return credentialIDCounter.GenerateID()
-}
-
-
-//
-// Create new account API credential store.
-//
-// Version:
-//   - 2026-05-09: Added.
-//
-func NewCredentialStore(db *sql.DB, tableName, accountTableName string) (*CredentialStore, error) {
-    // Guard.
-    if db == nil {
-        return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: db=null")
-    }
-    if tableName == "" {
-        return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: table_name=%q", "empty")
-    }
-    if accountTableName == "" {
-        return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: account_table_name=%q", "empty")
-    }
-
-    return &CredentialStore{
-        db:               db,
-        tableName:        tableName,
-        accountTableName: accountTableName,
-    }, nil
 }
 
 
