@@ -1,4 +1,4 @@
-module github.com/k4k3ru-hub/db/go/mysql/account/apikey
+module github.com/k4k3ru-hub/db/go/mysql/account/api
 
 go 1.25.7
 
