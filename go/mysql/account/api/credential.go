@@ -744,6 +744,22 @@ func (s *CredentialStore) Insert(p *CredentialInsertParams) error {
     if err := ValidateCredentialScopes(p.Scopes); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
+    switch p.Algorithm {
+    case CredentialAlgorithmHMACSHA256:
+        if p.EncryptedSecretKey == nil  {
+            return fmt.Errorf("failed to insert account api credential: missing required parameter: encrypted_secret_key=%q", "empty")
+        }
+        if p.SecretProviderKind == nil  {
+            return fmt.Errorf("failed to insert account api credential: missing required parameter: secret_provider_kind=%q", "empty")
+        }
+        if p.SecretKeyVersion == nil  {
+            return fmt.Errorf("failed to insert account api credential: missing required parameter: secret_key_version=%q", "empty")
+        }
+    case CredentialAlgorithmEd25519:
+        if p.PublicKey == nil {
+            return fmt.Errorf("failed to insert account api credential: missing required parameter: public_key=%q", "empty")
+        }
+    }
 
     // Generate an INSERT query.
     query := fmt.Sprintf(
