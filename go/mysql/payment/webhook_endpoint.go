@@ -1,7 +1,7 @@
 //
 // webhook_endpoint.go
 //
-package onchain
+package payment
 
 import (
     "database/sql"
