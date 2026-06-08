@@ -92,7 +92,7 @@ func GenerateDepositAddressID() uint64 {
 // Version:
 //   - 2026-05-25: Added.
 //
-func NewDepositAddressStore(executor helper.Executor, tableName string) (*DepositAddressStore, error) {
+func NewDepositAddressStore(tableName string) (*DepositAddressStore, error) {
     // Guard.
     tableName = strings.TrimSpace(tableName)
     if tableName == "" {
