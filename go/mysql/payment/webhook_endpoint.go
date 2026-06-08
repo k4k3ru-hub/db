@@ -15,7 +15,7 @@ import (
 )
 
 const (
-    DefaultWebhookEndpointTableName = "payment_onchain_webhook_endpoints"
+    DefaultWebhookEndpointTableName = "payment_webhook_endpoints"
 )
 
 var (
@@ -37,7 +37,6 @@ type WebhookEndpoint struct {
 }
 
 type WebhookEndpointStore struct {
-    executor  helper.Executor
     tableName string
 }
 
@@ -78,7 +77,7 @@ type WebhookEndpointUpdateParams struct {
 
 
 //
-// Generate payment onchain webhook endpoint ID.
+// Generate payment webhook endpoint ID.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -89,29 +88,26 @@ func GenerateWebhookEndpointID() uint64 {
 
 
 //
-// Create payment onchain webhook endpoint store.
+// Create payment webhook endpoint store.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func NewWebhookEndpointStore(executor helper.Executor, tableName string) (*WebhookEndpointStore, error) {
+func NewWebhookEndpointStore(tableName string) (*WebhookEndpointStore, error) {
     // Guard.
-    if executor == nil {
-        return nil, fmt.Errorf("failed to create payment onchain webhook endpoint store: missing required parameter: executor=null")
-    }
+    tableName = strings.TrimSpace(tableName)
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create payment onchain webhook endpoint store: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to create new payment webhook endpoint store: missing required parameter: table_name=%q", "empty")
     }
 
     return &WebhookEndpointStore{
-        executor:  executor,
         tableName: tableName,
     }, nil
 }
 
 
 //
-// Validate payment onchain webhook endpoint ID.
+// Validate payment webhook endpoint ID.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -125,21 +121,21 @@ func ValidateWebhookEndpointID(id uint64) error {
 
 
 //
-// Validate payment onchain webhook endpoint ID.
+// Validate payment webhook endpoint ID.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateID() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointID(e.ID)
 }
 
 
 //
-// Validate payment onchain webhook endpoint owner ref.
+// Validate payment webhook endpoint owner ref.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -157,21 +153,21 @@ func ValidateWebhookEndpointOwnerRef(ownerRef string) error {
 
 
 //
-// Validate payment onchain webhook endpoint owner ref.
+// Validate payment webhook endpoint owner ref.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateOwnerRef() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointOwnerRef(e.OwnerRef)
 }
 
 
 //
-// Validate payment onchain webhook endpoint name.
+// Validate payment webhook endpoint name.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -189,21 +185,21 @@ func ValidateWebhookEndpointName(name string) error {
 
 
 //
-// Validate payment onchain webhook endpoint name.
+// Validate payment webhook endpoint name.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateName() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointName(e.Name)
 }
 
 
 //
-// Validate payment onchain webhook endpoint URL.
+// Validate payment webhook endpoint URL.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -221,21 +217,21 @@ func ValidateWebhookEndpointURL(url string) error {
 
 
 //
-// Validate payment onchain webhook endpoint url.
+// Validate payment webhook endpoint url.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateURL() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointURL(e.URL)
 }
 
 
 //
-// Validate payment onchain webhook endpoint encrypted secret.
+// Validate payment webhook endpoint encrypted secret.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -253,21 +249,21 @@ func ValidateWebhookEndpointEncryptedSecret(encryptedSecret string) error {
 
 
 //
-// Validate payment onchain webhook endpoint encrypted secret.
+// Validate payment webhook endpoint encrypted secret.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateEncryptedSecret() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointEncryptedSecret(e.EncryptedSecret)
 }
 
 
 //
-// Validate payment onchain webhook endpoint secret provider kind.
+// Validate payment webhook endpoint secret provider kind.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -285,21 +281,21 @@ func ValidateWebhookEndpointSecretProviderKind(secretProviderKind string) error 
 
 
 //
-// Validate payment onchain webhook endpoint secret provider kind.
+// Validate payment webhook endpoint secret provider kind.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateSecretProviderKind() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointSecretProviderKind(e.SecretProviderKind)
 }
 
 
 //
-// Validate payment onchain webhook endpoint secret key version.
+// Validate payment webhook endpoint secret key version.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -317,21 +313,21 @@ func ValidateWebhookEndpointSecretKeyVersion(secretKeyVersion string) error {
 
 
 //
-// Validate payment onchain webhook endpoint secret key version.
+// Validate payment webhook endpoint secret key version.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateSecretKeyVersion() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointSecretKeyVersion(e.SecretKeyVersion)
 }
 
 
 //
-// Validate payment onchain webhook endpoint signature algorithm.
+// Validate payment webhook endpoint signature algorithm.
 //
 // Version:
 //   - 2026-06-01: Added.
@@ -345,34 +341,34 @@ func ValidateWebhookEndpointSignatureAlgorithm(s WebhookSignatureAlgorithm) erro
 
 
 //
-// Validate payment onchain webhook endpoint signature algorithm.
+// Validate payment webhook endpoint signature algorithm.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
 func (e *WebhookEndpoint) ValidateSignatureAlgorithm() error {
     if e == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
     return ValidateWebhookEndpointSignatureAlgorithm(e.SignatureAlgorithm)
 }
 
 
 //
-// Create payment onchain webhook endpoints table.
+// Create payment webhook endpoints table.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) CreateTable() error {
+func (s *WebhookEndpointStore) CreateTable(executor helper.Executor) error {
     if s == nil {
-        return fmt.Errorf("failed to create payment onchain webhook endpoints table: missing required parameter: webhook_endpoint_store=null")
-    }
-    if s.executor == nil {
-        return fmt.Errorf("failed to create payment onchain webhook endpoints table: missing required parameter: executor=null")
+        return fmt.Errorf("failed to create payment webhook endpoints table: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create payment onchain webhook endpoints table: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to create payment webhook endpoints table: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to create payment webhook endpoints table: missing required parameter: executor=null")
     }
 
     query := fmt.Sprintf(
@@ -388,8 +384,8 @@ func (s *WebhookEndpointStore) CreateTable() error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            UNIQUE KEY uq_payment_onchain_webhook_endpoints_owner_ref_name (%s, %s),
-            KEY idx_payment_onchain_webhook_endpoints_owner_ref (%s)
+            UNIQUE KEY uq_payment_webhook_endpoints_owner_ref_name (%s, %s),
+            KEY idx_payment_webhook_endpoints_owner_ref (%s)
         );`,
         s.tableName,
         ColID,
@@ -407,8 +403,8 @@ func (s *WebhookEndpointStore) CreateTable() error {
         ColOwnerRef,
     )
 
-    if _, err := s.executor.Exec(query); err != nil {
-        return fmt.Errorf("failed to create payment onchain webhook endpoints table: %w", err)
+    if _, err := executor.Exec(query); err != nil {
+        return fmt.Errorf("failed to create payment webhook endpoints table: %w", err)
     }
 
     return nil
@@ -416,44 +412,44 @@ func (s *WebhookEndpointStore) CreateTable() error {
 
 
 //
-// Insert payment onchain webhook endpoint.
+// Insert payment webhook endpoint.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) Insert(p *WebhookEndpointInsertParams) error {
+func (s *WebhookEndpointStore) Insert(executor helper.Executor, p *WebhookEndpointInsertParams) error {
     if s == nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: missing required parameter: webhook_endpoint_store=null")
-    }
-    if s.executor == nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: missing required parameter: executor=null")
+        return fmt.Errorf("failed to insert payment webhook endpoint: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to insert payment webhook endpoint: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to insert payment webhook endpoint: missing required parameter: executor=null")
     }
     if p == nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: missing required parameter: webhook_endpoint_insert_params=null")
+        return fmt.Errorf("failed to insert payment webhook endpoint: missing required parameter: webhook_endpoint_insert_params=null")
     }
     if err := ValidateWebhookEndpointOwnerRef(p.OwnerRef); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointName(p.Name); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointURL(p.URL); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointEncryptedSecret(p.EncryptedSecret); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointSecretProviderKind(p.SecretProviderKind); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointSecretKeyVersion(p.SecretKeyVersion); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointSignatureAlgorithm(p.SignatureAlgorithm); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
 
     if p.ID == 0 {
@@ -489,7 +485,7 @@ func (s *WebhookEndpointStore) Insert(p *WebhookEndpointInsertParams) error {
         ColUpdatedAt,
     )
 
-    if _, err := s.executor.Exec(
+    if _, err := executor.Exec(
         query,
         p.ID,
         p.OwnerRef,
@@ -502,7 +498,7 @@ func (s *WebhookEndpointStore) Insert(p *WebhookEndpointInsertParams) error {
         p.CreatedAt,
         p.UpdatedAt,
     ); err != nil {
-        return fmt.Errorf("failed to insert payment onchain webhook endpoint: %w", err)
+        return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
 
     return nil
@@ -510,31 +506,31 @@ func (s *WebhookEndpointStore) Insert(p *WebhookEndpointInsertParams) error {
 
 
 //
-// Select payment onchain webhook endpoints.
+// Select payment webhook endpoints.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) Select(p *WebhookEndpointSelectParams) ([]*WebhookEndpoint, error) {
+func (s *WebhookEndpointStore) Select(executor helper.Executor, p *WebhookEndpointSelectParams) ([]*WebhookEndpoint, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoints: missing required parameter: webhook_endpoint_store=null")
-    }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoints: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select payment webhook endpoints: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoints: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment webhook endpoints: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select payment webhook endpoints: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoints: %w", err)
+        return nil, fmt.Errorf("failed to select payment webhook endpoints: %w", err)
     }
 
     query, args := p.BuildQuery("SELECT * FROM " + s.tableName)
 
     // Execute.
-    rows, err := s.executor.Query(query, args...)
+    rows, err := executor.Query(query, args...)
     if err != nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoints: %w", err)
+        return nil, fmt.Errorf("failed to select payment webhook endpoints: %w", err)
     }
     defer rows.Close()
 
@@ -553,14 +549,14 @@ func (s *WebhookEndpointStore) Select(p *WebhookEndpointSelectParams) ([]*Webhoo
             &row.CreatedAt,
             &row.UpdatedAt,
         ); err != nil {
-            return nil, fmt.Errorf("failed to select payment onchain webhook endpoints: %w", err)
+            return nil, fmt.Errorf("failed to select payment webhook endpoints: %w", err)
         }
 
         result = append(result, row)
     }
 
     if err := rows.Err(); err != nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoints: %w", err)
+        return nil, fmt.Errorf("failed to select payment webhook endpoints: %w", err)
     }
 
     return result, nil
@@ -568,28 +564,28 @@ func (s *WebhookEndpointStore) Select(p *WebhookEndpointSelectParams) ([]*Webhoo
 
 
 //
-// Select payment onchain webhook endpoint by ID.
+// Select payment webhook endpoint by ID.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) SelectByID(id uint64) (*WebhookEndpoint, error) {
+func (s *WebhookEndpointStore) SelectByID(executor helper.Executor, id uint64) (*WebhookEndpoint, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by id: missing required parameter: webhook_endpoint_store=null")
-    }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by id: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by id: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by id: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by id: missing required parameter: executor=null")
     }
     if id == 0 {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by id: invalid parameter: id=0")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by id: invalid parameter: id=0")
     }
 
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
-    row := s.executor.QueryRow(query, id)
+    row := executor.QueryRow(query, id)
 
     result := &WebhookEndpoint{}
     err := row.Scan(
@@ -608,7 +604,7 @@ func (s *WebhookEndpointStore) SelectByID(id uint64) (*WebhookEndpoint, error) {
         if err == sql.ErrNoRows {
             return nil, nil
         }
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by id: %w", err)
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by id: %w", err)
     }
 
     return result, nil
@@ -616,31 +612,31 @@ func (s *WebhookEndpointStore) SelectByID(id uint64) (*WebhookEndpoint, error) {
 
 
 //
-// Select payment onchain webhook endpoint by owner ref and name.
+// Select payment webhook endpoint by owner ref and name.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) SelectByOwnerRefAndName(ownerRef, name string) (*WebhookEndpoint, error) {
+func (s *WebhookEndpointStore) SelectByOwnerRefAndName(executor helper.Executor, ownerRef, name string) (*WebhookEndpoint, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by owner ref and name: missing required parameter: webhook_endpoint_store=null")
-    }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by owner ref and name: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by owner ref and name: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: executor=null")
     }
     if ownerRef == "" {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by owner ref and name: missing required parameter: owner_ref=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: owner_ref=%q", "empty")
     }
     if name == "" {
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by owner ref and name: missing required parameter: name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: name=%q", "empty")
     }
 
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? AND %s = ? LIMIT 1;", s.tableName, ColOwnerRef, ColName)
 
-    row := s.executor.QueryRow(query, ownerRef, name)
+    row := executor.QueryRow(query, ownerRef, name)
 
     result := &WebhookEndpoint{}
     err := row.Scan(
@@ -659,7 +655,7 @@ func (s *WebhookEndpointStore) SelectByOwnerRefAndName(ownerRef, name string) (*
         if err == sql.ErrNoRows {
             return nil, nil
         }
-        return nil, fmt.Errorf("failed to select payment onchain webhook endpoint by owner ref and name: %w", err)
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: %w", err)
     }
 
     return result, nil
@@ -667,30 +663,30 @@ func (s *WebhookEndpointStore) SelectByOwnerRefAndName(ownerRef, name string) (*
 
 
 //
-// Count payment onchain webhook endpoints.
+// Count payment webhook endpoints.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) Count(p *WebhookEndpointSelectParams) (int64, error) {
+func (s *WebhookEndpointStore) Count(executor helper.Executor, p *WebhookEndpointSelectParams) (int64, error) {
     if s == nil {
-        return 0, fmt.Errorf("failed to count payment onchain webhook endpoints: missing required parameter: webhook_endpoint_store=null")
-    }
-    if s.executor == nil {
-        return 0, fmt.Errorf("failed to count payment onchain webhook endpoints: missing required parameter: executor=null")
+        return 0, fmt.Errorf("failed to count payment webhook endpoints: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count payment onchain webhook endpoints: missing required parameter: table_name=%q", "empty")
+        return 0, fmt.Errorf("failed to count payment webhook endpoints: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return 0, fmt.Errorf("failed to count payment webhook endpoints: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
-        return 0, fmt.Errorf("failed to count payment onchain webhook endpoints: %w", err)
+        return 0, fmt.Errorf("failed to count payment webhook endpoints: %w", err)
     }
 
     query, args := p.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     var result int64
-    if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
-        return 0, fmt.Errorf("failed to count payment onchain webhook endpoints: %w", err)
+    if err := executor.QueryRow(query, args...).Scan(&result); err != nil {
+        return 0, fmt.Errorf("failed to count payment webhook endpoints: %w", err)
     }
 
     return result, nil
@@ -698,29 +694,29 @@ func (s *WebhookEndpointStore) Count(p *WebhookEndpointSelectParams) (int64, err
 
 
 //
-// Delete payment onchain webhook endpoint by ID.
+// Delete payment webhook endpoint by ID.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) DeleteByID(id uint64) error {
+func (s *WebhookEndpointStore) DeleteByID(executor helper.Executor, id uint64) error {
     if s == nil {
-        return fmt.Errorf("failed to delete payment onchain webhook endpoint by id: missing required parameter: webhook_endpoint_store=null")
-    }
-    if s.executor == nil {
-        return fmt.Errorf("failed to delete payment onchain webhook endpoint by id: missing required parameter: executor=null")
+        return fmt.Errorf("failed to delete payment webhook endpoint by id: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to delete payment onchain webhook endpoint by id: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to delete payment webhook endpoint by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to delete payment webhook endpoint by id: missing required parameter: executor=null")
     }
     if id == 0 {
-        return fmt.Errorf("failed to delete payment onchain webhook endpoint by id: invalid parameter: id=0")
+        return fmt.Errorf("failed to delete payment webhook endpoint by id: invalid parameter: id=0")
     }
 
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
-    if _, err := s.executor.Exec(query, id); err != nil {
-        return fmt.Errorf("failed to delete payment onchain webhook endpoint by id: %w", err)
+    if _, err := executor.Exec(query, id); err != nil {
+        return fmt.Errorf("failed to delete payment webhook endpoint by id: %w", err)
     }
 
     return nil
@@ -728,67 +724,67 @@ func (s *WebhookEndpointStore) DeleteByID(id uint64) error {
 
 
 //
-// Update payment onchain webhook endpoint by ID.
+// Update payment webhook endpoint by ID.
 //
-func (s *WebhookEndpointStore) UpdateByID(id uint64, p *WebhookEndpointUpdateParams) error {
+func (s *WebhookEndpointStore) UpdateByID(executor helper.Executor, id uint64, p *WebhookEndpointUpdateParams) error {
     if s == nil {
-        return fmt.Errorf("failed to update payment onchain webhook endpoint by id: missing required parameter: request_store=null")
-    }
-    if s.executor == nil {
-        return fmt.Errorf("failed to update payment onchain webhook endpoint by id: missing required parameter: executor=null")
+        return fmt.Errorf("failed to update payment webhook endpoint by id: missing required parameter: request_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update payment onchain webhook endpoint by id: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to update payment webhook endpoint by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to update payment webhook endpoint by id: missing required parameter: executor=null")
     }
     if id == 0 {
-        return fmt.Errorf("failed to update payment onchain webhook endpoint by id: invalid parameter: id=0")
+        return fmt.Errorf("failed to update payment webhook endpoint by id: invalid parameter: id=0")
     }
     if p == nil {
-        return fmt.Errorf("failed to update payment onchain webhook endpoint by id: missing required parameter: webhook_endpoint_update_params=null")
+        return fmt.Errorf("failed to update payment webhook endpoint by id: missing required parameter: webhook_endpoint_update_params=null")
     }
 
     // Validate webhook endpoint update params.
     if p.OwnerRef != nil {
         if err := ValidateWebhookEndpointOwnerRef(*p.OwnerRef); err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
     if p.Name != nil {
         if err := ValidateWebhookEndpointName(*p.Name); err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
     if p.URL != nil {
         if err := ValidateWebhookEndpointURL(*p.URL); err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
     if p.EncryptedSecret != nil {
         if err := ValidateWebhookEndpointEncryptedSecret(*p.EncryptedSecret); err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
     if p.SecretProviderKind != nil {
         if err := ValidateWebhookEndpointSecretProviderKind(*p.SecretProviderKind); err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
     if p.SecretKeyVersion != nil {
         if err := ValidateWebhookEndpointSecretKeyVersion(*p.SecretKeyVersion); err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
     if p.SignatureAlgorithm != nil {
         if err := ValidateWebhookEndpointSignatureAlgorithm(*p.SignatureAlgorithm); err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
 
     // Check whether unique key is conflict.
     if p.OwnerRef != nil || p.Name != nil {
-        webhookEndpoint, err := s.SelectByID(id)
+        webhookEndpoint, err := s.SelectByID(executor, id)
         if err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
 
         ownerRef := webhookEndpoint.OwnerRef
@@ -801,13 +797,13 @@ func (s *WebhookEndpointStore) UpdateByID(id uint64, p *WebhookEndpointUpdatePar
             name = *p.Name
         }
 
-        newWebhookEndpoint, err := s.SelectByOwnerRefAndName(ownerRef, name)
+        newWebhookEndpoint, err := s.SelectByOwnerRefAndName(executor, ownerRef, name)
         if err != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
 
         if newWebhookEndpoint != nil {
-            return fmt.Errorf("failed to update payment onchain webhook endpoint by id: conflict: owner_ref=%q name=%q", ownerRef, name)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: conflict: owner_ref=%q name=%q", ownerRef, name)
         }
     }
 
@@ -844,15 +840,15 @@ func (s *WebhookEndpointStore) UpdateByID(id uint64, p *WebhookEndpointUpdatePar
     }
 
     if len(assignments) == 0 {
-        return fmt.Errorf("failed to update payment onchain webhook endpoint by id: invalid parameter: assignments=%q", "empty")
+        return fmt.Errorf("failed to update payment webhook endpoint by id: invalid parameter: assignments=%q", "empty")
     }
 
     args = append(args, id)
 
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
-    if _, err := s.executor.Exec(query, args...); err != nil {
-        return fmt.Errorf("failed to update payment onchain webhook endpoint by id: %w", err)
+    if _, err := executor.Exec(query, args...); err != nil {
+        return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
     }
 
     return nil
@@ -913,7 +909,7 @@ func (p *WebhookEndpointSelectParams) BuildQuery(selectFromClause string) (strin
 
 
 //
-// Validate payment onchain webhook endpoint select params.
+// Validate payment webhook endpoint select params.
 //
 // Version:
 //   - 2025-06-01: Added.
@@ -921,7 +917,7 @@ func (p *WebhookEndpointSelectParams) BuildQuery(selectFromClause string) (strin
 func (p *WebhookEndpointSelectParams) Validate() error {
     // Guard.
     if p == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_webhook_endpoint_select_params=null")
+        return fmt.Errorf("missing required parameter: payment_webhook_endpoint_select_params=null")
     }
 
     if p.ID != nil {

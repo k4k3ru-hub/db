@@ -42,8 +42,7 @@ type IntentTransfer struct {
 }
 
 type IntentTransferStore struct {
-    executor         helper.Executor
-    tableName        string
+    tableName       string
     intentTableName string
 }
 
@@ -103,19 +102,18 @@ func GenerateIntentTransferID() uint64 {
 // Version:
 //   - 2026-05-16: Added.
 //
-func NewIntentTransferStore(executor helper.Executor, tableName, intentTableName string) (*IntentTransferStore, error) {
-    if executor == nil {
-        return nil, fmt.Errorf("failed to create payment onchain intent transfer store: missing required parameter: executor=null")
-    }
+func NewIntentTransferStore(tableName, intentTableName string) (*IntentTransferStore, error) {
+    // Guard.
+    tableName = strings.TrimSpace(tableName)
     if tableName == "" {
         return nil, fmt.Errorf("failed to create payment onchain intent transfer store: missing required parameter: table_name=%q", "empty")
     }
+    intentTableName = strings.TrimSpace(intentTableName)
     if intentTableName == "" {
         return nil, fmt.Errorf("failed to create payment onchain intent transfer store: missing required parameter: request_table_name=%q", "empty")
     }
 
     return &IntentTransferStore{
-        executor:        executor,
         tableName:       tableName,
         intentTableName: intentTableName,
     }, nil
@@ -480,15 +478,15 @@ func (t *IntentTransfer) ValidateAmount() error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *IntentTransferStore) CreateTable() error {
+func (s *IntentTransferStore) CreateTable(executor helper.Executor) error {
     if s == nil {
         return fmt.Errorf("failed to create payment onchain intent transfers table: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to create payment onchain intent transfers table: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to create payment onchain intent transfers table: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to create payment onchain intent transfers table: missing required parameter: executor=null")
     }
     if s.intentTableName == "" {
         return fmt.Errorf("failed to create payment onchain intent transfers table: missing required parameter: request_table_name=%q", "empty")
@@ -540,7 +538,7 @@ func (s *IntentTransferStore) CreateTable() error {
         ColIntentID, s.intentTableName, ColID,
     )
 
-    if _, err := s.executor.Exec(query); err != nil {
+    if _, err := executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create payment onchain intent transfers table: %w", err)
     }
 
@@ -554,15 +552,15 @@ func (s *IntentTransferStore) CreateTable() error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *IntentTransferStore) Insert(p *IntentTransferInsertParams) error {
+func (s *IntentTransferStore) Insert(executor helper.Executor, p *IntentTransferInsertParams) error {
     if s == nil {
         return fmt.Errorf("failed to insert payment onchain intent transfer: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to insert payment onchain intent transfer: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to insert payment onchain intent transfer: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to insert payment onchain intent transfer: missing required parameter: executor=null")
     }
     if p == nil {
         return fmt.Errorf("failed to insert payment onchain intent transfer: missing required parameter: tx_insert_params=null")
@@ -638,7 +636,7 @@ func (s *IntentTransferStore) Insert(p *IntentTransferInsertParams) error {
         ColUpdatedAt,
     )
 
-    if _, err := s.executor.Exec(
+    if _, err := executor.Exec(
         query,
         p.ID,
         p.IntentID,
@@ -668,15 +666,15 @@ func (s *IntentTransferStore) Insert(p *IntentTransferInsertParams) error {
 // Version:
 //   - 2026-05-27: Added.
 //
-func (s *IntentTransferStore) Upsert(p *IntentTransferInsertParams) error {
+func (s *IntentTransferStore) Upsert(executor helper.Executor, p *IntentTransferInsertParams) error {
     if s == nil {
         return fmt.Errorf("failed to upsert payment onchain intent transfer: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to upsert payment onchain intent transfer: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to upsert payment onchain intent transfer: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to upsert payment onchain intent transfer: missing required parameter: executor=null")
     }
     if p == nil {
         return fmt.Errorf("failed to upsert payment onchain intent transfer: missing required parameter: tx_insert_params=null")
@@ -764,7 +762,7 @@ func (s *IntentTransferStore) Upsert(p *IntentTransferInsertParams) error {
         ColUpdatedAt, ColUpdatedAt,
     )
 
-    if _, err := s.executor.Exec(
+    if _, err := executor.Exec(
         query,
         p.ID,
         p.IntentID,
@@ -794,15 +792,15 @@ func (s *IntentTransferStore) Upsert(p *IntentTransferInsertParams) error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *IntentTransferStore) Select(p *IntentTransferSelectParams) ([]*IntentTransfer, error) {
+func (s *IntentTransferStore) Select(executor helper.Executor, p *IntentTransferSelectParams) ([]*IntentTransfer, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select payment onchain intent transfers: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select payment onchain intent transfers: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select payment onchain intent transfers: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select payment onchain intent transfers: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
         return nil, fmt.Errorf("failed to select payment onchain intent transfers: %w", err)
@@ -811,7 +809,7 @@ func (s *IntentTransferStore) Select(p *IntentTransferSelectParams) ([]*IntentTr
     query, args := p.BuildQuery("SELECT * FROM " + s.tableName)
 
     // Execute.
-    rows, err := s.executor.Query(query, args...)
+    rows, err := executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select payment onchain intent transfers: %w", err)
     }
@@ -857,15 +855,15 @@ func (s *IntentTransferStore) Select(p *IntentTransferSelectParams) ([]*IntentTr
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *IntentTransferStore) SelectByID(id uint64) (*IntentTransfer, error) {
+func (s *IntentTransferStore) SelectByID(executor helper.Executor, id uint64) (*IntentTransfer, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select payment onchain intent transfer by id: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select payment onchain intent transfer by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select payment onchain intent transfer by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select payment onchain intent transfer by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return nil, fmt.Errorf("failed to select payment onchain intent transfer by id: invalid parameter: id=0")
@@ -874,7 +872,7 @@ func (s *IntentTransferStore) SelectByID(id uint64) (*IntentTransfer, error) {
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
     result := &IntentTransfer{}
-    err := s.executor.QueryRow(query, id).Scan(
+    err := executor.QueryRow(query, id).Scan(
         &result.ID,
         &result.IntentID,
         &result.OwnerRef,
@@ -907,15 +905,15 @@ func (s *IntentTransferStore) SelectByID(id uint64) (*IntentTransfer, error) {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *IntentTransferStore) Count(p *IntentTransferSelectParams) (int64, error) {
+func (s *IntentTransferStore) Count(executor helper.Executor, p *IntentTransferSelectParams) (int64, error) {
     if s == nil {
         return 0, fmt.Errorf("failed to count payment onchain intent transfers: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return 0, fmt.Errorf("failed to count payment onchain intent transfers: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return 0, fmt.Errorf("failed to count payment onchain intent transfers: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return 0, fmt.Errorf("failed to count payment onchain intent transfers: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
         return 0, fmt.Errorf("failed to count payment onchain intent transfers: %w", err)
@@ -925,7 +923,7 @@ func (s *IntentTransferStore) Count(p *IntentTransferSelectParams) (int64, error
 
     // Execute.
     var result int64
-    if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
+    if err := executor.QueryRow(query, args...).Scan(&result); err != nil {
         return 0, fmt.Errorf("failed to count payment onchain intent transfers: %w", err)
     }
 
@@ -939,15 +937,15 @@ func (s *IntentTransferStore) Count(p *IntentTransferSelectParams) (int64, error
 // Version:
 //   - 2026-05-16: Added.
 //
-func (s *IntentTransferStore) DeleteByID(id uint64) error {
+func (s *IntentTransferStore) DeleteByID(executor helper.Executor, id uint64) error {
     if s == nil {
         return fmt.Errorf("failed to delete payment onchain intent transfer by id: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to delete payment onchain intent transfer by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to delete payment onchain intent transfer by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to delete payment onchain intent transfer by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return fmt.Errorf("failed to delete payment onchain intent transfer by id: invalid parameter: id=0")
@@ -955,7 +953,7 @@ func (s *IntentTransferStore) DeleteByID(id uint64) error {
 
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
-    if _, err := s.executor.Exec(query, id); err != nil {
+    if _, err := executor.Exec(query, id); err != nil {
         return fmt.Errorf("failed to delete payment onchain intent transfer by id: %w", err)
     }
 
@@ -964,15 +962,15 @@ func (s *IntentTransferStore) DeleteByID(id uint64) error {
 
 
 
-func (s *IntentTransferStore) Update(option *IntentTransferUpdateParams) error {
+func (s *IntentTransferStore) Update(executor helper.Executor, option *IntentTransferUpdateParams) error {
     if s == nil {
         return fmt.Errorf("failed to update payment onchain intent transfer: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to update payment onchain intent transfer: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to update payment onchain intent transfer: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to update payment onchain intent transfer: missing required parameter: executor=null")
     }
     if option == nil {
         return fmt.Errorf("failed to update payment onchain intent transfer: missing required parameter: option=null")
@@ -1000,7 +998,7 @@ func (s *IntentTransferStore) Update(option *IntentTransferUpdateParams) error {
 
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
-    if _, err := s.executor.Exec(query, args...); err != nil {
+    if _, err := executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update payment onchain intent transfer: %w", err)
     }
 
@@ -1014,15 +1012,15 @@ func (s *IntentTransferStore) Update(option *IntentTransferUpdateParams) error {
 // Version:
 //   - 2026-05-30: Added.
 //
-func (s *IntentTransferStore) SumConfirmedAmountByIntentID(intentID uint64, latestBlockNumber uint64, requiredConfirmations uint64) (*big.Int, error) {
+func (s *IntentTransferStore) SumConfirmedAmountByIntentID(executor helper.Executor, intentID uint64, latestBlockNumber uint64, requiredConfirmations uint64) (*big.Int, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to sum confirmed amount by request id: missing required parameter: request_tx_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to sum confirmed amount by request id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to sum confirmed amount by request id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to sum confirmed amount by request id: missing required parameter: executor=null")
     }
     if intentID == 0 {
         return nil, fmt.Errorf("failed to sum confirmed amount by request id: invalid parameter: request_id=0")
@@ -1047,7 +1045,7 @@ func (s *IntentTransferStore) SumConfirmedAmountByIntentID(intentID uint64, late
     args = append(args, intentID, latestBlockNumber, latestBlockNumber, requiredConfirmations)
 
     // Execute.
-    rows, err := s.executor.Query(query, args...)
+    rows, err := executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to sum confirmed amount by request id: %w", err)
     }
