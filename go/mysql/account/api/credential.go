@@ -168,7 +168,7 @@ func GenerateCredentialAPIKey(prefix string) (string, error) {
 // Version:
 //   - 2026-05-09: Added.
 //
-func NewCredentialStore(executor helper.Executor, tableName, accountTableName string) (*CredentialStore, error) {
+func NewCredentialStore(tableName, accountTableName string) (*CredentialStore, error) {
     // Guard.
     tableName = strings.TrimSpace(tableName)
     if tableName == "" {

@@ -170,7 +170,7 @@ func GenerateAccountID() uint64 {
 // Version:
 //   - 2026-04-30: Added.
 //
-func NewAccountStore(executor helper.Executor, tableName string) (*AccountStore, error) {
+func NewAccountStore(tableName string) (*AccountStore, error) {
     // Guard.
     tableName = strings.TrimSpace(tableName)
     if tableName == "" {
