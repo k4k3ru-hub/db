@@ -59,7 +59,6 @@ type Credential struct {
 //   - 2026-05-09: Added.
 //
 type CredentialStore struct {
-    executor               helper.Executor
     tableName        string
     accountTableName string
 }
@@ -171,18 +170,16 @@ func GenerateCredentialAPIKey(prefix string) (string, error) {
 //
 func NewCredentialStore(executor helper.Executor, tableName, accountTableName string) (*CredentialStore, error) {
     // Guard.
-    if executor == nil {
-        return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: executor=null")
-    }
+    tableName = strings.TrimSpace(tableName)
     if tableName == "" {
         return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: table_name=%q", "empty")
     }
+    accountTableName = strings.TrimSpace(accountTableName)
     if accountTableName == "" {
         return nil, fmt.Errorf("failed to create account api credential store: missing required parameter: account_table_name=%q", "empty")
     }
 
     return &CredentialStore{
-        executor:               executor,
         tableName:        tableName,
         accountTableName: accountTableName,
     }, nil
@@ -558,16 +555,16 @@ func (c *Credential) ValidateScopes() error {
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) Count(option *CredentialSelectOption) (int64, error) {
+func (s *CredentialStore) Count(executor helper.Executor, option *CredentialSelectOption) (int64, error) {
     // Guard.
     if s == nil {
         return 0, fmt.Errorf("failed to count account api credentials: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return 0, fmt.Errorf("failed to count account api credentials: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return 0, fmt.Errorf("failed to count account api credentials: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return 0, fmt.Errorf("failed to count account api credentials: missing required parameter: executor=null")
     }
     if err := option.Validate(); err != nil {
         return 0, fmt.Errorf("failed to count account api credentials: %w", err)
@@ -577,7 +574,7 @@ func (s *CredentialStore) Count(option *CredentialSelectOption) (int64, error) {
 
     // Execute query.
     var result int64
-    err := s.executor.QueryRow(query, args...).Scan(&result)
+    err := executor.QueryRow(query, args...).Scan(&result)
     if err != nil {
         return 0, fmt.Errorf("failed to count account api credentials: %w", err)
     }
@@ -592,16 +589,16 @@ func (s *CredentialStore) Count(option *CredentialSelectOption) (int64, error) {
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) CreateTable() error {
+func (s *CredentialStore) CreateTable(executor helper.Executor) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to create account api credentials table: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to create account api credentials table: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to create account api credentials table: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to create account api credentials table: missing required parameter: executor=null")
     }
 
      // Generate CREATE TABLE query.
@@ -650,7 +647,7 @@ func (s *CredentialStore) CreateTable() error {
     )
 
     // Execute the query.
-    if _, err := s.executor.Exec(query); err != nil {
+    if _, err := executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create account api credentials table: %w", err)
     }
 
@@ -664,16 +661,16 @@ func (s *CredentialStore) CreateTable() error {
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) DeleteByID(id uint64) error {
+func (s *CredentialStore) DeleteByID(executor helper.Executor, id uint64) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to delete account api credential by id: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to delete account api credential by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to delete account api credential by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to delete account api credential by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return fmt.Errorf("failed to delete account api credential by id: invalid parameter: id=0")
@@ -683,7 +680,7 @@ func (s *CredentialStore) DeleteByID(id uint64) error {
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
     // Execute.
-    if _, err := s.executor.Exec(query, id); err != nil {
+    if _, err := executor.Exec(query, id); err != nil {
         return fmt.Errorf("failed to delete account api credential by id: %w", err)
     }
 
@@ -697,16 +694,16 @@ func (s *CredentialStore) DeleteByID(id uint64) error {
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) Insert(p *CredentialInsertParams) error {
+func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertParams) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to insert account api credential: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to insert account api credential: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to insert account api credential: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to insert account api credential: missing required parameter: executor=null")
     }
     if p == nil {
         return fmt.Errorf("failed to insert account api credential: missing required parameter: credential_insert_params=null")
@@ -794,7 +791,7 @@ func (s *CredentialStore) Insert(p *CredentialInsertParams) error {
     }
 
     // Execute.
-    if _, err := s.executor.Exec(
+    if _, err := executor.Exec(
         query,
         p.ID,
         p.AccountID,
@@ -824,16 +821,16 @@ func (s *CredentialStore) Insert(p *CredentialInsertParams) error {
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) Select(option *CredentialSelectOption) ([]*Credential, error) {
+func (s *CredentialStore) Select(executor helper.Executor, option *CredentialSelectOption) ([]*Credential, error) {
     // Guard.
     if s == nil {
         return nil, fmt.Errorf("failed to select account api credentials: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select account api credentials: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account api credentials: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account api credentials: missing required parameter: executor=null")
     }
     if err := option.Validate(); err != nil {
         return nil, fmt.Errorf("failed to select account api credentials: %w", err)
@@ -842,7 +839,7 @@ func (s *CredentialStore) Select(option *CredentialSelectOption) ([]*Credential,
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
     // Execute.
-    rows, err := s.executor.Query(query, args...)
+    rows, err := executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select account api credentials: %w", err)
     }
@@ -890,16 +887,16 @@ func (s *CredentialStore) Select(option *CredentialSelectOption) ([]*Credential,
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
+func (s *CredentialStore) SelectByID(executor helper.Executor, id uint64) (*Credential, error) {
     // Guard.
     if s == nil {
         return nil, fmt.Errorf("failed to select account api credential by id: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select account api credential by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account api credential by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account api credential by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return nil, fmt.Errorf("failed to select account api credential by id: invalid parameter: id=0")
@@ -909,7 +906,7 @@ func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
     // Execute.
-    row := s.executor.QueryRow(query, id)
+    row := executor.QueryRow(query, id)
 
     // Scan.
     result := &Credential{}
@@ -946,16 +943,16 @@ func (s *CredentialStore) SelectByID(id uint64) (*Credential, error) {
 // Version:
 //   - 2026-06-03: Added.
 //
-func (s *CredentialStore) SelectByAPIKey(apiKey string) (*Credential, error) {
+func (s *CredentialStore) SelectByAPIKey(executor helper.Executor, apiKey string) (*Credential, error) {
     // Guard.
     if s == nil {
         return nil, fmt.Errorf("failed to select account api credential by api key: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select account api credential by api key: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account api credential by api key: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account api credential by api key: missing required parameter: executor=null")
     }
     if apiKey == "" {
         return nil, fmt.Errorf("failed to select account api credential by api key: invalid parameter: api_key=%q", "empty")
@@ -965,7 +962,7 @@ func (s *CredentialStore) SelectByAPIKey(apiKey string) (*Credential, error) {
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColAPIKey)
 
     // Execute query.
-    row := s.executor.QueryRow(query, apiKey)
+    row := executor.QueryRow(query, apiKey)
 
     // Scan.
     result := &Credential{}
@@ -1002,16 +999,16 @@ func (s *CredentialStore) SelectByAPIKey(apiKey string) (*Credential, error) {
 // Version:
 //   - 2026-05-10: Added.
 //
-func (s *CredentialStore) SelectByAccountIDAndName(accountID uint64, name string) (*Credential, error) {
+func (s *CredentialStore) SelectByAccountIDAndName(executor helper.Executor, accountID uint64, name string) (*Credential, error) {
     // Guard.
     if s == nil {
         return nil, fmt.Errorf("failed to select account api credential by account id and name: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select account api credential by account id and name: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account api credential by account id and name: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account api credential by account id and name: missing required parameter: executor=null")
     }
     if accountID == 0 {
         return nil, fmt.Errorf("failed to select account api credential by account id and name: invalid parameter: account_id=0")
@@ -1024,7 +1021,7 @@ func (s *CredentialStore) SelectByAccountIDAndName(accountID uint64, name string
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? AND %s = ? LIMIT 1;", s.tableName, ColAccountID, ColName)
 
     // Execute.
-    row := s.executor.QueryRow(query, accountID, name)
+    row := executor.QueryRow(query, accountID, name)
 
     // Scan.
     result := &Credential{}
@@ -1061,16 +1058,16 @@ func (s *CredentialStore) SelectByAccountIDAndName(accountID uint64, name string
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) Update(id uint64, p *CredentialUpdateParams) error {
+func (s *CredentialStore) Update(executor helper.Executor, id uint64, p *CredentialUpdateParams) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to update account api credential by id: missing required parameter: credential_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to update account api credential by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to update account api credential by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to update account api credential by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return fmt.Errorf("failed to update account api credential by id: invalid parameter: id=0")
@@ -1182,7 +1179,7 @@ func (s *CredentialStore) Update(id uint64, p *CredentialUpdateParams) error {
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
     // Execute query.
-    if _, err := s.executor.Exec(query, args...); err != nil {
+    if _, err := executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update account api credential by id: %w", err)
     }
 

@@ -41,7 +41,6 @@ type Account struct {
 
 
 type AccountStore struct {
-    executor  helper.Executor
     tableName string
 }
 
@@ -173,15 +172,12 @@ func GenerateAccountID() uint64 {
 //
 func NewAccountStore(executor helper.Executor, tableName string) (*AccountStore, error) {
     // Guard.
-    if executor == nil {
-        return nil, fmt.Errorf("failed to create account store: missing required parameter: executor=null")
-    }
+    tableName = strings.TrimSpace(tableName)
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create account store: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to create new account store: missing required parameter: table_name=%q", "empty")
     }
 
     return &AccountStore{
-        executor:  executor,
         tableName: tableName,
     }, nil
 }
@@ -193,16 +189,16 @@ func NewAccountStore(executor helper.Executor, tableName string) (*AccountStore,
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) Count(option *AccountSelectOption) (int64, error) {
+func (s *AccountStore) Count(executor helper.Executor, option *AccountSelectOption) (int64, error) {
     // Guard.
     if s == nil {
         return 0, fmt.Errorf("failed to count accounts: missing required parameter: account_store=null")
     }
-    if s.executor == nil {
-        return 0, fmt.Errorf("failed to count accounts: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return 0, fmt.Errorf("failed to count accounts: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return 0, fmt.Errorf("failed to count accounts: missing required parameter: executor=null")
     }
     if err := option.Validate(); err != nil {
         return 0, fmt.Errorf("failed to count accounts: %w", err)
@@ -212,7 +208,7 @@ func (s *AccountStore) Count(option *AccountSelectOption) (int64, error) {
 
     // Execute query.
     var result int64
-    err := s.executor.QueryRow(query, args...).Scan(&result)
+    err := executor.QueryRow(query, args...).Scan(&result)
     if err != nil {
         return 0, fmt.Errorf("failed to count accounts: %w", err)
     }
@@ -227,16 +223,16 @@ func (s *AccountStore) Count(option *AccountSelectOption) (int64, error) {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) CreateTable() error {
+func (s *AccountStore) CreateTable(executor helper.Executor) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to create accounts table: missing required parameter: account_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to create accounts table: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to create accounts table: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to create accounts table: missing required parameter: executor=null")
     }
 
     // Generate CREATE TABLE query.
@@ -261,7 +257,7 @@ func (s *AccountStore) CreateTable() error {
     )
 
     // Execute query.
-    if _, err := s.executor.Exec(query); err != nil {
+    if _, err := executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create accounts table: %w", err)
     }
 
@@ -275,16 +271,16 @@ func (s *AccountStore) CreateTable() error {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) DeleteByID(id uint64) error {
+func (s *AccountStore) DeleteByID(executor helper.Executor, id uint64) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to delete account by id: missing required parameter: account_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to delete account by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to delete account by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to delete account by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return fmt.Errorf("failed to delete account by id: invalid parameter: id=0")
@@ -294,7 +290,7 @@ func (s *AccountStore) DeleteByID(id uint64) error {
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
     // Execute query.
-    if _, err := s.executor.Exec(query, id); err != nil {
+    if _, err := executor.Exec(query, id); err != nil {
         return fmt.Errorf("failed to delete account by id: %w", err)
     }
 
@@ -308,16 +304,16 @@ func (s *AccountStore) DeleteByID(id uint64) error {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) Insert(p *AccountInsertParams) error {
+func (s *AccountStore) Insert(executor helper.Executor, p *AccountInsertParams) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: account_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to insert account: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to insert account: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to insert account: missing required parameter: executor=null")
     }
     if p == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: account_insert_params=null")
@@ -353,7 +349,7 @@ func (s *AccountStore) Insert(p *AccountInsertParams) error {
     }
 
     // Execute query.
-    if _, err := s.executor.Exec(
+    if _, err := executor.Exec(
         query,
         p.ID,
         p.Status,
@@ -371,16 +367,16 @@ func (s *AccountStore) Insert(p *AccountInsertParams) error {
 //
 // Select accounts.
 //
-func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
+func (s *AccountStore) Select(executor helper.Executor, option *AccountSelectOption) ([]*Account, error) {
     // Guard.
     if s == nil {
         return nil, fmt.Errorf("failed to select accounts: missing required parameter: account_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select accounts: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select accounts: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select accounts: missing required parameter: executor=null")
     }
     if err := option.Validate(); err != nil {
         return nil, fmt.Errorf("failed to select accounts: %w", err)
@@ -389,7 +385,7 @@ func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
     // Execute query.
-    rows, err := s.executor.Query(query, args...)
+    rows, err := executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select accounts: %w", err)
     }
@@ -427,16 +423,16 @@ func (s *AccountStore) Select(option *AccountSelectOption) ([]*Account, error) {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
+func (s *AccountStore) SelectByID(executor helper.Executor, id uint64) (*Account, error) {
     // Guard.
     if s == nil {
         return nil, fmt.Errorf("failed to select account by id: missing required parameter: account_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select account by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select account by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return nil, fmt.Errorf("failed to select account by id: invalid parameter: id=empty")
@@ -446,7 +442,7 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
     // Execute.
-    row := s.executor.QueryRow(query, id)
+    row := executor.QueryRow(query, id)
 
     // Scan.
     result := &Account{}
@@ -474,16 +470,16 @@ func (s *AccountStore) SelectByID(id uint64) (*Account, error) {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) Update(id uint64, option *AccountUpdateOption) error {
+func (s *AccountStore) Update(executor helper.Executor, id uint64, option *AccountUpdateOption) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to update account: missing required parameter: account_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to update account: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to update account: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to update account: missing required parameter: executor=null")
     }
     if option == nil {
         return fmt.Errorf("failed to update account: missing required parameter: option=null")
@@ -520,7 +516,7 @@ func (s *AccountStore) Update(id uint64, option *AccountUpdateOption) error {
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
     // Execute query.
-    if _, err := s.executor.Exec(query, args...); err != nil {
+    if _, err := executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update account: %w", err)
     }
 

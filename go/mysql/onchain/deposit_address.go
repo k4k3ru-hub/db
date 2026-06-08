@@ -38,7 +38,6 @@ type DepositAddress struct {
 }
 
 type DepositAddressStore struct {
-    executor  helper.Executor
     tableName string
 }
 
@@ -95,15 +94,12 @@ func GenerateDepositAddressID() uint64 {
 //
 func NewDepositAddressStore(executor helper.Executor, tableName string) (*DepositAddressStore, error) {
     // Guard.
-    if executor == nil {
-        return nil, fmt.Errorf("failed to create onchain deposit address store: missing required parameter: executor=null")
-    }
+    tableName = strings.TrimSpace(tableName)
     if tableName == "" {
         return nil, fmt.Errorf("failed to create onchain deposit address store: missing required parameter: table_name=%q", "empty")
     }
 
     return &DepositAddressStore{
-        executor:  executor,
         tableName: tableName,
     }, nil
 }
@@ -387,15 +383,15 @@ func (w *DepositAddress) ValidateEncryptedPrivateKey() error {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *DepositAddressStore) CreateTable() error {
+func (s *DepositAddressStore) CreateTable(executor helper.Executor) error {
     if s == nil {
         return fmt.Errorf("failed to create onchain deposit addresss table: missing required parameter: wallet_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to create onchain deposit addresss table: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to create onchain deposit addresss table: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to create onchain deposit addresss table: missing required parameter: executor=null")
     }
 
     query := fmt.Sprintf(
@@ -432,7 +428,7 @@ func (s *DepositAddressStore) CreateTable() error {
         ColOwnerRef, ColChain, ColNetwork, ColStatus,
     )
 
-    if _, err := s.executor.Exec(query); err != nil {
+    if _, err := executor.Exec(query); err != nil {
         return fmt.Errorf("failed to create onchain deposit addresss table: %w", err)
     }
 
@@ -446,15 +442,15 @@ func (s *DepositAddressStore) CreateTable() error {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *DepositAddressStore) Insert(p *DepositAddressInsertParams) error {
+func (s *DepositAddressStore) Insert(executor helper.Executor, p *DepositAddressInsertParams) error {
     if s == nil {
         return fmt.Errorf("failed to insert onchain deposit address: missing required parameter: wallet_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to insert onchain deposit address: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to insert onchain deposit address: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to insert onchain deposit address: missing required parameter: executor=null")
     }
     if p == nil {
         return fmt.Errorf("failed to insert onchain deposit address: missing required parameter: wallet_insert_params=null")
@@ -518,7 +514,7 @@ func (s *DepositAddressStore) Insert(p *DepositAddressInsertParams) error {
         ColUpdatedAt,
     )
 
-    if _, err := s.executor.Exec(
+    if _, err := executor.Exec(
         query,
         p.ID,
         p.OwnerRef,
@@ -545,15 +541,15 @@ func (s *DepositAddressStore) Insert(p *DepositAddressInsertParams) error {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *DepositAddressStore) Select(p *DepositAddressSelectParams) ([]*DepositAddress, error) {
+func (s *DepositAddressStore) Select(executor helper.Executor, p *DepositAddressSelectParams) ([]*DepositAddress, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select onchain deposit addresss: missing required parameter: wallet_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select onchain deposit addresss: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select onchain deposit addresss: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select onchain deposit addresss: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
         return nil, fmt.Errorf("failed to select onchain deposit addresss: %w", err)
@@ -562,7 +558,7 @@ func (s *DepositAddressStore) Select(p *DepositAddressSelectParams) ([]*DepositA
     query, args := p.BuildQuery("SELECT * FROM " + s.tableName)
 
     // Execute.
-    rows, err := s.executor.Query(query, args...)
+    rows, err := executor.Query(query, args...)
     if err != nil {
         return nil, fmt.Errorf("failed to select onchain deposit addresss: %w", err)
     }
@@ -604,15 +600,15 @@ func (s *DepositAddressStore) Select(p *DepositAddressSelectParams) ([]*DepositA
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *DepositAddressStore) SelectByID(id uint64) (*DepositAddress, error) {
+func (s *DepositAddressStore) SelectByID(executor helper.Executor, id uint64) (*DepositAddress, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select onchain deposit address by id: missing required parameter: wallet_store=null")
     }
-    if s.executor == nil {
-        return nil, fmt.Errorf("failed to select onchain deposit address by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return nil, fmt.Errorf("failed to select onchain deposit address by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select onchain deposit address by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return nil, fmt.Errorf("failed to select onchain deposit address by id: invalid parameter: id=0")
@@ -620,7 +616,7 @@ func (s *DepositAddressStore) SelectByID(id uint64) (*DepositAddress, error) {
 
     query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
-    row := s.executor.QueryRow(query, id)
+    row := executor.QueryRow(query, id)
 
     result := &DepositAddress{}
     err := row.Scan(
@@ -653,15 +649,15 @@ func (s *DepositAddressStore) SelectByID(id uint64) (*DepositAddress, error) {
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *DepositAddressStore) Count(p *DepositAddressSelectParams) (int64, error) {
+func (s *DepositAddressStore) Count(executor helper.Executor, p *DepositAddressSelectParams) (int64, error) {
     if s == nil {
         return 0, fmt.Errorf("failed to count onchain deposit addresss: missing required parameter: wallet_store=null")
     }
-    if s.executor == nil {
-        return 0, fmt.Errorf("failed to count onchain deposit addresss: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return 0, fmt.Errorf("failed to count onchain deposit addresss: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return 0, fmt.Errorf("failed to count onchain deposit addresss: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
         return 0, fmt.Errorf("failed to count onchain deposit addresss: %w", err)
@@ -670,7 +666,7 @@ func (s *DepositAddressStore) Count(p *DepositAddressSelectParams) (int64, error
     query, args := p.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     var result int64
-    if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
+    if err := executor.QueryRow(query, args...).Scan(&result); err != nil {
         return 0, fmt.Errorf("failed to count onchain deposit addresss: %w", err)
     }
 
@@ -684,15 +680,15 @@ func (s *DepositAddressStore) Count(p *DepositAddressSelectParams) (int64, error
 // Version:
 //   - 2026-05-25: Added.
 //
-func (s *DepositAddressStore) DeleteByID(id uint64) error {
+func (s *DepositAddressStore) DeleteByID(executor helper.Executor, id uint64) error {
     if s == nil {
         return fmt.Errorf("failed to delete onchain deposit address by id: missing required parameter: wallet_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to delete onchain deposit address by id: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to delete onchain deposit address by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to delete onchain deposit address by id: missing required parameter: executor=null")
     }
     if id == 0 {
         return fmt.Errorf("failed to delete onchain deposit address by id: invalid parameter: id=0")
@@ -700,7 +696,7 @@ func (s *DepositAddressStore) DeleteByID(id uint64) error {
 
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
-    if _, err := s.executor.Exec(query, id); err != nil {
+    if _, err := executor.Exec(query, id); err != nil {
         return fmt.Errorf("failed to delete onchain deposit address by id: %w", err)
     }
 
@@ -715,15 +711,15 @@ func (s *DepositAddressStore) DeleteByID(id uint64) error {
 //   - 2026-05-25: Added.
 //
 
-func (s *DepositAddressStore) Update(p *DepositAddressUpdateParams) error {
+func (s *DepositAddressStore) Update(executor helper.Executor, p *DepositAddressUpdateParams) error {
     if s == nil {
         return fmt.Errorf("failed to update onchain deposit address: missing required parameter: wallet_store=null")
     }
-    if s.executor == nil {
-        return fmt.Errorf("failed to update onchain deposit address: missing required parameter: executor=null")
-    }
     if s.tableName == "" {
         return fmt.Errorf("failed to update onchain deposit address: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to update onchain deposit address: missing required parameter: executor=null")
     }
     if p == nil {
         return fmt.Errorf("failed to update onchain deposit address: missing required parameter: wallet_update_params=null")
@@ -751,7 +747,7 @@ func (s *DepositAddressStore) Update(p *DepositAddressUpdateParams) error {
 
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
-    if _, err := s.executor.Exec(query, args...); err != nil {
+    if _, err := executor.Exec(query, args...); err != nil {
         return fmt.Errorf("failed to update onchain deposit address: %w", err)
     }
 
