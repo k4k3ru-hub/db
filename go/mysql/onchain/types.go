@@ -102,78 +102,74 @@ func (s *DepositAddressStatus) Scan(src any) error {
 }
 
 
-type Chain k4k3ruOnchainCore.Chain
+type ChainFamily k4k3ruOnchainCore.ChainFamily
 
 const (
-    ChainEthereum  Chain = Chain(k4k3ruOnchainCore.ChainEthereum)
-    ChainBase      Chain = Chain(k4k3ruOnchainCore.ChainBase)
-    ChainBNB       Chain = Chain(k4k3ruOnchainCore.ChainBNB)
-    ChainPolygon   Chain = Chain(k4k3ruOnchainCore.ChainPolygon)
-    ChainAvalanche Chain = Chain(k4k3ruOnchainCore.ChainAvalanche)
-    ChainSolana    Chain = Chain(k4k3ruOnchainCore.ChainSolana)
-    ChainSui       Chain = Chain(k4k3ruOnchainCore.ChainSui)
+    ChainFamilyEVM    ChainFamily = ChainFamily(k4k3ruOnchainCore.ChainFamilyEVM)
+    ChainFamilySolana ChainFamily = ChainFamily(k4k3ruOnchainCore.ChainFamilySolana)
+    ChainFamilySui    ChainFamily = ChainFamily(k4k3ruOnchainCore.ChainFamilySui)
 )
 
 
 //
-// Check whether chain is valid.
+// Check whether chain family is valid.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func (c Chain) IsValid() bool {
-    return k4k3ruOnchainCore.Chain(c).IsValid()
+func (f ChainFamily) IsValid() bool {
+    return k4k3ruOnchainCore.ChainFamily(f).IsValid()
 }
 
 
 //
-// Validate chain.
+// Validate chain family.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func (c Chain) Validate() error {
-    return k4k3ruOnchainCore.Chain(c).Validate()
+func (f ChainFamily) Validate() error {
+    return k4k3ruOnchainCore.ChainFamily(f).Validate()
 }
 
 
 //
-// Get chain as driver.Valuer.
+// Get chain family as driver.Valuer.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func (c Chain) Value() (driver.Value, error) {
-    if err := c.Validate(); err != nil {
+func (f ChainFamily) Value() (driver.Value, error) {
+    if err := f.Validate(); err != nil {
         return nil, err
     }
-    return string(c), nil
+    return string(f), nil
 }
 
 
 //
-// Scan chain as sql.Scanner.
+// Scan chain_ family as sql.Scanner.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func (c *Chain) Scan(src any) error {
-    if c == nil {
-        return fmt.Errorf("missing required parameter: chain=null")
+func (f *ChainFamily) Scan(src any) error {
+    if f == nil {
+        return fmt.Errorf("missing required parameter: chain_family=null")
     }
 
     switch v := src.(type) {
     case string:
-        *c = Chain(v)
+        *f = ChainFamily(v)
     case []byte:
-        *c = Chain(string(v))
+        *f = ChainFamily(string(v))
     case nil:
-        return fmt.Errorf("missing required parameter: chain=null")
+        return fmt.Errorf("missing required parameter: chain_family=null")
     default:
-        return fmt.Errorf("unsupported parameter: chain: type=%T", src)
+        return fmt.Errorf("unsupported parameter: chain_family: type=%T", src)
     }
 
-    if err := c.Validate(); err != nil {
+    if err := f.Validate(); err != nil {
         return err
     }
 
