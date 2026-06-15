@@ -18,6 +18,7 @@ type IntentStatus uint8
 const (
     IntentStatusPending IntentStatus = iota
     IntentStatusCompleted
+    IntentStatusConfirming
     IntentStatusExpired
     IntentStatusCanceled
     IntentStatusFailed
@@ -83,6 +84,8 @@ func (s IntentStatus) String() string {
         return "pending"
     case IntentStatusCompleted:
         return "completed"
+    case IntentStatusConfirming:
+        return "confirming"
     case IntentStatusExpired:
         return "expired"
     case IntentStatusCanceled:
