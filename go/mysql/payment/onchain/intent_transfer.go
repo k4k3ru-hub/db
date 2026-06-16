@@ -352,34 +352,6 @@ func (t *IntentTransfer) ValidateIntentTransferTxHash() error {
 
 
 //
-// Validate payment onchain intent transfer event index.
-//
-// Version:
-//   - 2026-05-31: Added.
-//
-func ValidateIntentTransferEventIndex(eventIndex uint64) error {
-    if eventIndex == 0 {
-        return fmt.Errorf("invalid parameter: event_index=0")
-    }
-    return nil
-}
-
-
-//
-// Validate payment onchain intent transfer event index.
-//
-// Version:
-//   - 2026-05-31: Added.
-//
-func (t *IntentTransfer) ValidateEventIndex() error {
-    if t == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_intent_transfer=null")
-    }
-    return ValidateIntentTransferEventIndex(t.EventIndex)
-}
-
-
-//
 // Validate payment onchain intent transfer from address.
 //
 // Version:
@@ -586,9 +558,6 @@ func (s *IntentTransferStore) Insert(executor helper.Executor, p *IntentTransfer
     if err := ValidateIntentTransferTxHash(p.TxHash); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent transfer: %w", err)
     }
-    if err := ValidateIntentTransferEventIndex(p.EventIndex); err != nil {
-        return fmt.Errorf("failed to insert payment onchain intent transfer: %w", err)
-    }
     if err := ValidateIntentTransferFromAddress(p.FromAddress); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent transfer: %w", err)
     }
@@ -698,9 +667,6 @@ func (s *IntentTransferStore) Upsert(executor helper.Executor, p *IntentTransfer
         return fmt.Errorf("failed to upsert payment onchain intent transfer: %w", err)
     }
     if err := ValidateIntentTransferTxHash(p.TxHash); err != nil {
-        return fmt.Errorf("failed to upsert payment onchain intent transfer: %w", err)
-    }
-    if err := ValidateIntentTransferEventIndex(p.EventIndex); err != nil {
         return fmt.Errorf("failed to upsert payment onchain intent transfer: %w", err)
     }
     if err := ValidateIntentTransferFromAddress(p.FromAddress); err != nil {
@@ -1233,11 +1199,6 @@ func (p *IntentTransferSelectParams) Validate() error {
     }
     if p.TxHash != nil {
         if err := ValidateIntentTransferTxHash(*p.TxHash); err != nil {
-            return err
-        }
-    }
-    if p.EventIndex != nil {
-        if err := ValidateIntentTransferEventIndex(*p.EventIndex); err != nil {
             return err
         }
     }
