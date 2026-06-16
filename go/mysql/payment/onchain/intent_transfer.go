@@ -5,13 +5,14 @@ package onchain
 
 import (
     "database/sql"
+    "errors"
     "fmt"
     "math/big"
     "strings"
     "time"
     "unicode/utf8"
 
-    _ "github.com/go-sql-driver/mysql"
+    "github.com/go-sql-driver/mysql"
 
     "github.com/k4k3ru-hub/db/go/mysql/helper"
 )
@@ -622,6 +623,10 @@ func (s *IntentTransferStore) Insert(executor helper.Executor, p *IntentTransfer
         p.CreatedAt,
         p.UpdatedAt,
     ); err != nil {
+        var mysqlErr *mysql.MySQLError
+        if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+            return fmt.Errorf("failed to insert payment onchain intent transfer: %w", helper.ErrDuplicateKey)
+        }
         return fmt.Errorf("failed to insert payment onchain intent transfer: %w", err)
     }
 
