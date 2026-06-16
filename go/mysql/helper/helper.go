@@ -6,6 +6,7 @@ package helper
 import (
     "context"
     "database/sql"
+    "errors"
     "fmt"
     "strconv"
     "strings"
@@ -14,6 +15,11 @@ import (
     "unicode/utf8"
 
     _ "github.com/go-sql-driver/mysql"
+)
+
+
+var (
+    ErrDuplicateKey = errors.New("duplicate key")
 )
 
 
