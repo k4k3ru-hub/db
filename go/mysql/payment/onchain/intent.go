@@ -1,11 +1,10 @@
 //
-// request.go
+// intent.go
 //
 package onchain
 
 import (
     "database/sql"
-    "encoding/json"
     "fmt"
     "strings"
     "time"
@@ -23,7 +22,7 @@ const (
 )
 
 var (
-    requestIDCounter = &helper.IdCounter{}
+    intentIDCounter = &helper.IdCounter{}
 )
 
 
@@ -40,7 +39,7 @@ type Intent struct {
     Memo              *string       `json:"memo,omitempty"`
     ExpiresAt         time.Time     `json:"expiresAt"`
     WebhookEndpointID *uint64       `json:"webhookEndpointId,omitempty"`
-    MetadataJSON      *string       `json:"metadataJson,omitempty"`
+    Metadata          *helper.JSON  `json:"metadata,omitempty"`
     CreatedAt         time.Time     `json:"createdAt,omitempty"`
     UpdatedAt         time.Time     `json:"updatedAt,omitempty"`
 }
@@ -62,7 +61,7 @@ type IntentInsertParams struct {
     Memo              *string       `json:"memo,omitempty"`
     ExpiresAt         time.Time     `json:"expiresAt"`
     WebhookEndpointID *uint64       `json:"webhookEndpointId,omitempty"`
-    MetadataJSON      *string       `json:"metadataJson,omitempty"`
+    Metadata          *helper.JSON  `json:"metadata,omitempty"`
     CreatedAt         time.Time     `json:"createdAt,omitempty"`
     UpdatedAt         time.Time     `json:"updatedAt,omitempty"`
     Ignore            bool          `json:"ignore"`
@@ -110,7 +109,7 @@ func DefaultExpiresAt() time.Time {
 //   - 2026-05-16: Added.
 //
 func GenerateIntentID() uint64 {
-    return requestIDCounter.GenerateID()
+    return intentIDCounter.GenerateID()
 }
 
 
@@ -481,33 +480,18 @@ func (r *Intent) ValidateWebhookEndpointID() error {
 
 
 //
-// Validate payment onchain intent metadata JSON.
+// Validate payment onchain intent metadata.
 //
 // Version:
 //   - 2026-05-31: Added.
 //
-func ValidateIntentMetadataJSON(metadataJSON *string) error {
-    if metadataJSON == nil {
+func ValidateIntentMetadata(metadata *helper.JSON) error {
+    if metadata == nil {
         return nil
     }
-    s := strings.TrimSpace(*metadataJSON)
-    if s == "" {
-        return fmt.Errorf("invalid parameter: metadata_json=%q", "empty")
-    }
-    if utf8.RuneCountInString(s) > 4096 {
-        return fmt.Errorf("invalid parameter: max_length=4096 metadata_json=%q", "too long")
-    }
-    if !json.Valid([]byte(s)) {
-        return fmt.Errorf("invalid parameter: metadata_json=%q", "invalid json")
-    }
 
-    var v any
-    if err := json.Unmarshal([]byte(s), &v); err != nil {
-        return fmt.Errorf("invalid parameter: metadata_json=%q: %w", "invalid json", err)
-    }
-
-    if _, ok := v.(map[string]any); !ok {
-        return fmt.Errorf("invalid parameter: metadata_json=%q", "must be json object")
+    if err := metadata.Validate(); err != nil {
+        return  fmt.Errorf("invalid parameter: metadata: %w", err)
     }
 
     return nil
@@ -515,16 +499,16 @@ func ValidateIntentMetadataJSON(metadataJSON *string) error {
 
 
 //
-// Validate payment onchain intent metadata JSON.
+// Validate payment onchain intent metadata.
 //
 // Version:
 //   - 2026-05-31: Added.
 //
-func (r *Intent) ValidateMetadataJSON() error {
+func (r *Intent) ValidateMetadata() error {
     if r == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentMetadataJSON(r.MetadataJSON)
+    return ValidateIntentMetadata(r.Metadata)
 }
 
 
@@ -579,7 +563,7 @@ func (s *IntentStore) CreateTable(executor helper.Executor) error {
         ColMemo,
         ColExpiresAt,
         ColWebhookEndpointID,
-        ColMetadataJSON,
+        ColMetadata,
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
@@ -647,7 +631,7 @@ func (s *IntentStore) Insert(executor helper.Executor, p *IntentInsertParams) er
     if err := ValidateIntentWebhookEndpointID(p.WebhookEndpointID); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent: %w", err)
     }
-    if err := ValidateIntentMetadataJSON(p.MetadataJSON); err != nil {
+    if err := ValidateIntentMetadata(p.Metadata); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent: %w", err)
     }
 
@@ -684,7 +668,7 @@ func (s *IntentStore) Insert(executor helper.Executor, p *IntentInsertParams) er
         ColMemo,
         ColExpiresAt,
         ColWebhookEndpointID,
-        ColMetadataJSON,
+        ColMetadata,
         ColCreatedAt,
         ColUpdatedAt,
     )
@@ -703,7 +687,7 @@ func (s *IntentStore) Insert(executor helper.Executor, p *IntentInsertParams) er
         p.Memo,
         p.ExpiresAt,
         p.WebhookEndpointID,
-        p.MetadataJSON,
+        p.Metadata,
         p.CreatedAt,
         p.UpdatedAt,
     ); err != nil {
@@ -759,7 +743,7 @@ func (s *IntentStore) Select(executor helper.Executor, p *IntentSelectParams) ([
             &row.Memo,
             &row.ExpiresAt,
             &row.WebhookEndpointID,
-            &row.MetadataJSON,
+            &row.Metadata,
             &row.CreatedAt,
             &row.UpdatedAt,
         ); err != nil {
@@ -815,7 +799,7 @@ func (s *IntentStore) SelectByID(executor helper.Executor, id uint64) (*Intent, 
         &result.Memo,
         &result.ExpiresAt,
         &result.WebhookEndpointID,
-        &result.MetadataJSON,
+        &result.Metadata,
         &result.CreatedAt,
         &result.UpdatedAt,
     )

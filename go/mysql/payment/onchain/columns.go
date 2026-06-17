@@ -15,7 +15,7 @@ const (
     ColID                 = "id"
     ColIntentID           = "intent_id"
     ColMemo               = "memo"
-    ColMetadataJSON       = "metadata_json"
+    ColMetadata           = "metadata"
     ColNetwork            = "network"
     ColOwnerRef           = "owner_ref"
     ColRecipientType      = "recipient_type"
