@@ -39,7 +39,7 @@ type Intent struct {
     Memo              *string       `json:"memo,omitempty"`
     ExpiresAt         time.Time     `json:"expiresAt"`
     WebhookEndpointID *uint64       `json:"webhookEndpointId,omitempty"`
-    Metadata          *helper.JSON  `json:"metadata,omitempty"`
+    Metadata          helper.JSON   `json:"metadata,omitempty"`
     CreatedAt         time.Time     `json:"createdAt,omitempty"`
     UpdatedAt         time.Time     `json:"updatedAt,omitempty"`
 }
@@ -61,7 +61,7 @@ type IntentInsertParams struct {
     Memo              *string       `json:"memo,omitempty"`
     ExpiresAt         time.Time     `json:"expiresAt"`
     WebhookEndpointID *uint64       `json:"webhookEndpointId,omitempty"`
-    Metadata          *helper.JSON  `json:"metadata,omitempty"`
+    Metadata          helper.JSON   `json:"metadata,omitempty"`
     CreatedAt         time.Time     `json:"createdAt,omitempty"`
     UpdatedAt         time.Time     `json:"updatedAt,omitempty"`
     Ignore            bool          `json:"ignore"`
@@ -485,7 +485,7 @@ func (r *Intent) ValidateWebhookEndpointID() error {
 // Version:
 //   - 2026-05-31: Added.
 //
-func ValidateIntentMetadata(metadata *helper.JSON) error {
+func ValidateIntentMetadata(metadata helper.JSON) error {
     if metadata == nil {
         return nil
     }
