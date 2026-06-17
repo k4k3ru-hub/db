@@ -6,6 +6,8 @@ package helper
 import (
     "context"
     "database/sql"
+    "database/sql/driver"
+    "encoding/json"
     "errors"
     "fmt"
     "strconv"
@@ -260,4 +262,71 @@ func ScanUint8(name string, value any) (uint8, error) {
     default:
         return 0, fmt.Errorf("unsupported parameter: %s_type=%T", name, value)
     }
+}
+
+
+type JSON json.RawMessage
+
+func (j JSON) Value() (driver.Value, error) {
+    if len(j) == 0 {
+        return nil, nil
+    }
+
+    if err := j.Validate(); err != nil {
+        return nil, err
+    }
+
+    return []byte(j), nil
+}
+
+func (j *JSON) Scan(src any) error {
+    if j == nil {
+        return fmt.Errorf("missing required parameter: json=null")
+    }
+
+    if src == nil {
+        *j = nil
+        return nil
+    }
+
+    var b []byte
+
+    switch v := src.(type) {
+    case []byte:
+        b = append([]byte(nil), v...)
+    case string:
+        b = []byte(v)
+    default:
+        return fmt.Errorf("unsupported parameter: json: type=%T", src)
+    }
+
+    *j = JSON(b)
+
+    if err := j.Validate(); err != nil {
+        return err
+    }
+
+    return nil
+}
+
+
+func (j *JSON) Validate() error {
+    if j == nil {
+        return fmt.Errorf("missing required parameter: json=null")
+    }
+    if len(*j) == 0 {
+        return fmt.Errorf("invalid parameter: json=%q", "empty")
+    }
+    if len(*j) > 4096 {
+        return fmt.Errorf("invalid parameter: json=%q max_bytes=4096", "too long")
+    }
+    if !json.Valid([]byte(*j)) {
+        return fmt.Errorf("invalid parameter: json=%q", string(*j))
+    }
+
+    return nil
+}
+
+func (j JSON) RawMessage() json.RawMessage {
+    return json.RawMessage(j)
 }
