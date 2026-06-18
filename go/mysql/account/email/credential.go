@@ -6,12 +6,13 @@ package email
 import (
     "database/sql"
     "encoding/json"
+    "errors"
     "fmt"
     "strings"
     "time"
     "unicode/utf8"
 
-    _ "github.com/go-sql-driver/mysql"
+    "github.com/go-sql-driver/mysql"
 
     "github.com/k4k3ru-hub/db/go/mysql/account"
     "github.com/k4k3ru-hub/db/go/mysql/helper"
@@ -53,6 +54,19 @@ type Credential struct {
 type CredentialStore struct {
     tableName        string
     accountTableName string
+}
+
+
+type CredentialInsertParams struct {
+    ID         uint64           `json:"id,string"`
+    AccountID  uint64           `json:"accountId,string"`
+    Email      string           `json:"email"`
+    Status     CredentialStatus `json:"status"`
+    LastUsedAt *time.Time       `json:"lastUsedAt,omitempty"`
+    MetaData   *string          `json:"metaData,omitempty"`
+    CreatedAt  time.Time        `json:"createdAt"`
+    UpdatedAt  time.Time        `json:"updatedAt"`
+    Ignore     bool      `json:"ignore"`
 }
 
 
@@ -373,7 +387,7 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
 // Version:
 //   - 2026-05-04: Added.
 //
-func (s *CredentialStore) Insert(executor helper.Executor, row *Credential) error {
+func (s *CredentialStore) Insert(executor helper.Executor, params *CredentialInsertParams) error {
     if s == nil {
         return fmt.Errorf("failed to insert account email credential: missing required parameter: credential_store=null")
     }
@@ -383,35 +397,35 @@ func (s *CredentialStore) Insert(executor helper.Executor, row *Credential) erro
     if executor == nil {
         return fmt.Errorf("failed to insert account email credential: missing required parameter: executor=null")
     }
-    if row == nil {
-        return fmt.Errorf("failed to insert account email credential: missing required parameter: credential=null")
+    if params == nil {
+        return fmt.Errorf("failed to insert account email credential: missing required parameter: credential_insert_params=null")
     }
-    if err := ValidateCredentialAccountID(row.AccountID); err != nil {
+    if err := ValidateCredentialAccountID(params.AccountID); err != nil {
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
-    if err := ValidateCredentialEmail(row.Email); err != nil {
+    if err := ValidateCredentialEmail(params.Email); err != nil {
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
-    if err := row.ValidateStatus(); err != nil {
+    if err := ValidateCredentialStatus(params.Status); err != nil {
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
-    if err := row.ValidateLastUsedAt(); err != nil {
+    if err := ValidateCredentialLastUsedAt(params.LastUsedAt); err != nil {
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
-    if err := row.ValidateMetaData(); err != nil {
+    if err := ValidateCredentialMetaData(params.MetaData); err != nil {
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
 
-    if row.ID == 0 {
-        row.ID = GenerateCredentialID()
+    if params.ID == 0 {
+        params.ID = GenerateCredentialID()
     }
 
     now := time.Now()
-    if row.CreatedAt.IsZero() {
-        row.CreatedAt = now
+    if params.CreatedAt.IsZero() {
+        params.CreatedAt = now
     }
-    if row.UpdatedAt.IsZero() {
-        row.UpdatedAt = now
+    if params.UpdatedAt.IsZero() {
+        params.UpdatedAt = now
     }
 
     query := fmt.Sprintf(
@@ -429,15 +443,19 @@ func (s *CredentialStore) Insert(executor helper.Executor, row *Credential) erro
 
     if _, err := executor.Exec(
         query,
-        row.ID,
-        row.AccountID,
-        row.Email,
-        row.Status,
-        row.LastUsedAt,
-        row.MetaData,
-        row.CreatedAt,
-        row.UpdatedAt,
+        params.ID,
+        params.AccountID,
+        params.Email,
+        params.Status,
+        params.LastUsedAt,
+        params.MetaData,
+        params.CreatedAt,
+        params.UpdatedAt,
     ); err != nil {
+        var mysqlErr *mysql.MySQLError
+        if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+            return fmt.Errorf("failed to insert account email credential: %w", helper.ErrDuplicateKey)
+        }
         return fmt.Errorf("failed to insert account email credential: %w", err)
     }
 

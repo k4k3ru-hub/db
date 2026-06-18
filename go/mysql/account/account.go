@@ -5,11 +5,13 @@ package account
 
 import (
     "database/sql"
+    "errors"
     "fmt"
     "strings"
     "time"
     "unicode/utf8"
-    _ "github.com/go-sql-driver/mysql"
+
+    "github.com/go-sql-driver/mysql"
 
     "github.com/k4k3ru-hub/db/go/mysql/helper"
 )
@@ -304,7 +306,7 @@ func (s *AccountStore) DeleteByID(executor helper.Executor, id uint64) error {
 // Version:
 //   - 2026-04-29: Added.
 //
-func (s *AccountStore) Insert(executor helper.Executor, p *AccountInsertParams) error {
+func (s *AccountStore) Insert(executor helper.Executor, params *AccountInsertParams) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: account_store=null")
@@ -315,13 +317,13 @@ func (s *AccountStore) Insert(executor helper.Executor, p *AccountInsertParams) 
     if executor == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: executor=null")
     }
-    if p == nil {
+    if params == nil {
         return fmt.Errorf("failed to insert account: missing required parameter: account_insert_params=null")
     }
-    if err := ValidateAccountStatus(p.Status); err != nil {
+    if err := ValidateAccountStatus(params.Status); err != nil {
         return fmt.Errorf("failed to insert account: %w", err)
     }
-    if err := ValidateAccountName(p.Name); err != nil {
+    if err := ValidateAccountName(params.Name); err != nil {
         return fmt.Errorf("failed to insert account: %w", err)
     }
 
@@ -336,27 +338,31 @@ func (s *AccountStore) Insert(executor helper.Executor, p *AccountInsertParams) 
         ColUpdatedAt,
     )
 
-    if p.ID == 0 {
-        p.ID = GenerateAccountID()
+    if params.ID == 0 {
+        params.ID = GenerateAccountID()
     }
 
     now := time.Now()
-    if p.CreatedAt.IsZero() {
-        p.CreatedAt = now
+    if params.CreatedAt.IsZero() {
+        params.CreatedAt = now
     }
-    if p.UpdatedAt.IsZero() {
-        p.UpdatedAt = now
+    if params.UpdatedAt.IsZero() {
+        params.UpdatedAt = now
     }
 
     // Execute query.
     if _, err := executor.Exec(
         query,
-        p.ID,
-        p.Status,
-        p.Name,
-        p.CreatedAt,
-        p.UpdatedAt,
+        params.ID,
+        params.Status,
+        params.Name,
+        params.CreatedAt,
+        params.UpdatedAt,
     ); err != nil {
+        var mysqlErr *mysql.MySQLError
+        if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+            return fmt.Errorf("failed to insert account: %w", helper.ErrDuplicateKey)
+        }
         return fmt.Errorf("failed to insert account: %w", err)
     }
 
