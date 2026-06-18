@@ -165,7 +165,7 @@ func HashCode(code string, maxCodeLength int) (string, error) {
 // Version:
 //   - 2026-05-03: Added.
 //
-func NewOTPStore(executor helper.Executor, tableName string) (*OTPStore, error) {
+func NewOTPStore(tableName string) (*OTPStore, error) {
     // Guard.
     tableName = strings.TrimSpace(tableName)
     if tableName == "" {
