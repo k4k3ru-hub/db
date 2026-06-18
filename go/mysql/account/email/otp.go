@@ -539,7 +539,7 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
 // Version:
 //   - 2026-05-05: Added.
 //
-func (s *OTPStore) Upsert(executor helper.Executor, row *OTP) error {
+func (s *OTPStore) Upsert(executor helper.Executor, params *OTPInsertParams) error {
     if s == nil {
         return fmt.Errorf("failed to upsert account email otp: missing required parameter: otp_store=null")
     }
@@ -549,29 +549,29 @@ func (s *OTPStore) Upsert(executor helper.Executor, row *OTP) error {
     if executor == nil {
         return fmt.Errorf("failed to upsert account email otp: missing required parameter: executor=null")
     }
-    if row == nil {
-        return fmt.Errorf("failed to upsert account email otp: missing required parameter: otp=null")
+    if params == nil {
+        return fmt.Errorf("failed to upsert account email otp: missing required parameter: otp_insert_params=null")
     }
-    if err := row.ValidateEmail(); err != nil {
-        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    if err := ValidateOTPEmail(params.Email); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
     }
-    if err := row.ValidatePurpose(); err != nil {
-        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    if err := ValidateOTPPurpose(params.Purpose); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
     }
-    if err := row.ValidateStatus(); err != nil {
-        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    if err := ValidateOTPStatus(params.Status); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
     }
-    if err := row.ValidateCodeHash(); err != nil {
-        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    if err := ValidateOTPCodeHash(params.CodeHash); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
     }
-    if err := row.ValidateExpiresAt(); err != nil {
-        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    if err := ValidateOTPExpiresAt(params.ExpiresAt); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
     }
-    if err := row.ValidateLastSentAt(); err != nil {
-        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    if err := ValidateOTPLastSentAt(params.LastSentAt); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
     }
-    if err := row.ValidateLockedUntil(); err != nil {
-        return fmt.Errorf("failed to upsert account email otp: %w", err)
+    if err := ValidateOTPLockedUntil(params.LockedUntil); err != nil {
+        return fmt.Errorf("failed to insert account email otp: %w", err)
     }
 
     query := fmt.Sprintf(
@@ -595,14 +595,14 @@ func (s *OTPStore) Upsert(executor helper.Executor, row *OTP) error {
 
     if _, err := executor.Exec(
         query,
-        row.Email,
-        row.Purpose,
-        row.Status,
-        row.CodeHash,
-        row.ExpiresAt,
-        row.AttemptCount,
-        row.LastSentAt,
-        row.LockedUntil,
+        params.Email,
+        params.Purpose,
+        params.Status,
+        params.CodeHash,
+        params.ExpiresAt,
+        params.AttemptCount,
+        params.LastSentAt,
+        params.LockedUntil,
     ); err != nil {
         return fmt.Errorf("failed to upsert account email otp: %w", err)
     }
