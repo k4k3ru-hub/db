@@ -329,7 +329,7 @@ func (s *UsageLedgerEntryStore) CreateTable(executor helper.Executor) error {
             KEY idx_account_app_usage_ledger_entry_account_id (%s),
             KEY idx_account_app_usage_ledger_entry_type (%s),
             KEY idx_account_app_usage_ledger_entry_created_at (%s),
-            CONSTRAINT fk_account_app_usage_ledger_entries_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
+            CONSTRAINT fk_%s_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
         );`,
         s.tableName,
         ColID,
@@ -345,7 +345,7 @@ func (s *UsageLedgerEntryStore) CreateTable(executor helper.Executor) error {
         ColAccountID,
         ColType,
         ColCreatedAt,
-        ColAccountID, s.accountTableName, account.ColID,
+        s.tableName, ColAccountID, s.accountTableName, account.ColID,
     )
 
     if _, err := executor.Exec(query); err != nil {

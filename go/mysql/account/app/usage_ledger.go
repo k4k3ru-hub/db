@@ -324,7 +324,7 @@ func (s *UsageLedgerStore) CreateTable(executor helper.Executor) error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
             KEY idx_account_app_usage_ledger_status (%s),
-            CONSTRAINT fk_account_app_usage_ledger_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
+            CONSTRAINT fk_%s_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
         );`,
         s.tableName,
         ColAccountID,
@@ -338,7 +338,7 @@ func (s *UsageLedgerStore) CreateTable(executor helper.Executor) error {
         ColUpdatedAt,
         ColAccountID,
         ColStatus,
-        ColAccountID, s.accountTableName, account.ColID,
+        s.tableName, ColAccountID, s.accountTableName, account.ColID,
     )
 
     if _, err := executor.Exec(query); err != nil {
