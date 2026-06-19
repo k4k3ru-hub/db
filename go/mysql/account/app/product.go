@@ -4,20 +4,21 @@
 package app
 
 import (
-	"database/sql"
-	"encoding/json"
-	"fmt"
-	"strings"
-	"time"
-	"unicode/utf8"
+    "database/sql"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "strings"
+    "time"
+    "unicode/utf8"
 
-	_ "github.com/go-sql-driver/mysql"
+    "github.com/go-sql-driver/mysql"
 
-	"github.com/k4k3ru-hub/db/go/mysql/helper"
+    "github.com/k4k3ru-hub/db/go/mysql/helper"
 )
 
 const (
-	DefaultProductTableName = "account_app_products"
+    DefaultProductTableName = "account_app_products"
 )
 
 
@@ -33,20 +34,20 @@ var (
 //   - 2026-05-02: Added.
 //
 type Product struct {
-	ID             uint64        `json:"id,string"`
-	Name           string        `json:"name"`
-	Status         ProductStatus `json:"status"`
-	Type           ProductType   `json:"type"`
-	CreditTicks    uint64        `json:"creditTicks,string"`
-	BonusTicks     uint64        `json:"bonusTicks,string"`
-	PriceAmount    uint64        `json:"priceAmount,string"`
-	PriceCurrency  PriceCurrency `json:"priceCurrency"`
-	ExpiresInDays  uint32        `json:"expiresInDays"`
-	PurchaseLimit  uint32        `json:"purchaseLimit"`
-	Description    *string       `json:"description,omitempty"`
-	MetaData       *string       `json:"metaData,omitempty"`
-	CreatedAt      time.Time     `json:"createdAt"`
-	UpdatedAt      time.Time     `json:"updatedAt"`
+    ID             uint64        `json:"id,string"`
+    Name           string        `json:"name"`
+    Status         ProductStatus `json:"status"`
+    Type           ProductType   `json:"type"`
+    CreditTicks    uint64        `json:"creditTicks,string"`
+    BonusTicks     uint64        `json:"bonusTicks,string"`
+    PriceAmount    uint64        `json:"priceAmount,string"`
+    PriceCurrency  PriceCurrency `json:"priceCurrency"`
+    ExpiresInDays  uint32        `json:"expiresInDays"`
+    PurchaseLimit  uint32        `json:"purchaseLimit"`
+    Description    *string       `json:"description,omitempty"`
+    MetaData       *string       `json:"metaData,omitempty"`
+    CreatedAt      time.Time     `json:"createdAt"`
+    UpdatedAt      time.Time     `json:"updatedAt"`
 }
 
 
@@ -57,8 +58,26 @@ type Product struct {
 //   - 2026-05-02: Added.
 //
 type ProductStore struct {
-	executor  helper.Executor
-	tableName string
+    tableName string
+}
+
+
+type ProductInsertParams struct {
+    ID             uint64        `json:"id,string"`
+    Name           string        `json:"name"`
+    Status         ProductStatus `json:"status"`
+    Type           ProductType   `json:"type"`
+    CreditTicks    uint64        `json:"creditTicks,string"`
+    BonusTicks     uint64        `json:"bonusTicks,string"`
+    PriceAmount    uint64        `json:"priceAmount,string"`
+    PriceCurrency  PriceCurrency `json:"priceCurrency"`
+    ExpiresInDays  uint32        `json:"expiresInDays"`
+    PurchaseLimit  uint32        `json:"purchaseLimit"`
+    Description    *string       `json:"description,omitempty"`
+    MetaData       *string       `json:"metaData,omitempty"`
+    CreatedAt      time.Time     `json:"createdAt"`
+    UpdatedAt      time.Time     `json:"updatedAt"`
+    Ignore         bool          `json:"ignore"`
 }
 
 
@@ -69,25 +88,25 @@ type ProductStore struct {
 //   - 2026-05-02: Added.
 //
 type ProductSelectOption struct {
-	ID              *uint64        `json:"id,string,omitempty"`
-	Name            *string        `json:"name,omitempty"`
-	Status          *ProductStatus `json:"status,omitempty"`
-	Type            *ProductType   `json:"type,omitempty"`
-	CreditTicksGTE  *uint64        `json:"creditTicksGte,string,omitempty"`
-	CreditTicksLTE  *uint64        `json:"creditTicksLte,string,omitempty"`
-	BonusTicksGTE   *uint64        `json:"bonusTicksGte,string,omitempty"`
-	BonusTicksLTE   *uint64        `json:"bonusTicksLte,string,omitempty"`
-	PriceAmountGTE  *uint64        `json:"priceAmountGte,string,omitempty"`
-	PriceAmountLTE  *uint64        `json:"priceAmountLte,string,omitempty"`
-	PriceCurrency   *PriceCurrency `json:"priceCurrency,omitempty"`
-	ExpiresInDays   *uint32        `json:"expiresInDays,omitempty"`
-	PurchaseLimit   *uint32        `json:"purchaseLimit,omitempty"`
-	CreatedAtGTE    *time.Time     `json:"createdAtGte,omitempty"`
-	CreatedAtLTE    *time.Time     `json:"createdAtLte,omitempty"`
-	OrderBy          string         `json:"orderBy"`
-	OrderByDesc      bool           `json:"orderByDesc"`
-	Limit            int            `json:"limit"`
-	Offset           int            `json:"offset"`
+    ID              *uint64        `json:"id,string,omitempty"`
+    Name            *string        `json:"name,omitempty"`
+    Status          *ProductStatus `json:"status,omitempty"`
+    Type            *ProductType   `json:"type,omitempty"`
+    CreditTicksGTE  *uint64        `json:"creditTicksGte,string,omitempty"`
+    CreditTicksLTE  *uint64        `json:"creditTicksLte,string,omitempty"`
+    BonusTicksGTE   *uint64        `json:"bonusTicksGte,string,omitempty"`
+    BonusTicksLTE   *uint64        `json:"bonusTicksLte,string,omitempty"`
+    PriceAmountGTE  *uint64        `json:"priceAmountGte,string,omitempty"`
+    PriceAmountLTE  *uint64        `json:"priceAmountLte,string,omitempty"`
+    PriceCurrency   *PriceCurrency `json:"priceCurrency,omitempty"`
+    ExpiresInDays   *uint32        `json:"expiresInDays,omitempty"`
+    PurchaseLimit   *uint32        `json:"purchaseLimit,omitempty"`
+    CreatedAtGTE    *time.Time     `json:"createdAtGte,omitempty"`
+    CreatedAtLTE    *time.Time     `json:"createdAtLte,omitempty"`
+    OrderBy          string         `json:"orderBy"`
+    OrderByDesc      bool           `json:"orderByDesc"`
+    Limit            int            `json:"limit"`
+    Offset           int            `json:"offset"`
 }
 
 
@@ -98,18 +117,18 @@ type ProductSelectOption struct {
 //   - 2026-05-02: Added.
 //
 type ProductUpdateOption struct {
-	ID             uint64         `json:"id,string"`
-	Name           *string        `json:"name,omitempty"`
-	Status         *ProductStatus `json:"status,omitempty"`
-	Type           *ProductType   `json:"type,omitempty"`
-	CreditTicks    *uint64        `json:"creditTicks,string,omitempty"`
-	BonusTicks     *uint64        `json:"bonusTicks,string,omitempty"`
-	PriceAmount    *uint64        `json:"priceAmount,string,omitempty"`
-	PriceCurrency  *PriceCurrency `json:"priceCurrency,omitempty"`
-	ExpiresInDays  *uint32        `json:"expiresInDays,omitempty"`
-	PurchaseLimit  *uint32        `json:"purchaseLimit,omitempty"`
-	Description    *string        `json:"description,omitempty"`
-	MetaData       *string        `json:"metaData,omitempty"`
+    ID             uint64         `json:"id,string"`
+    Name           *string        `json:"name,omitempty"`
+    Status         *ProductStatus `json:"status,omitempty"`
+    Type           *ProductType   `json:"type,omitempty"`
+    CreditTicks    *uint64        `json:"creditTicks,string,omitempty"`
+    BonusTicks     *uint64        `json:"bonusTicks,string,omitempty"`
+    PriceAmount    *uint64        `json:"priceAmount,string,omitempty"`
+    PriceCurrency  *PriceCurrency `json:"priceCurrency,omitempty"`
+    ExpiresInDays  *uint32        `json:"expiresInDays,omitempty"`
+    PurchaseLimit  *uint32        `json:"purchaseLimit,omitempty"`
+    Description    *string        `json:"description,omitempty"`
+    MetaData       *string        `json:"metaData,omitempty"`
 }
 
 
@@ -120,7 +139,7 @@ type ProductUpdateOption struct {
 //   - 2026-05-02: Added.
 //
 func GenerateProductID() uint64 {
-	return productIDCounter.GenerateID()
+    return productIDCounter.GenerateID()
 }
 
 
@@ -130,18 +149,15 @@ func GenerateProductID() uint64 {
 // Version:
 //   - 2026-05-02: Added.
 //
-func NewProductStore(executor helper.Executor, tableName string) (*ProductStore, error) {
-	if executor == nil {
-		return nil, fmt.Errorf("failed to create account app product store: missing required parameter: executor=null")
-	}
-	if tableName == "" {
-		return nil, fmt.Errorf("failed to create account app product store: missing required parameter: table_name=%q", "empty")
-	}
+func NewProductStore(tableName string) (*ProductStore, error) {
+    tableName = strings.TrimSpace(tableName)
+    if tableName == "" {
+        return nil, fmt.Errorf("failed to create new account app product store: missing required parameter: table_name=%q", "empty")
+    }
 
-	return &ProductStore{
-		executor:  executor,
-		tableName: tableName,
-	}, nil
+    return &ProductStore{
+        tableName: tableName,
+    }, nil
 }
 
 
@@ -166,10 +182,10 @@ func ValidateProductID(id uint64) error {
 //   - 2026-05-12: Added.
 //
 func (p *Product) ValidateID() error {
-	if p == nil {
-		return fmt.Errorf("missing required parameter: account_product=null")
-	}
-	return ValidateProductID(p.ID)
+    if p == nil {
+        return fmt.Errorf("missing required parameter: account_product=null")
+    }
+    return ValidateProductID(p.ID)
 }
 
 
@@ -197,10 +213,10 @@ func ValidateProductName(name string) error {
 //   - 2026-05-12: Added.
 //
 func (p *Product) ValidateName() error {
-	if p == nil {
-		return fmt.Errorf("missing required parameter: account_product=null")
-	}
-	return ValidateProductName(p.Name)
+    if p == nil {
+        return fmt.Errorf("missing required parameter: account_product=null")
+    }
+    return ValidateProductName(p.Name)
 }
 
 
@@ -225,10 +241,10 @@ func ValidateProductStatus(s ProductStatus) error {
 //   - 2026-05-12: Added.
 //
 func (p *Product) ValidateStatus() error {
-	if p == nil {
-		return fmt.Errorf("missing required parameter: account_product=null")
-	}
-	return ValidateProductStatus(p.Status)
+    if p == nil {
+        return fmt.Errorf("missing required parameter: account_product=null")
+    }
+    return ValidateProductStatus(p.Status)
 }
 
 
@@ -253,10 +269,10 @@ func ValidateProductType(t ProductType) error {
 //   - 2026-05-12: Added.
 //
 func (p *Product) ValidateType() error {
-	if p == nil {
-		return fmt.Errorf("missing required parameter: account_product=null")
-	}
-	return ValidateProductType(p.Type)
+    if p == nil {
+        return fmt.Errorf("missing required parameter: account_product=null")
+    }
+    return ValidateProductType(p.Type)
 }
 
 
@@ -281,10 +297,10 @@ func ValidateProductPriceCurrency(c PriceCurrency) error {
 //   - 2026-05-12: Added.
 //
 func (p *Product) ValidatePriceCurrency() error {
-	if p == nil {
-		return fmt.Errorf("missing required parameter: account_product=null")
-	}
-	return ValidateProductPriceCurrency(p.PriceCurrency)
+    if p == nil {
+        return fmt.Errorf("missing required parameter: account_product=null")
+    }
+    return ValidateProductPriceCurrency(p.PriceCurrency)
 }
 
 
@@ -312,10 +328,10 @@ func ValidateProductDescription(description *string) error {
 //   - 2026-05-12: Added.
 //
 func (p *Product) ValidateDescription() error {
-	if p == nil {
-		return fmt.Errorf("missing required parameter: account_product=null")
-	}
-	return ValidateProductDescription(p.Description)
+    if p == nil {
+        return fmt.Errorf("missing required parameter: account_product=null")
+    }
+    return ValidateProductDescription(p.Description)
 }
 
 
@@ -346,10 +362,10 @@ func ValidateProductMetaData(metaData *string) error {
 //   - 2026-05-12: Added.
 //
 func (p *Product) ValidateMetaData() error {
-	if p == nil {
-		return fmt.Errorf("missing required parameter: account_product=null")
-	}
-	return ValidateProductMetaData(p.MetaData)
+    if p == nil {
+        return fmt.Errorf("missing required parameter: account_product=null")
+    }
+    return ValidateProductMetaData(p.MetaData)
 }
 
 
@@ -359,66 +375,66 @@ func (p *Product) ValidateMetaData() error {
 // Version:
 //   - 2026-05-02: Added.
 //
-func (s *ProductStore) CreateTable() error {
-	if s == nil {
-		return fmt.Errorf("failed to create account app product table: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return fmt.Errorf("failed to create account app product table: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return fmt.Errorf("failed to create account app product table: missing required parameter: table_name=%q", "empty")
-	}
+func (s *ProductStore) CreateTable(executor helper.Executor) error {
+    if s == nil {
+        return fmt.Errorf("failed to create account app product table: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return fmt.Errorf("failed to create account app product table: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to create account app product table: missing required parameter: executor=null")
+    }
 
-	query := fmt.Sprintf(
-		`CREATE TABLE IF NOT EXISTS %s (
-			%s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
-			%s VARCHAR(128) NOT NULL COMMENT 'Name',
-			%s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
-			%s TINYINT UNSIGNED NOT NULL COMMENT 'Type',
-			%s BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Credit ticks',
-			%s BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Bonus ticks',
-			%s BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Price amount',
-			%s VARCHAR(16) NOT NULL COMMENT 'Price currency',
-			%s INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Expires in days',
-			%s INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Purchase limit',
-			%s VARCHAR(255) NULL COMMENT 'Description',
-			%s JSON NULL COMMENT 'Meta data',
-			%s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
-			%s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
-			PRIMARY KEY (%s),
-			UNIQUE KEY uk_account_app_products_name (%s),
-			KEY idx_account_app_products_status (%s),
-			KEY idx_account_app_products_type (%s),
-			KEY idx_account_app_products_price_currency (%s)
-		);`,
-		s.tableName,
-		ColID,
-		ColName,
-		ColStatus,
-		ColType,
-		ColCreditTicks,
-		ColBonusTicks,
-		ColPriceAmount,
-		ColPriceCurrency,
-		ColExpiresInDays,
-		ColPurchaseLimit,
-		ColDescription,
-		ColMetaData,
-		ColCreatedAt,
-		ColUpdatedAt,
-		ColID,
-		ColName,
-		ColStatus,
-		ColType,
-		ColPriceCurrency,
-	)
+    query := fmt.Sprintf(
+        `CREATE TABLE IF NOT EXISTS %s (
+            %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
+            %s VARCHAR(128) NOT NULL COMMENT 'Name',
+            %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
+            %s TINYINT UNSIGNED NOT NULL COMMENT 'Type',
+            %s BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Credit ticks',
+            %s BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Bonus ticks',
+            %s BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Price amount',
+            %s VARCHAR(16) NOT NULL COMMENT 'Price currency',
+            %s INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Expires in days',
+            %s INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Purchase limit',
+            %s VARCHAR(255) NULL COMMENT 'Description',
+            %s JSON NULL COMMENT 'Meta data',
+            %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
+            %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
+            PRIMARY KEY (%s),
+            UNIQUE KEY uk_account_app_products_name (%s),
+            KEY idx_account_app_products_status (%s),
+            KEY idx_account_app_products_type (%s),
+            KEY idx_account_app_products_price_currency (%s)
+        );`,
+        s.tableName,
+        ColID,
+        ColName,
+        ColStatus,
+        ColType,
+        ColCreditTicks,
+        ColBonusTicks,
+        ColPriceAmount,
+        ColPriceCurrency,
+        ColExpiresInDays,
+        ColPurchaseLimit,
+        ColDescription,
+        ColMetaData,
+        ColCreatedAt,
+        ColUpdatedAt,
+        ColID,
+        ColName,
+        ColStatus,
+        ColType,
+        ColPriceCurrency,
+    )
 
-	if _, err := s.executor.Exec(query); err != nil {
-		return fmt.Errorf("failed to create account app product table: %w", err)
-	}
+    if _, err := executor.Exec(query); err != nil {
+        return fmt.Errorf("failed to create account app product table: %w", err)
+    }
 
-	return nil
+    return nil
 }
 
 
@@ -428,90 +444,100 @@ func (s *ProductStore) CreateTable() error {
 // Version:
 //   - 2026-05-02: Added.
 //
-func (s *ProductStore) Insert(row *Product) error {
-	if s == nil {
-		return fmt.Errorf("failed to insert account app product: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return fmt.Errorf("failed to insert account app product: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return fmt.Errorf("failed to insert account app product: missing required parameter: table_name=%q", "empty")
-	}
-	if row == nil {
-		return fmt.Errorf("failed to insert account app product: missing required parameter: product=null")
-	}
-	if err := row.ValidateName(); err != nil {
-		return fmt.Errorf("failed to insert account app product: %w", err)
-	}
-	if err := row.ValidateStatus(); err != nil {
-		return fmt.Errorf("failed to insert account app product: %w", err)
-	}
-	if err := row.ValidateType(); err != nil {
-		return fmt.Errorf("failed to insert account app product: %w", err)
-	}
-	if err := row.ValidatePriceCurrency(); err != nil {
-		return fmt.Errorf("failed to insert account app product: %w", err)
-	}
-	if err := row.ValidateDescription(); err != nil {
-		return fmt.Errorf("failed to insert account app product: %w", err)
-	}
-	if err := row.ValidateMetaData(); err != nil {
-		return fmt.Errorf("failed to insert account app product: %w", err)
-	}
+func (s *ProductStore) Insert(executor helper.Executor, params *ProductInsertParams) error {
+    if s == nil {
+        return fmt.Errorf("failed to insert account app product: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return fmt.Errorf("failed to insert account app product: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to insert account app product: missing required parameter: executor=null")
+    }
+    if params == nil {
+        return fmt.Errorf("failed to insert account app product: missing required parameter: product=null")
+    }
+    if err := ValidateProductName(params.Name); err != nil {
+        return fmt.Errorf("failed to insert account app product: %w", err)
+    }
+    if err := ValidateProductStatus(params.Status); err != nil {
+        return fmt.Errorf("failed to insert account app product: %w", err)
+    }
+    if err := ValidateProductType(params.Type); err != nil {
+        return fmt.Errorf("failed to insert account app product: %w", err)
+    }
+    if err := ValidateProductPriceCurrency(params.PriceCurrency); err != nil {
+        return fmt.Errorf("failed to insert account app product: %w", err)
+    }
+    if err := ValidateProductDescription(params.Description); err != nil {
+        return fmt.Errorf("failed to insert account app product: %w", err)
+    }
+    if err := ValidateProductMetaData(params.MetaData); err != nil {
+        return fmt.Errorf("failed to insert account app product: %w", err)
+    }
 
-	if row.ID == 0 {
-		row.ID = GenerateProductID()
-	}
+    if params.ID == 0 {
+        params.ID = GenerateProductID()
+    }
 
-	now := time.Now()
-	if row.CreatedAt.IsZero() {
-		row.CreatedAt = now
-	}
-	if row.UpdatedAt.IsZero() {
-		row.UpdatedAt = now
-	}
+    now := time.Now()
+    if params.CreatedAt.IsZero() {
+        params.CreatedAt = now
+    }
+    if params.UpdatedAt.IsZero() {
+        params.UpdatedAt = now
+    }
 
-	query := fmt.Sprintf(
-		"INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-		s.tableName,
-		ColID,
-		ColName,
-		ColStatus,
-		ColType,
-		ColCreditTicks,
-		ColBonusTicks,
-		ColPriceAmount,
-		ColPriceCurrency,
-		ColExpiresInDays,
-		ColPurchaseLimit,
-		ColDescription,
-		ColMetaData,
-		ColCreatedAt,
-		ColUpdatedAt,
-	)
+    queryPrefix := "INSERT"
+    if params.Ignore {
+        queryPrefix = "INSERT IGNORE"
+    }
 
-	if _, err := s.executor.Exec(
-		query,
-		row.ID,
-		row.Name,
-		row.Status,
-		row.Type,
-		row.CreditTicks,
-		row.BonusTicks,
-		row.PriceAmount,
-		row.PriceCurrency,
-		row.ExpiresInDays,
-		row.PurchaseLimit,
-		row.Description,
-		row.MetaData,
-		row.CreatedAt,
-		row.UpdatedAt,
-	); err != nil {
-		return fmt.Errorf("failed to insert account app product: %w", err)
-	}
+    query := fmt.Sprintf(
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        queryPrefix,
+        s.tableName,
+        ColID,
+        ColName,
+        ColStatus,
+        ColType,
+        ColCreditTicks,
+        ColBonusTicks,
+        ColPriceAmount,
+        ColPriceCurrency,
+        ColExpiresInDays,
+        ColPurchaseLimit,
+        ColDescription,
+        ColMetaData,
+        ColCreatedAt,
+        ColUpdatedAt,
+    )
 
-	return nil
+    if _, err := executor.Exec(
+        query,
+        params.ID,
+        params.Name,
+        params.Status,
+        params.Type,
+        params.CreditTicks,
+        params.BonusTicks,
+        params.PriceAmount,
+        params.PriceCurrency,
+        params.ExpiresInDays,
+        params.PurchaseLimit,
+        params.Description,
+        params.MetaData,
+        params.CreatedAt,
+        params.UpdatedAt,
+    ); err != nil {
+        var mysqlErr *mysql.MySQLError
+        if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+            return fmt.Errorf("failed to insert account app product: %w", helper.ErrDuplicateKey)
+        }
+        return fmt.Errorf("failed to insert account app product: %w", err)
+    }
+
+    return nil
 }
 
 
@@ -521,47 +547,47 @@ func (s *ProductStore) Insert(row *Product) error {
 // Version:
 //   - 2026-05-02: Added.
 //
-func (s *ProductStore) SelectByID(id uint64) (*Product, error) {
-	if s == nil {
-		return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: table_name=%q", "empty")
-	}
-	if id == 0 {
-		return nil, fmt.Errorf("failed to select account app product by id: invalid parameter: id=0")
-	}
+func (s *ProductStore) SelectByID(executor helper.Executor, id uint64) (*Product, error) {
+    if s == nil {
+        return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account app product by id: missing required parameter: executor=null")
+    }
+    if id == 0 {
+        return nil, fmt.Errorf("failed to select account app product by id: invalid parameter: id=0")
+    }
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColID)
 
-	result := &Product{}
-	err := s.executor.QueryRow(query, id).Scan(
-		&result.ID,
-		&result.Name,
-		&result.Status,
-		&result.Type,
-		&result.CreditTicks,
-		&result.BonusTicks,
-		&result.PriceAmount,
-		&result.PriceCurrency,
-		&result.ExpiresInDays,
-		&result.PurchaseLimit,
-		&result.Description,
-		&result.MetaData,
-		&result.CreatedAt,
-		&result.UpdatedAt,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to select account app product by id: %w", err)
-	}
+    result := &Product{}
+    err := executor.QueryRow(query, id).Scan(
+        &result.ID,
+        &result.Name,
+        &result.Status,
+        &result.Type,
+        &result.CreditTicks,
+        &result.BonusTicks,
+        &result.PriceAmount,
+        &result.PriceCurrency,
+        &result.ExpiresInDays,
+        &result.PurchaseLimit,
+        &result.Description,
+        &result.MetaData,
+        &result.CreatedAt,
+        &result.UpdatedAt,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, nil
+        }
+        return nil, fmt.Errorf("failed to select account app product by id: %w", err)
+    }
 
-	return result, nil
+    return result, nil
 }
 
 
@@ -571,47 +597,47 @@ func (s *ProductStore) SelectByID(id uint64) (*Product, error) {
 // Version:
 //   - 2026-05-13: Added.
 //
-func (s *ProductStore) SelectByName(name string) (*Product, error) {
-	if s == nil {
-		return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: table_name=%q", "empty")
-	}
-	if err := ValidateProductName(name); err != nil {
-		return nil, fmt.Errorf("failed to select account app product by name: %w", err)
-	}
+func (s *ProductStore) SelectByName(executor helper.Executor, name string) (*Product, error) {
+    if s == nil {
+        return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account app product by name: missing required parameter: executor=null")
+    }
+    if err := ValidateProductName(name); err != nil {
+        return nil, fmt.Errorf("failed to select account app product by name: %w", err)
+    }
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColName)
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1;", s.tableName, ColName)
 
-	result := &Product{}
-	err := s.executor.QueryRow(query, name).Scan(
-		&result.ID,
-		&result.Name,
-		&result.Status,
-		&result.Type,
-		&result.CreditTicks,
-		&result.BonusTicks,
-		&result.PriceAmount,
-		&result.PriceCurrency,
-		&result.ExpiresInDays,
-		&result.PurchaseLimit,
-		&result.Description,
-		&result.MetaData,
-		&result.CreatedAt,
-		&result.UpdatedAt,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to select account app product by name: %w", err)
-	}
+    result := &Product{}
+    err := executor.QueryRow(query, name).Scan(
+        &result.ID,
+        &result.Name,
+        &result.Status,
+        &result.Type,
+        &result.CreditTicks,
+        &result.BonusTicks,
+        &result.PriceAmount,
+        &result.PriceCurrency,
+        &result.ExpiresInDays,
+        &result.PurchaseLimit,
+        &result.Description,
+        &result.MetaData,
+        &result.CreatedAt,
+        &result.UpdatedAt,
+    )
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, nil
+        }
+        return nil, fmt.Errorf("failed to select account app product by name: %w", err)
+    }
 
-	return result, nil
+    return result, nil
 }
 
 
@@ -621,58 +647,58 @@ func (s *ProductStore) SelectByName(name string) (*Product, error) {
 // Version:
 //   - 2026-05-02: Added.
 //
-func (s *ProductStore) Select(option *ProductSelectOption) ([]*Product, error) {
-	if s == nil {
-		return nil, fmt.Errorf("failed to select account app products: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return nil, fmt.Errorf("failed to select account app products: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return nil, fmt.Errorf("failed to select account app products: missing required parameter: table_name=%q", "empty")
-	}
-	if err := option.Validate(); err != nil {
-		return nil, fmt.Errorf("failed to select account app products: %w", err)
-	}
+func (s *ProductStore) Select(executor helper.Executor, option *ProductSelectOption) ([]*Product, error) {
+    if s == nil {
+        return nil, fmt.Errorf("failed to select account app products: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return nil, fmt.Errorf("failed to select account app products: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return nil, fmt.Errorf("failed to select account app products: missing required parameter: executor=null")
+    }
+    if err := option.Validate(); err != nil {
+        return nil, fmt.Errorf("failed to select account app products: %w", err)
+    }
 
     query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 
-	rows, err := s.executor.Query(query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to select account app products: %w", err)
-	}
-	defer rows.Close()
+    rows, err := executor.Query(query, args...)
+    if err != nil {
+        return nil, fmt.Errorf("failed to select account app products: %w", err)
+    }
+    defer rows.Close()
 
-	var result []*Product
-	for rows.Next() {
-		row := &Product{}
-		if err := rows.Scan(
-			&row.ID,
-			&row.Name,
-			&row.Status,
-			&row.Type,
-			&row.CreditTicks,
-			&row.BonusTicks,
-			&row.PriceAmount,
-			&row.PriceCurrency,
-			&row.ExpiresInDays,
-			&row.PurchaseLimit,
-			&row.Description,
-			&row.MetaData,
-			&row.CreatedAt,
-			&row.UpdatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("failed to select account app products: %w", err)
-		}
+    var result []*Product
+    for rows.Next() {
+        row := &Product{}
+        if err := rows.Scan(
+            &row.ID,
+            &row.Name,
+            &row.Status,
+            &row.Type,
+            &row.CreditTicks,
+            &row.BonusTicks,
+            &row.PriceAmount,
+            &row.PriceCurrency,
+            &row.ExpiresInDays,
+            &row.PurchaseLimit,
+            &row.Description,
+            &row.MetaData,
+            &row.CreatedAt,
+            &row.UpdatedAt,
+        ); err != nil {
+            return nil, fmt.Errorf("failed to select account app products: %w", err)
+        }
 
-		result = append(result, row)
-	}
+        result = append(result, row)
+    }
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to select account app products: %w", err)
-	}
+    if err := rows.Err(); err != nil {
+        return nil, fmt.Errorf("failed to select account app products: %w", err)
+    }
 
-	return result, nil
+    return result, nil
 }
 
 
@@ -682,28 +708,28 @@ func (s *ProductStore) Select(option *ProductSelectOption) ([]*Product, error) {
 // Version:
 //   - 2026-05-02: Added.
 //
-func (s *ProductStore) Count(option *ProductSelectOption) (int64, error) {
-	if s == nil {
-		return 0, fmt.Errorf("failed to count account app products: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return 0, fmt.Errorf("failed to count account app products: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return 0, fmt.Errorf("failed to count account app products: missing required parameter: table_name=%q", "empty")
-	}
-	if err := option.Validate(); err != nil {
-		return 0, fmt.Errorf("failed to count account app products: %w", err)
-	}
+func (s *ProductStore) Count(executor helper.Executor, option *ProductSelectOption) (int64, error) {
+    if s == nil {
+        return 0, fmt.Errorf("failed to count account app products: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return 0, fmt.Errorf("failed to count account app products: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return 0, fmt.Errorf("failed to count account app products: missing required parameter: executor=null")
+    }
+    if err := option.Validate(); err != nil {
+        return 0, fmt.Errorf("failed to count account app products: %w", err)
+    }
 
     query, args := option.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
-	var result int64
-	if err := s.executor.QueryRow(query, args...).Scan(&result); err != nil {
-		return 0, fmt.Errorf("failed to count account app products: %w", err)
-	}
+    var result int64
+    if err := executor.QueryRow(query, args...).Scan(&result); err != nil {
+        return 0, fmt.Errorf("failed to count account app products: %w", err)
+    }
 
-	return result, nil
+    return result, nil
 }
 
 
@@ -713,91 +739,91 @@ func (s *ProductStore) Count(option *ProductSelectOption) (int64, error) {
 // Version:
 //   - 2026-05-02: Added.
 //
-func (s *ProductStore) Update(option *ProductUpdateOption) error {
-	if s == nil {
-		return fmt.Errorf("failed to update account app product: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return fmt.Errorf("failed to update account app product: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return fmt.Errorf("failed to update account app product: missing required parameter: table_name=%q", "empty")
-	}
-	if err := option.Validate(); err != nil {
-		return fmt.Errorf("failed to update account app product: %w", err)
-	}
+func (s *ProductStore) Update(executor helper.Executor, option *ProductUpdateOption) error {
+    if s == nil {
+        return fmt.Errorf("failed to update account app product: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return fmt.Errorf("failed to update account app product: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to update account app product: missing required parameter: executor=null")
+    }
+    if err := option.Validate(); err != nil {
+        return fmt.Errorf("failed to update account app product: %w", err)
+    }
 
-	assignments := make([]string, 0, 11)
-	args := make([]any, 0, 12)
+    assignments := make([]string, 0, 11)
+    args := make([]any, 0, 12)
 
-	if option.Name != nil {
-		assignments = append(assignments, ColName+" = ?")
-		args = append(args, *option.Name)
-	}
+    if option.Name != nil {
+        assignments = append(assignments, ColName+" = ?")
+        args = append(args, *option.Name)
+    }
 
-	if option.Status != nil {
-		assignments = append(assignments, ColStatus+" = ?")
-		args = append(args, *option.Status)
-	}
+    if option.Status != nil {
+        assignments = append(assignments, ColStatus+" = ?")
+        args = append(args, *option.Status)
+    }
 
-	if option.Type != nil {
-		assignments = append(assignments, ColType+" = ?")
-		args = append(args, *option.Type)
-	}
+    if option.Type != nil {
+        assignments = append(assignments, ColType+" = ?")
+        args = append(args, *option.Type)
+    }
 
-	if option.CreditTicks != nil {
-		assignments = append(assignments, ColCreditTicks+" = ?")
-		args = append(args, *option.CreditTicks)
-	}
+    if option.CreditTicks != nil {
+        assignments = append(assignments, ColCreditTicks+" = ?")
+        args = append(args, *option.CreditTicks)
+    }
 
-	if option.BonusTicks != nil {
-		assignments = append(assignments, ColBonusTicks+" = ?")
-		args = append(args, *option.BonusTicks)
-	}
+    if option.BonusTicks != nil {
+        assignments = append(assignments, ColBonusTicks+" = ?")
+        args = append(args, *option.BonusTicks)
+    }
 
-	if option.PriceAmount != nil {
-		assignments = append(assignments, ColPriceAmount+" = ?")
-		args = append(args, *option.PriceAmount)
-	}
+    if option.PriceAmount != nil {
+        assignments = append(assignments, ColPriceAmount+" = ?")
+        args = append(args, *option.PriceAmount)
+    }
 
-	if option.PriceCurrency != nil {
-		assignments = append(assignments, ColPriceCurrency+" = ?")
-		args = append(args, *option.PriceCurrency)
-	}
+    if option.PriceCurrency != nil {
+        assignments = append(assignments, ColPriceCurrency+" = ?")
+        args = append(args, *option.PriceCurrency)
+    }
 
-	if option.ExpiresInDays != nil {
-		assignments = append(assignments, ColExpiresInDays+" = ?")
-		args = append(args, *option.ExpiresInDays)
-	}
+    if option.ExpiresInDays != nil {
+        assignments = append(assignments, ColExpiresInDays+" = ?")
+        args = append(args, *option.ExpiresInDays)
+    }
 
-	if option.PurchaseLimit != nil {
-		assignments = append(assignments, ColPurchaseLimit+" = ?")
-		args = append(args, *option.PurchaseLimit)
-	}
+    if option.PurchaseLimit != nil {
+        assignments = append(assignments, ColPurchaseLimit+" = ?")
+        args = append(args, *option.PurchaseLimit)
+    }
 
-	if option.Description != nil {
-		assignments = append(assignments, ColDescription+" = ?")
-		args = append(args, *option.Description)
-	}
+    if option.Description != nil {
+        assignments = append(assignments, ColDescription+" = ?")
+        args = append(args, *option.Description)
+    }
 
-	if option.MetaData != nil {
-		assignments = append(assignments, ColMetaData+" = ?")
-		args = append(args, *option.MetaData)
-	}
+    if option.MetaData != nil {
+        assignments = append(assignments, ColMetaData+" = ?")
+        args = append(args, *option.MetaData)
+    }
 
-	if len(assignments) == 0 {
-		return fmt.Errorf("failed to update account app product: invalid parameter: assignments=empty")
-	}
+    if len(assignments) == 0 {
+        return fmt.Errorf("failed to update account app product: invalid parameter: assignments=empty")
+    }
 
-	args = append(args, option.ID)
+    args = append(args, option.ID)
 
-	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
+    query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
 
-	if _, err := s.executor.Exec(query, args...); err != nil {
-		return fmt.Errorf("failed to update account app product: %w", err)
-	}
+    if _, err := executor.Exec(query, args...); err != nil {
+        return fmt.Errorf("failed to update account app product: %w", err)
+    }
 
-	return nil
+    return nil
 }
 
 
@@ -807,27 +833,27 @@ func (s *ProductStore) Update(option *ProductUpdateOption) error {
 // Version:
 //   - 2026-05-02: Added.
 //
-func (s *ProductStore) DeleteByID(id uint64) error {
-	if s == nil {
-		return fmt.Errorf("failed to delete account app product by id: missing required parameter: product_store=null")
-	}
-	if s.executor == nil {
-		return fmt.Errorf("failed to delete account app product by id: missing required parameter: executor=null")
-	}
-	if s.tableName == "" {
-		return fmt.Errorf("failed to delete account app product by id: missing required parameter: table_name=%q", "empty")
-	}
-	if id == 0 {
-		return fmt.Errorf("failed to delete account app product by id: invalid parameter: id=0")
-	}
+func (s *ProductStore) DeleteByID(executor helper.Executor, id uint64) error {
+    if s == nil {
+        return fmt.Errorf("failed to delete account app product by id: missing required parameter: product_store=null")
+    }
+    if s.tableName == "" {
+        return fmt.Errorf("failed to delete account app product by id: missing required parameter: table_name=%q", "empty")
+    }
+    if executor == nil {
+        return fmt.Errorf("failed to delete account app product by id: missing required parameter: executor=null")
+    }
+    if id == 0 {
+        return fmt.Errorf("failed to delete account app product by id: invalid parameter: id=0")
+    }
 
-	query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
+    query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
-	if _, err := s.executor.Exec(query, id); err != nil {
-		return fmt.Errorf("failed to delete account app product by id: %w", err)
-	}
+    if _, err := executor.Exec(query, id); err != nil {
+        return fmt.Errorf("failed to delete account app product by id: %w", err)
+    }
 
-	return nil
+    return nil
 }
 
 
@@ -846,69 +872,69 @@ func (o *ProductSelectOption) BuildQuery(selectFromClause string) (string, []any
     var query strings.Builder
     query.WriteString(selectFromClause)
     
-	conditions := make([]string, 0, 16)
-	args := make([]any, 0, 18)
+    conditions := make([]string, 0, 16)
+    args := make([]any, 0, 18)
 
-	if o.ID != nil {
-		conditions = append(conditions, ColID + " = ?")
-		args = append(args, *o.ID)
-	}
-	if o.Name != nil {
-		conditions = append(conditions, ColName + " = ?")
-		args = append(args, *o.Name)
-	}
-	if o.Status != nil {
-		conditions = append(conditions, ColStatus + " = ?")
-		args = append(args, *o.Status)
-	}
-	if o.Type != nil {
-		conditions = append(conditions, ColType + " = ?")
-		args = append(args, *o.Type)
-	}
-	if o.CreditTicksGTE != nil {
-		conditions = append(conditions, ColCreditTicks + " >= ?")
-		args = append(args, *o.CreditTicksGTE)
-	}
-	if o.CreditTicksLTE != nil {
-		conditions = append(conditions, ColCreditTicks + " <= ?")
-		args = append(args, *o.CreditTicksLTE)
-	}
-	if o.BonusTicksGTE != nil {
-		conditions = append(conditions, ColBonusTicks + " >= ?")
-		args = append(args, *o.BonusTicksGTE)
-	}
-	if o.BonusTicksLTE != nil {
-		conditions = append(conditions, ColBonusTicks + " <= ?")
-		args = append(args, *o.BonusTicksLTE)
-	}
-	if o.PriceAmountGTE != nil {
-		conditions = append(conditions, ColPriceAmount + " >= ?")
-		args = append(args, *o.PriceAmountGTE)
-	}
-	if o.PriceAmountLTE != nil {
-		conditions = append(conditions, ColPriceAmount + " <= ?")
-		args = append(args, *o.PriceAmountLTE)
-	}
-	if o.PriceCurrency != nil {
-		conditions = append(conditions, ColPriceCurrency + " = ?")
-		args = append(args, *o.PriceCurrency)
-	}
-	if o.ExpiresInDays != nil {
-		conditions = append(conditions, ColExpiresInDays + " = ?")
-		args = append(args, *o.ExpiresInDays)
-	}
-	if o.PurchaseLimit != nil {
-		conditions = append(conditions, ColPurchaseLimit + " = ?")
-		args = append(args, *o.PurchaseLimit)
-	}
-	if o.CreatedAtGTE != nil {
-		conditions = append(conditions, ColCreatedAt + " >= ?")
-		args = append(args, *o.CreatedAtGTE)
-	}
-	if o.CreatedAtLTE != nil {
-		conditions = append(conditions, ColCreatedAt + " <= ?")
-		args = append(args, *o.CreatedAtLTE)
-	}
+    if o.ID != nil {
+        conditions = append(conditions, ColID + " = ?")
+        args = append(args, *o.ID)
+    }
+    if o.Name != nil {
+        conditions = append(conditions, ColName + " = ?")
+        args = append(args, *o.Name)
+    }
+    if o.Status != nil {
+        conditions = append(conditions, ColStatus + " = ?")
+        args = append(args, *o.Status)
+    }
+    if o.Type != nil {
+        conditions = append(conditions, ColType + " = ?")
+        args = append(args, *o.Type)
+    }
+    if o.CreditTicksGTE != nil {
+        conditions = append(conditions, ColCreditTicks + " >= ?")
+        args = append(args, *o.CreditTicksGTE)
+    }
+    if o.CreditTicksLTE != nil {
+        conditions = append(conditions, ColCreditTicks + " <= ?")
+        args = append(args, *o.CreditTicksLTE)
+    }
+    if o.BonusTicksGTE != nil {
+        conditions = append(conditions, ColBonusTicks + " >= ?")
+        args = append(args, *o.BonusTicksGTE)
+    }
+    if o.BonusTicksLTE != nil {
+        conditions = append(conditions, ColBonusTicks + " <= ?")
+        args = append(args, *o.BonusTicksLTE)
+    }
+    if o.PriceAmountGTE != nil {
+        conditions = append(conditions, ColPriceAmount + " >= ?")
+        args = append(args, *o.PriceAmountGTE)
+    }
+    if o.PriceAmountLTE != nil {
+        conditions = append(conditions, ColPriceAmount + " <= ?")
+        args = append(args, *o.PriceAmountLTE)
+    }
+    if o.PriceCurrency != nil {
+        conditions = append(conditions, ColPriceCurrency + " = ?")
+        args = append(args, *o.PriceCurrency)
+    }
+    if o.ExpiresInDays != nil {
+        conditions = append(conditions, ColExpiresInDays + " = ?")
+        args = append(args, *o.ExpiresInDays)
+    }
+    if o.PurchaseLimit != nil {
+        conditions = append(conditions, ColPurchaseLimit + " = ?")
+        args = append(args, *o.PurchaseLimit)
+    }
+    if o.CreatedAtGTE != nil {
+        conditions = append(conditions, ColCreatedAt + " >= ?")
+        args = append(args, *o.CreatedAtGTE)
+    }
+    if o.CreatedAtLTE != nil {
+        conditions = append(conditions, ColCreatedAt + " <= ?")
+        args = append(args, *o.CreatedAtLTE)
+    }
 
     if len(conditions) > 0 {
         query.WriteString(" WHERE ")
@@ -939,98 +965,98 @@ func (o *ProductSelectOption) BuildQuery(selectFromClause string) (string, []any
 //   - 2026-05-02: Added.
 //
 func (o *ProductSelectOption) Validate() error {
-	if o == nil {
-		return fmt.Errorf("missing required parameter: product_select_option=null")
-	}
+    if o == nil {
+        return fmt.Errorf("missing required parameter: product_select_option=null")
+    }
 
-	if o.ID != nil {
-		p := Product{
-			ID: *o.ID,
-		}
-		if err := p.ValidateID(); err != nil {
-			return err
-		}
-	}
+    if o.ID != nil {
+        p := Product{
+            ID: *o.ID,
+        }
+        if err := p.ValidateID(); err != nil {
+            return err
+        }
+    }
 
-	if o.Status != nil {
-		p := Product{
-			Status: *o.Status,
-		}
-		if err := p.ValidateStatus(); err != nil {
-			return err
-		}
-	}
+    if o.Status != nil {
+        p := Product{
+            Status: *o.Status,
+        }
+        if err := p.ValidateStatus(); err != nil {
+            return err
+        }
+    }
 
-	if o.Type != nil {
-		p := Product{
-			Type: *o.Type,
-		}
-		if err := p.ValidateType(); err != nil {
-			return err
-		}
-	}
+    if o.Type != nil {
+        p := Product{
+            Type: *o.Type,
+        }
+        if err := p.ValidateType(); err != nil {
+            return err
+        }
+    }
 
-	if o.Name != nil {
-		p := Product{
-			Name: *o.Name,
-		}
-		if err := p.ValidateName(); err != nil {
-			return err
-		}
-	}
+    if o.Name != nil {
+        p := Product{
+            Name: *o.Name,
+        }
+        if err := p.ValidateName(); err != nil {
+            return err
+        }
+    }
 
-	if o.CreditTicksGTE != nil && o.CreditTicksLTE != nil && *o.CreditTicksGTE > *o.CreditTicksLTE {
-		return fmt.Errorf("invalid parameter: credit_ticks_gte=%d credit_ticks_lte=%d", *o.CreditTicksGTE, *o.CreditTicksLTE)
-	}
+    if o.CreditTicksGTE != nil && o.CreditTicksLTE != nil && *o.CreditTicksGTE > *o.CreditTicksLTE {
+        return fmt.Errorf("invalid parameter: credit_ticks_gte=%d credit_ticks_lte=%d", *o.CreditTicksGTE, *o.CreditTicksLTE)
+    }
 
-	if o.BonusTicksGTE != nil && o.BonusTicksLTE != nil && *o.BonusTicksGTE > *o.BonusTicksLTE {
-		return fmt.Errorf("invalid parameter: bonus_ticks_gte=%d bonus_ticks_lte=%d", *o.BonusTicksGTE, *o.BonusTicksLTE)
-	}
+    if o.BonusTicksGTE != nil && o.BonusTicksLTE != nil && *o.BonusTicksGTE > *o.BonusTicksLTE {
+        return fmt.Errorf("invalid parameter: bonus_ticks_gte=%d bonus_ticks_lte=%d", *o.BonusTicksGTE, *o.BonusTicksLTE)
+    }
 
-	if o.PriceAmountGTE != nil && o.PriceAmountLTE != nil && *o.PriceAmountGTE > *o.PriceAmountLTE {
-		return fmt.Errorf("invalid parameter: price_amount_gte=%d price_amount_lte=%d", *o.PriceAmountGTE, *o.PriceAmountLTE)
-	}
+    if o.PriceAmountGTE != nil && o.PriceAmountLTE != nil && *o.PriceAmountGTE > *o.PriceAmountLTE {
+        return fmt.Errorf("invalid parameter: price_amount_gte=%d price_amount_lte=%d", *o.PriceAmountGTE, *o.PriceAmountLTE)
+    }
 
-	if o.PriceCurrency != nil {
-		p := Product{
-			PriceCurrency: *o.PriceCurrency,
-		}
-		if err := p.ValidatePriceCurrency(); err != nil {
-			return err
-		}
-	}
+    if o.PriceCurrency != nil {
+        p := Product{
+            PriceCurrency: *o.PriceCurrency,
+        }
+        if err := p.ValidatePriceCurrency(); err != nil {
+            return err
+        }
+    }
 
-	if o.CreatedAtGTE != nil && o.CreatedAtLTE != nil && o.CreatedAtGTE.After(*o.CreatedAtLTE) {
-		return fmt.Errorf("invalid parameter: created_at_gte=%s created_at_lte=%s", *o.CreatedAtGTE, *o.CreatedAtLTE)
-	}
+    if o.CreatedAtGTE != nil && o.CreatedAtLTE != nil && o.CreatedAtGTE.After(*o.CreatedAtLTE) {
+        return fmt.Errorf("invalid parameter: created_at_gte=%s created_at_lte=%s", *o.CreatedAtGTE, *o.CreatedAtLTE)
+    }
 
-	if o.OrderBy != "" {
-		switch o.OrderBy {
-		case ColID,
-			ColStatus,
-			ColType,
-			ColName,
-			ColCreditTicks,
-			ColBonusTicks,
-			ColPriceAmount,
-			ColPriceCurrency,
-			ColExpiresInDays,
-			ColPurchaseLimit,
-			ColCreatedAt,
-			ColUpdatedAt:
-		default:
-			return fmt.Errorf("invalid parameter: order_by=%s", o.OrderBy)
-		}
-	}
+    if o.OrderBy != "" {
+        switch o.OrderBy {
+        case ColID,
+            ColStatus,
+            ColType,
+            ColName,
+            ColCreditTicks,
+            ColBonusTicks,
+            ColPriceAmount,
+            ColPriceCurrency,
+            ColExpiresInDays,
+            ColPurchaseLimit,
+            ColCreatedAt,
+            ColUpdatedAt:
+        default:
+            return fmt.Errorf("invalid parameter: order_by=%s", o.OrderBy)
+        }
+    }
 
-	if o.Limit < 0 {
-		return fmt.Errorf("invalid parameter: limit=%d", o.Limit)
-	}
-	if o.Offset < 0 {
-		return fmt.Errorf("invalid parameter: offset=%d", o.Offset)
-	}
+    if o.Limit < 0 {
+        return fmt.Errorf("invalid parameter: limit=%d", o.Limit)
+    }
+    if o.Offset < 0 {
+        return fmt.Errorf("invalid parameter: offset=%d", o.Offset)
+    }
 
-	return nil
+    return nil
 }
 
 //
@@ -1040,67 +1066,67 @@ func (o *ProductSelectOption) Validate() error {
 //   - 2026-05-02: Added.
 //
 func (o *ProductUpdateOption) Validate() error {
-	if o == nil {
-		return fmt.Errorf("missing required parameter: product_update_option=null")
-	}
+    if o == nil {
+        return fmt.Errorf("missing required parameter: product_update_option=null")
+    }
 
-	if o.ID == 0 {
-		return fmt.Errorf("invalid parameter: id=0")
-	}
+    if o.ID == 0 {
+        return fmt.Errorf("invalid parameter: id=0")
+    }
 
-	if o.Status != nil {
-		p := Product{
-			Status: *o.Status,
-		}
-		if err := p.ValidateStatus(); err != nil {
-			return err
-		}
-	}
+    if o.Status != nil {
+        p := Product{
+            Status: *o.Status,
+        }
+        if err := p.ValidateStatus(); err != nil {
+            return err
+        }
+    }
 
-	if o.Type != nil {
-		p := Product{
-			Type: *o.Type,
-		}
-		if err := p.ValidateType(); err != nil {
-			return err
-		}
-	}
+    if o.Type != nil {
+        p := Product{
+            Type: *o.Type,
+        }
+        if err := p.ValidateType(); err != nil {
+            return err
+        }
+    }
 
-	if o.Name != nil {
-		p := Product{
-			Name: *o.Name,
-		}
-		if err := p.ValidateName(); err != nil {
-			return err
-		}
-	}
+    if o.Name != nil {
+        p := Product{
+            Name: *o.Name,
+        }
+        if err := p.ValidateName(); err != nil {
+            return err
+        }
+    }
 
-	if o.Description != nil {
-		p := Product{
-			Description: o.Description,
-		}
-		if err := p.ValidateDescription(); err != nil {
-			return err
-		}
-	}
+    if o.Description != nil {
+        p := Product{
+            Description: o.Description,
+        }
+        if err := p.ValidateDescription(); err != nil {
+            return err
+        }
+    }
 
-	if o.PriceCurrency != nil {
-		p := Product{
-			PriceCurrency: *o.PriceCurrency,
-		}
-		if err := p.ValidatePriceCurrency(); err != nil {
-			return err
-		}
-	}
+    if o.PriceCurrency != nil {
+        p := Product{
+            PriceCurrency: *o.PriceCurrency,
+        }
+        if err := p.ValidatePriceCurrency(); err != nil {
+            return err
+        }
+    }
 
-	if o.MetaData != nil {
-		p := Product{
-			MetaData: o.MetaData,
-		}
-		if err := p.ValidateMetaData(); err != nil {
-			return err
-		}
-	}
+    if o.MetaData != nil {
+        p := Product{
+            MetaData: o.MetaData,
+        }
+        if err := p.ValidateMetaData(); err != nil {
+            return err
+        }
+    }
 
-	return nil
+    return nil
 }

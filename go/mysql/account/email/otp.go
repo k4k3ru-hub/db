@@ -498,8 +498,14 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
         return fmt.Errorf("failed to insert account email otp: %w", err)
     }
 
+    queryPrefix := "INSERT"
+    if params.Ignore {
+        queryPrefix = "INSERT IGNORE"
+    }
+
     query := fmt.Sprintf(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        queryPrefix,
         s.tableName,
         ColEmail,
         ColPurpose,

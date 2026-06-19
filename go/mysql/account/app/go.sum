@@ -6,7 +6,11 @@ github.com/k4k3ru-hub/db/go/mysql/account v0.0.0-20260501052426-f36865019fab h1:
 github.com/k4k3ru-hub/db/go/mysql/account v0.0.0-20260501052426-f36865019fab/go.mod h1:Ud44uKROTqEFfaFLKgGeARxy5SDEU1QZLHuoJ/nUd0M=
 github.com/k4k3ru-hub/db/go/mysql/account v0.0.0-20260513024847-b3de273f27f0 h1:UJogwqLbSlsHSMW60IVnsoc3YIZ6Bg/CY6GGIde4iTw=
 github.com/k4k3ru-hub/db/go/mysql/account v0.0.0-20260513024847-b3de273f27f0/go.mod h1:4sPcZ7LGvv5gbAoJctf9Pl3LfP9UCBs8+NPsam3y1X4=
+github.com/k4k3ru-hub/db/go/mysql/account v0.0.0-20260618150216-079a60bd2541 h1:oUibZDhzfh0RlihA2dAU0DcrZOEN3zSvcQs+Z8Iaqv0=
+github.com/k4k3ru-hub/db/go/mysql/account v0.0.0-20260618150216-079a60bd2541/go.mod h1:9ZoSikFGgzKxPOQoJohznYeyvDR0fTFNvNWk9XjjENA=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260501052426-f36865019fab h1:ao4KINDexZUhe3VhFEnkx8f9f97HsQaN3ch/5TPvVbs=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260501052426-f36865019fab/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260513024847-b3de273f27f0 h1:M0hQPz4FaNPwpb+V4Yqh/TDrQkrnvP6sApgNKC0LqKE=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260513024847-b3de273f27f0/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260618150216-079a60bd2541 h1:UbO61/irdS4aWkxC3cOSNq7YIYrs43uy1VVWLyjkw2k=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260618150216-079a60bd2541/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=

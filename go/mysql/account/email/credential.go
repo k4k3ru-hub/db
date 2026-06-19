@@ -131,7 +131,7 @@ func NewCredentialStore(tableName, accountTableName string) (*CredentialStore, e
     }
     accountTableName = strings.TrimSpace(accountTableName)
     if accountTableName == "" {
-        return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: account_table_name=empty")
+        return nil, fmt.Errorf("failed to create account email credential store: missing required parameter: account_table_name=%q", "empty")
     }
 
     return &CredentialStore{
@@ -428,8 +428,14 @@ func (s *CredentialStore) Insert(executor helper.Executor, params *CredentialIns
         params.UpdatedAt = now
     }
 
+    queryPrefix := "INSERT"
+    if params.Ignore {
+        queryPrefix = "INSERT IGNORE"
+    }
+
     query := fmt.Sprintf(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        queryPrefix,
         s.tableName,
         ColID,
         ColAccountID,
