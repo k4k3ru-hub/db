@@ -120,7 +120,7 @@ type UsageLedgerUpdateOption struct {
 // Version:
 //   - 2026-05-01: Added.
 //
-func NewUsageLedgerStore(executor helper.Executor, tableName, accountTableName string) (*UsageLedgerStore, error) {
+func NewUsageLedgerStore(tableName, accountTableName string) (*UsageLedgerStore, error) {
     // Guard.
     tableName = strings.TrimSpace(tableName)
     if tableName == "" {
