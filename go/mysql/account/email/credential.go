@@ -355,7 +355,7 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
             UNIQUE KEY uk_account_email_credential_account_id (%s),
             UNIQUE KEY uk_account_email_credential_email (%s),
             KEY idx_account_app_email_credential_status (%s),
-            CONSTRAINT fk_account_email_credential_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
+            CONSTRAINT fk_%s_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
         );`,
         s.tableName,
         ColID,
@@ -370,7 +370,7 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
         ColAccountID,
         ColEmail,
         ColStatus,
-        ColAccountID, s.accountTableName, account.ColID,
+        s.tableName, ColAccountID, s.accountTableName, account.ColID,
     )
 
     if _, err := executor.Exec(query); err != nil {
