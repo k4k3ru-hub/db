@@ -10,6 +10,8 @@ github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260616064157-09a5cae22385 h1:S
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260616064157-09a5cae22385/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260617054157-3fe762a8d94e h1:3NuC1ESaZQvDFiEiT8Xr4gwtswBRqJtLmtFqpFZ1x8I=
 github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260617054157-3fe762a8d94e/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260619143359-e4d03d7f8f4f h1:xkQt7OIim1dM/KgG8otlOSfKy0h5ZZUA3VGr8tOTWtQ=
+github.com/k4k3ru-hub/db/go/mysql/helper v0.0.0-20260619143359-e4d03d7f8f4f/go.mod h1:Bi3hxIxpRqYD8pAZg/J2pQJjEhcLYTzuQrHqzk11Vgs=
 github.com/k4k3ru-hub/onchain/go v0.0.0-20260517094244-c1dcb7f4b740 h1:5uO0eo4oMPgKh8MTSbjUlOcyLx1cIvSWwSy2ugnUsCA=
 github.com/k4k3ru-hub/onchain/go v0.0.0-20260517094244-c1dcb7f4b740/go.mod h1:1TrdAvj8GvS9AAM5r6UR7KBAILRQxTcMt9fQUdQp8wA=
 github.com/k4k3ru-hub/onchain/go v0.0.0-20260523005615-3d782c171d56 h1:sIGhhsvzx+Tkx9m8YhiaJy7aidSgQUl8R/BAe5TqT+o=

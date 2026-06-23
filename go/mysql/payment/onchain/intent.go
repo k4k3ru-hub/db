@@ -28,12 +28,13 @@ var (
 
 type Intent struct {
     ID                uint64        `json:"id,string"`
-    OwnerRef          string        `json:"ownerRef"`
+    AccountID         uint64        `json:"accountId,string"`
     Status            IntentStatus  `json:"status"`
     Chain             Chain         `json:"chain"`
     Network           Network       `json:"network"`
     Token             Token         `json:"token"`
-    RecipientType     RecipientType `json:"recipientType"`
+    RecipientID       uint64        `json:"recipientId,string"`
+    RecipientKind     RecipientKind `json:"recipientKind"`
     RecipientAddress  string        `json:"recipientAddress"`
     Amount            string        `json:"amount"`
     Memo              *string       `json:"memo,omitempty"`
@@ -50,12 +51,13 @@ type IntentStore struct {
 
 type IntentInsertParams struct {
     ID                uint64        `json:"id,string"`
-    OwnerRef          string        `json:"ownerRef"`
+    AccountID         uint64        `json:"accountId,string"`
     Status            IntentStatus  `json:"status"`
     Chain             Chain         `json:"chain"`
     Network           Network       `json:"network"`
     Token             Token         `json:"token"`
-    RecipientType     RecipientType `json:"recipientType"`
+    RecipientID       uint64        `json:"recipientId,string"`
+    RecipientKind     RecipientKind `json:"recipientKind"`
     RecipientAddress  string        `json:"recipientAddress"`
     Amount            string        `json:"amount"`
     Memo              *string       `json:"memo,omitempty"`
@@ -68,11 +70,12 @@ type IntentInsertParams struct {
 }
 
 type IntentSelectParams struct {
-    OwnerRef         *string        `json:"ownerRef,omitempty"`
+    AccountID        *uint64        `json:"accountId,string,omitempty"`
     Status           *IntentStatus  `json:"status,omitempty"`
     Chain            *Chain         `json:"chain,omitempty"`
     Network          *Network       `json:"network,omitempty"`
     Token            *Token         `json:"token,omitempty"`
+    RecipientID      *uint64        `json:"recipientId,string,omitempty"`
     RecipientAddress *string        `json:"recipientAddress,omitempty"`
     OrderBy          string         `json:"orderBy"`
     OrderByDesc      bool           `json:"orderByDesc"`
@@ -152,43 +155,39 @@ func ValidateIntentID(id uint64) error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Intent) ValidateID() error {
-    if r == nil {
+func (i *Intent) ValidateID() error {
+    if i == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentID(r.ID)
+    return ValidateIntentID(i.ID)
 }
 
 
 //
-// Validate payment onchain intent owner ref.
+// Validate payment onchain intent account ID.
 //
 // Version:
-//   - 2026-05-31: Added.
+//   - 2026-05-16: Added.
 //
-func ValidateIntentOwnerRef(ownerRef string) error {
-    s := strings.TrimSpace(ownerRef)
-    if s == "" {
-        return fmt.Errorf("invalid parameter: owner_ref=%q", "empty")
-    }
-    if len(s) > 128 {
-        return fmt.Errorf("invalid parameter: owner_ref=%q", "too long")
+func ValidateIntentAccountID(accountID uint64) error {
+    if accountID == 0 {
+        return fmt.Errorf("invalid parameter: account_id=0")
     }
     return nil
 }
 
 
 //
-// Validate payment onchain intent owner ref.
+// Validate payment onchain intent account ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Intent) ValidateOwnerRef() error {
-    if r == nil {
+func (i *Intent) ValidateAccountID() error {
+    if i == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentOwnerRef(r.OwnerRef)
+    return ValidateIntentAccountID(i.AccountID)
 }
 
 
@@ -212,11 +211,11 @@ func ValidateIntentStatus(s IntentStatus) error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Intent) ValidateStatus() error {
-    if r == nil {
+func (i *Intent) ValidateStatus() error {
+    if i == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentStatus(r.Status)
+    return ValidateIntentStatus(i.Status)
 }
 
 
@@ -240,11 +239,11 @@ func ValidateIntentChain(c Chain) error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Intent) ValidateChain() error {
-    if r == nil {
+func (i *Intent) ValidateChain() error {
+    if i == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentChain(r.Chain)
+    return ValidateIntentChain(i.Chain)
 }
 
 
@@ -268,11 +267,11 @@ func ValidateIntentNetwork(n Network) error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Intent) ValidateNetwork() error {
-    if r == nil {
+func (i *Intent) ValidateNetwork() error {
+    if i == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentNetwork(r.Network)
+    return ValidateIntentNetwork(i.Network)
 }
 
 
@@ -293,36 +292,64 @@ func ValidateIntentToken(t Token) error {
 // Version:
 //   - 2026-05-16: Added.
 //
-func (r *Intent) ValidateToken() error {
-    if r == nil {
+func (i *Intent) ValidateToken() error {
+    if i == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentToken(r.Token)
+    return ValidateIntentToken(i.Token)
 }
 
 
 //
-// Validate payment onchain intent recipient type.
+// Validate payment onchain intent recipient ID.
 //
 // Version:
-//   - 2026-05-31: Added.
+//   - 2026-05-16: Added.
 //
-func ValidateIntentRecipientType(t RecipientType) error {
-    return t.Validate()
+func ValidateIntentRecipientID(recipientID uint64) error {
+    if recipientID == 0 {
+        return fmt.Errorf("invalid parameter: recipient_id=0")
+    }
+    return nil
 }
 
 
 //
-// Validate payment onchain intent recipient type.
+// Validate payment onchain intent recipient ID.
+//
+// Version:
+//   - 2026-05-16: Added.
+//
+func (i *Intent) ValidateRecipientID() error {
+    if i == nil {
+        return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
+    }
+    return ValidateIntentRecipientID(i.RecipientID)
+}
+
+
+//
+// Validate payment onchain intent recipient kind.
 //
 // Version:
 //   - 2026-05-31: Added.
 //
-func (r *Intent) ValidateRecipientType() error {
-    if r == nil {
+func ValidateIntentRecipientKind(kind RecipientKind) error {
+    return kind.Validate()
+}
+
+
+//
+// Validate payment onchain intent recipient kind.
+//
+// Version:
+//   - 2026-05-31: Added.
+//
+func (i *Intent) ValidateRecipientKind() error {
+    if i == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent=null")
     }
-    return ValidateIntentRecipientType(r.RecipientType)
+    return ValidateIntentRecipientKind(i.RecipientKind)
 }
 
 
@@ -532,13 +559,14 @@ func (s *IntentStore) CreateTable(executor helper.Executor) error {
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
-            %s VARCHAR(128) NOT NULL COMMENT 'Owner Ref',
+            %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
             %s VARCHAR(64) NOT NULL COMMENT 'Token',
-            %s VARCHAR(16) NOT NULL COMMENT 'Recipient Type',
-            %s VARCHAR(255) NOT NULL COMMENT 'Deposit recipient address',
+            %s BIGINT UNSIGNED NOT NULL COMMENT 'Recipient ID',
+            %s VARCHAR(16) NOT NULL COMMENT 'Recipient Kind',
+            %s VARCHAR(255) NOT NULL COMMENT 'Recipient address',
             %s VARCHAR(78) NOT NULL COMMENT 'Intended payment amount in token smallest units as decimal string',
             %s VARCHAR(255) NULL COMMENT 'Memo',
             %s DATETIME NOT NULL COMMENT 'Expires at',
@@ -547,17 +575,18 @@ func (s *IntentStore) CreateTable(executor helper.Executor) error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            KEY idx_payment_onchain_intents_owner_ref (%s),
+            KEY idx_payment_onchain_intents_account_id_status (%s, %s),
             KEY idx_payment_onchain_intents_rec_add_cha_net_tok_sta (%s, %s, %s, %s, %s)
         );`,
         s.tableName,
         ColID,
-        ColOwnerRef,
+        ColAccountID,
         ColStatus,
         ColChain,
         ColNetwork,
         ColToken,
-        ColRecipientType,
+        ColRecipientID,
+        ColRecipientKind,
         ColRecipientAddress,
         ColAmount,
         ColMemo,
@@ -567,7 +596,7 @@ func (s *IntentStore) CreateTable(executor helper.Executor) error {
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
-        ColOwnerRef,
+        ColAccountID, ColStatus,
         ColRecipientAddress, ColChain, ColNetwork, ColToken, ColStatus,
     )
 
@@ -598,7 +627,7 @@ func (s *IntentStore) Insert(executor helper.Executor, p *IntentInsertParams) er
     if p == nil {
         return fmt.Errorf("failed to insert payment onchain intent: missing required parameter: request_insert_params=null")
     }
-    if err := ValidateIntentOwnerRef(p.OwnerRef); err != nil {
+    if err := ValidateIntentAccountID(p.AccountID); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent: %w", err)
     }
     if err := ValidateIntentStatus(p.Status); err != nil {
@@ -613,7 +642,10 @@ func (s *IntentStore) Insert(executor helper.Executor, p *IntentInsertParams) er
     if err := ValidateIntentToken(p.Token); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent: %w", err)
     }
-    if err := ValidateIntentRecipientType(p.RecipientType); err != nil {
+    if err := ValidateIntentRecipientID(p.RecipientID); err != nil {
+        return fmt.Errorf("failed to insert payment onchain intent: %w", err)
+    }
+    if err := ValidateIntentRecipientKind(p.RecipientKind); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent: %w", err)
     }
     if err := ValidateIntentRecipientAddress(p.RecipientAddress); err != nil {
@@ -653,16 +685,17 @@ func (s *IntentStore) Insert(executor helper.Executor, p *IntentInsertParams) er
     }
 
     query := fmt.Sprintf(
-        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
         queryPrefix,
         s.tableName,
         ColID,
-        ColOwnerRef,
+        ColAccountID,
         ColStatus,
         ColChain,
         ColNetwork,
         ColToken,
-        ColRecipientType,
+        ColRecipientID,
+        ColRecipientKind,
         ColRecipientAddress,
         ColAmount,
         ColMemo,
@@ -676,12 +709,13 @@ func (s *IntentStore) Insert(executor helper.Executor, p *IntentInsertParams) er
     if _, err := executor.Exec(
         query,
         p.ID,
-        p.OwnerRef,
+        p.AccountID,
         p.Status,
         p.Chain,
         p.Network,
         p.Token,
-        p.RecipientType,
+        p.RecipientID,
+        p.RecipientKind,
         p.RecipientAddress,
         p.Amount,
         p.Memo,
@@ -732,12 +766,13 @@ func (s *IntentStore) Select(executor helper.Executor, p *IntentSelectParams) ([
         row := &Intent{}
         if err := rows.Scan(
             &row.ID,
-            &row.OwnerRef,
+            &row.AccountID,
             &row.Status,
             &row.Chain,
             &row.Network,
             &row.Token,
-            &row.RecipientType,
+            &row.RecipientID,
+            &row.RecipientKind,
             &row.RecipientAddress,
             &row.Amount,
             &row.Memo,
@@ -788,12 +823,13 @@ func (s *IntentStore) SelectByID(executor helper.Executor, id uint64) (*Intent, 
     result := &Intent{}
     err := row.Scan(
         &result.ID,
-        &result.OwnerRef,
+        &result.AccountID,
         &result.Status,
         &result.Chain,
         &result.Network,
         &result.Token,
-        &result.RecipientType,
+        &result.RecipientID,
+        &result.RecipientKind,
         &result.RecipientAddress,
         &result.Amount,
         &result.Memo,
@@ -928,12 +964,12 @@ func (p *IntentSelectParams) BuildQuery(selectFromClause string) (string, []any)
     var query strings.Builder
     query.WriteString(selectFromClause)
 
-    conditions := make([]string, 0, 6)
-    args := make([]any, 0, 8)
+    conditions := make([]string, 0, 7)
+    args := make([]any, 0, 9)
 
-    if p.OwnerRef != nil {
-        conditions = append(conditions, ColOwnerRef + " = ?")
-        args = append(args, *p.OwnerRef)
+    if p.AccountID != nil {
+        conditions = append(conditions, ColAccountID + " = ?")
+        args = append(args, *p.AccountID)
     }
     if p.Status != nil {
         conditions = append(conditions, ColStatus + " = ?")
@@ -950,6 +986,10 @@ func (p *IntentSelectParams) BuildQuery(selectFromClause string) (string, []any)
     if p.Token != nil {
         conditions = append(conditions, ColToken + " = ?")
         args = append(args, *p.Token)
+    }
+    if p.RecipientID != nil {
+        conditions = append(conditions, ColRecipientID + " = ?")
+        args = append(args, *p.RecipientID)
     }
     if p.RecipientAddress != nil {
         conditions = append(conditions, ColRecipientAddress + " = ?")
@@ -990,8 +1030,8 @@ func (p *IntentSelectParams) Validate() error {
         return fmt.Errorf("missing required parameter: payment_onchain_intent_select_params=null")
     }
 
-    if p.OwnerRef != nil {
-        if err := ValidateIntentOwnerRef(*p.OwnerRef); err != nil {
+    if p.AccountID != nil {
+        if err := ValidateIntentAccountID(*p.AccountID); err != nil {
             return err
         }
     }
@@ -1015,6 +1055,11 @@ func (p *IntentSelectParams) Validate() error {
             return err
         }
     }
+    if p.RecipientID != nil {
+        if err := ValidateIntentRecipientID(*p.RecipientID); err != nil {
+            return err
+        }
+    }
     if p.RecipientAddress != nil {
         if err := ValidateIntentRecipientAddress(*p.RecipientAddress); err != nil {
             return err
@@ -1024,12 +1069,13 @@ func (p *IntentSelectParams) Validate() error {
     if p.OrderBy != "" {
         switch p.OrderBy {
         case ColID,
-            ColOwnerRef,
+            ColAccountID,
             ColStatus,
             ColChain,
             ColNetwork,
             ColToken,
-            ColRecipientType,
+            ColRecipientID,
+            ColRecipientKind,
             ColRecipientAddress,
             ColWebhookEndpointID,
             ColCreatedAt,

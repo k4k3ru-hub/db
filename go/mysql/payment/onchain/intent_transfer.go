@@ -28,7 +28,7 @@ var (
 type IntentTransfer struct {
     ID          uint64    `json:"id,string"`
     IntentID    uint64    `json:"intentId,string"`
-    OwnerRef    string    `json:"ownerRef"`
+    AccountID   uint64    `json:"accountId"`
     Chain       Chain     `json:"chain"`
     Network     Network   `json:"network"`
     Token       Token     `json:"token"`
@@ -50,7 +50,7 @@ type IntentTransferStore struct {
 type IntentTransferInsertParams struct {
     ID          uint64    `json:"id,string"`
     IntentID    uint64    `json:"intentId,string"`
-    OwnerRef    string    `json:"ownerRef"`
+    AccountID   uint64    `json:"accountId"`
     Chain       Chain     `json:"chain"`
     Network     Network   `json:"network"`
     Token       Token     `json:"token"`
@@ -67,7 +67,7 @@ type IntentTransferInsertParams struct {
 
 type IntentTransferSelectParams struct {
     IntentID    *uint64   `json:"intentId,string,omitempty"`
-    OwnerRef    *string   `json:"ownerRef,omitempty"`
+    AccountID   *uint64   `json:"accountId,omitempty"`
     Chain       *Chain    `json:"chain,omitempty"`
     Network     *Network  `json:"network,omitempty"`
     Token       *Token    `json:"token,omitempty"`
@@ -178,34 +178,30 @@ func (t *IntentTransfer) ValidateIntentID() error {
 
 
 //
-// Validate payment onchain intent transfer owner ref.
+// Validate payment onchain intent transfer account ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func ValidateIntentTransferOwnerRef(ownerRef string) error {
-    s := strings.TrimSpace(ownerRef)
-    if s == "" {
-        return fmt.Errorf("invalid parameter: owner_ref=%q", "empty")
-    }
-    if len(s) > 128 {
-        return fmt.Errorf("invalid parameter: owner_ref=%q", "too long")
+func ValidateIntentTransferAccountID(accountID uint64) error {
+    if accountID == 0 {
+        return fmt.Errorf("invalid parameter: account_id=0")
     }
     return nil
 }
 
 
 //
-// Validate payment onchain intent transfer owner ref.
+// Validate payment onchain intent transfer account ID.
 //
 // Version:
 //   - 2026-05-16: Added.
 //
-func (t *IntentTransfer) ValidateOwnerRef() error {
+func (t *IntentTransfer) ValidateAccountID() error {
     if t == nil {
         return fmt.Errorf("missing required parameter: payment_onchain_intent_transfer=null")
     }
-    return ValidateIntentTransferOwnerRef(t.OwnerRef)
+    return ValidateIntentTransferAccountID(t.AccountID)
 }
 
 
@@ -469,7 +465,7 @@ func (s *IntentTransferStore) CreateTable(executor helper.Executor) error {
         `CREATE TABLE IF NOT EXISTS %s (
             %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
             %s BIGINT UNSIGNED NOT NULL COMMENT 'Intent ID',
-            %s VARCHAR(128) NOT NULL COMMENT 'Owner Ref',
+            %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
             %s VARCHAR(64) NOT NULL COMMENT 'Chain',
             %s VARCHAR(64) NOT NULL COMMENT 'Network',
             %s VARCHAR(64) NOT NULL COMMENT 'Token',
@@ -491,7 +487,7 @@ func (s *IntentTransferStore) CreateTable(executor helper.Executor) error {
         s.tableName,
         ColID,
         ColIntentID,
-        ColOwnerRef,
+        ColAccountID,
         ColChain,
         ColNetwork,
         ColToken,
@@ -538,7 +534,7 @@ func (s *IntentTransferStore) Insert(executor helper.Executor, p *IntentTransfer
     if p == nil {
         return fmt.Errorf("failed to insert payment onchain intent transfer: missing required parameter: tx_insert_params=null")
     }
-    if err := ValidateIntentTransferOwnerRef(p.OwnerRef); err != nil {
+    if err := ValidateIntentTransferAccountID(p.AccountID); err != nil {
         return fmt.Errorf("failed to insert payment onchain intent transfer: %w", err)
     }
     if err := ValidateIntentTransferIntentID(p.IntentID); err != nil {
@@ -592,7 +588,7 @@ func (s *IntentTransferStore) Insert(executor helper.Executor, p *IntentTransfer
         s.tableName,
         ColID,
         ColIntentID,
-        ColOwnerRef,
+        ColAccountID,
         ColChain,
         ColNetwork,
         ColToken,
@@ -610,7 +606,7 @@ func (s *IntentTransferStore) Insert(executor helper.Executor, p *IntentTransfer
         query,
         p.ID,
         p.IntentID,
-        p.OwnerRef,
+        p.AccountID,
         p.Chain,
         p.Network,
         p.Token,
@@ -653,7 +649,7 @@ func (s *IntentTransferStore) Upsert(executor helper.Executor, p *IntentTransfer
     if p == nil {
         return fmt.Errorf("failed to upsert payment onchain intent transfer: missing required parameter: tx_insert_params=null")
     }
-    if err := ValidateIntentTransferOwnerRef(p.OwnerRef); err != nil {
+    if err := ValidateIntentTransferAccountID(p.AccountID); err != nil {
         return fmt.Errorf("failed to upsert payment onchain intent transfer: %w", err)
     }
     if err := ValidateIntentTransferIntentID(p.IntentID); err != nil {
@@ -711,7 +707,7 @@ func (s *IntentTransferStore) Upsert(executor helper.Executor, p *IntentTransfer
         s.tableName,
         ColID,
         ColIntentID,
-        ColOwnerRef,
+        ColAccountID,
         ColChain,
         ColNetwork,
         ColToken,
@@ -724,7 +720,7 @@ func (s *IntentTransferStore) Upsert(executor helper.Executor, p *IntentTransfer
         ColCreatedAt,
         ColUpdatedAt,
         ColIntentID, ColIntentID,
-        ColOwnerRef, ColOwnerRef,
+        ColAccountID, ColAccountID,
         ColToken, ColToken,
         ColBlockNumber, ColBlockNumber,
         ColFromAddress, ColFromAddress,
@@ -737,7 +733,7 @@ func (s *IntentTransferStore) Upsert(executor helper.Executor, p *IntentTransfer
         query,
         p.ID,
         p.IntentID,
-        p.OwnerRef,
+        p.AccountID,
         p.Chain,
         p.Network,
         p.Token,
@@ -792,7 +788,7 @@ func (s *IntentTransferStore) Select(executor helper.Executor, p *IntentTransfer
         err := rows.Scan(
             &row.ID,
             &row.IntentID,
-            &row.OwnerRef,
+            &row.AccountID,
             &row.Chain,
             &row.Network,
             &row.Token,
@@ -846,7 +842,7 @@ func (s *IntentTransferStore) SelectByID(executor helper.Executor, id uint64) (*
     err := executor.QueryRow(query, id).Scan(
         &result.ID,
         &result.IntentID,
-        &result.OwnerRef,
+        &result.AccountID,
         &result.Chain,
         &result.Network,
         &result.Token,
@@ -1114,9 +1110,9 @@ func (p *IntentTransferSelectParams) BuildQuery(selectFromClause string) (string
         conditions = append(conditions, ColIntentID + " = ?")
         args = append(args, *p.IntentID)
     }
-    if p.OwnerRef != nil {
-        conditions = append(conditions, ColOwnerRef + " = ?")
-        args = append(args, *p.OwnerRef)
+    if p.AccountID != nil {
+        conditions = append(conditions, ColAccountID + " = ?")
+        args = append(args, *p.AccountID)
     }
     if p.Chain != nil {
         conditions = append(conditions, ColChain + " = ?")
@@ -1182,8 +1178,8 @@ func (p *IntentTransferSelectParams) Validate() error {
             return err
         }
     }
-    if p.OwnerRef != nil {
-        if err := ValidateIntentTransferOwnerRef(*p.OwnerRef); err != nil {
+    if p.AccountID != nil {
+        if err := ValidateIntentTransferAccountID(*p.AccountID); err != nil {
             return err
         }
     }
@@ -1217,7 +1213,7 @@ func (p *IntentTransferSelectParams) Validate() error {
         switch p.OrderBy {
         case ColID,
             ColIntentID,
-            ColOwnerRef,
+            ColAccountID,
             ColChain,
             ColNetwork,
             ColToken,
