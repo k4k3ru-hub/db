@@ -25,7 +25,7 @@ var (
 
 type WebhookEndpoint struct {
     ID                 uint64                    `json:"id,string"`
-    OwnerRef           string                    `json:"ownerRef"`
+    AccountID          uint64                    `json:"accountId,string"`
     Name               string                    `json:"name"`
     URL                string                    `json:"url"`
     EncryptedSecret    string                    `json:"-"`
@@ -43,7 +43,7 @@ type WebhookEndpointStore struct {
 
 type WebhookEndpointInsertParams struct {
     ID                 uint64                    `json:"id,string"`
-    OwnerRef           string                    `json:"ownerRef"`
+    AccountID          uint64                    `json:"accountId,string"`
     Name               string                    `json:"name"`
     URL                string                    `json:"url"`
     EncryptedSecret    string                    `json:"-"`
@@ -57,7 +57,7 @@ type WebhookEndpointInsertParams struct {
 
 type WebhookEndpointSelectParams struct {
     ID          *uint64 `json:"id,string,omitempty"`
-    OwnerRef    *string `json:"ownerRef,omitempty"`
+    AccountID   *uint64 `json:"accountId,string,omitempty"`
     Name        *string `json:"name,omitempty"`
     OrderBy     string  `json:"orderBy"`
     OrderByDesc bool    `json:"orderByDesc"`
@@ -66,7 +66,7 @@ type WebhookEndpointSelectParams struct {
 }
 
 type WebhookEndpointUpdateParams struct {
-    OwnerRef           *string                    `json:"ownerRef,omitempty"`
+    AccountID          *uint64                    `json:"accountId,string,omitempty"`
     Name               *string                    `json:"name,omitempty"`
     URL                *string                    `json:"url,omitempty"`
     EncryptedSecret    *string                    `json:"-"`
@@ -135,34 +135,30 @@ func (e *WebhookEndpoint) ValidateID() error {
 
 
 //
-// Validate payment webhook endpoint owner ref.
+// Validate payment webhook endpoint account ID.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func ValidateWebhookEndpointOwnerRef(ownerRef string) error {
-    s := strings.TrimSpace(ownerRef)
-    if s == "" {
-        return fmt.Errorf("invalid parameter: owner_ref=%q", "empty")
-    }
-    if len(s) > 128 {
-        return fmt.Errorf("invalid parameter: owner_ref=%q", "too long")
+func ValidateWebhookEndpointAccountID(accountID uint64) error {
+    if accountID == 0 {
+        return fmt.Errorf("invalid parameter: account_id=0")
     }
     return nil
 }
 
 
 //
-// Validate payment webhook endpoint owner ref.
+// Validate payment webhook endpoint account ID.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (e *WebhookEndpoint) ValidateOwnerRef() error {
+func (e *WebhookEndpoint) ValidateAccountID() error {
     if e == nil {
         return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
-    return ValidateWebhookEndpointOwnerRef(e.OwnerRef)
+    return ValidateWebhookEndpointAccountID(e.AccountID)
 }
 
 
@@ -374,7 +370,7 @@ func (s *WebhookEndpointStore) CreateTable(executor helper.Executor) error {
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
-            %s VARCHAR(128) NOT NULL COMMENT 'Owner Ref',
+            %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
             %s VARCHAR(64) NOT NULL COMMENT 'Name',
             %s VARCHAR(2048) NOT NULL COMMENT 'Webhook endpoint URL',
             %s TEXT NOT NULL COMMENT 'Encrypted secret',
@@ -384,12 +380,12 @@ func (s *WebhookEndpointStore) CreateTable(executor helper.Executor) error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            UNIQUE KEY uq_payment_webhook_endpoints_owner_ref_name (%s, %s),
-            KEY idx_payment_webhook_endpoints_owner_ref (%s)
+            UNIQUE KEY uq_payment_webhook_endpoints_account_id_name (%s, %s),
+            KEY idx_payment_webhook_endpoints_account_id (%s)
         );`,
         s.tableName,
         ColID,
-        ColOwnerRef,
+        ColAccountID,
         ColName,
         ColURL,
         ColEncryptedSecret,
@@ -399,8 +395,8 @@ func (s *WebhookEndpointStore) CreateTable(executor helper.Executor) error {
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
-        ColOwnerRef, ColName,
-        ColOwnerRef,
+        ColAccountID, ColName,
+        ColAccountID,
     )
 
     if _, err := executor.Exec(query); err != nil {
@@ -430,7 +426,7 @@ func (s *WebhookEndpointStore) Insert(executor helper.Executor, p *WebhookEndpoi
     if p == nil {
         return fmt.Errorf("failed to insert payment webhook endpoint: missing required parameter: webhook_endpoint_insert_params=null")
     }
-    if err := ValidateWebhookEndpointOwnerRef(p.OwnerRef); err != nil {
+    if err := ValidateWebhookEndpointAccountID(p.AccountID); err != nil {
         return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointName(p.Name); err != nil {
@@ -474,7 +470,7 @@ func (s *WebhookEndpointStore) Insert(executor helper.Executor, p *WebhookEndpoi
         queryPrefix,
         s.tableName,
         ColID,
-        ColOwnerRef,
+        ColAccountID,
         ColName,
         ColURL,
         ColEncryptedSecret,
@@ -488,7 +484,7 @@ func (s *WebhookEndpointStore) Insert(executor helper.Executor, p *WebhookEndpoi
     if _, err := executor.Exec(
         query,
         p.ID,
-        p.OwnerRef,
+        p.AccountID,
         p.Name,
         p.URL,
         p.EncryptedSecret,
@@ -539,7 +535,7 @@ func (s *WebhookEndpointStore) Select(executor helper.Executor, p *WebhookEndpoi
         row := &WebhookEndpoint{}
         if err := rows.Scan(
             &row.ID,
-            &row.OwnerRef,
+            &row.AccountID,
             &row.Name,
             &row.URL,
             &row.EncryptedSecret,
@@ -590,7 +586,7 @@ func (s *WebhookEndpointStore) SelectByID(executor helper.Executor, id uint64) (
     result := &WebhookEndpoint{}
     err := row.Scan(
         &result.ID,
-        &result.OwnerRef,
+        &result.AccountID,
         &result.Name,
         &result.URL,
         &result.EncryptedSecret,
@@ -612,36 +608,36 @@ func (s *WebhookEndpointStore) SelectByID(executor helper.Executor, id uint64) (
 
 
 //
-// Select payment webhook endpoint by owner ref and name.
+// Select payment webhook endpoint by account ID and name.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (s *WebhookEndpointStore) SelectByOwnerRefAndName(executor helper.Executor, ownerRef, name string) (*WebhookEndpoint, error) {
+func (s *WebhookEndpointStore) SelectByAccountIDAndName(executor helper.Executor, accountID uint64, name string) (*WebhookEndpoint, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: webhook_endpoint_store=null")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by account id and name: missing required parameter: webhook_endpoint_store=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by account id and name: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by account id and name: missing required parameter: executor=null")
     }
-    if ownerRef == "" {
-        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: owner_ref=%q", "empty")
+    if accountID == 0 {
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by account id and name: missing required parameter: account_id=0")
     }
     if name == "" {
-        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: missing required parameter: name=%q", "empty")
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by account id and name: missing required parameter: name=%q", "empty")
     }
 
-    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? AND %s = ? LIMIT 1;", s.tableName, ColOwnerRef, ColName)
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? AND %s = ? LIMIT 1;", s.tableName, ColAccountID, ColName)
 
-    row := executor.QueryRow(query, ownerRef, name)
+    row := executor.QueryRow(query, accountID, name)
 
     result := &WebhookEndpoint{}
     err := row.Scan(
         &result.ID,
-        &result.OwnerRef,
+        &result.AccountID,
         &result.Name,
         &result.URL,
         &result.EncryptedSecret,
@@ -655,7 +651,7 @@ func (s *WebhookEndpointStore) SelectByOwnerRefAndName(executor helper.Executor,
         if err == sql.ErrNoRows {
             return nil, nil
         }
-        return nil, fmt.Errorf("failed to select payment webhook endpoint by owner ref and name: %w", err)
+        return nil, fmt.Errorf("failed to select payment webhook endpoint by account id and name: %w", err)
     }
 
     return result, nil
@@ -744,8 +740,8 @@ func (s *WebhookEndpointStore) UpdateByID(executor helper.Executor, id uint64, p
     }
 
     // Validate webhook endpoint update params.
-    if p.OwnerRef != nil {
-        if err := ValidateWebhookEndpointOwnerRef(*p.OwnerRef); err != nil {
+    if p.AccountID != nil {
+        if err := ValidateWebhookEndpointAccountID(*p.AccountID); err != nil {
             return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
@@ -781,15 +777,15 @@ func (s *WebhookEndpointStore) UpdateByID(executor helper.Executor, id uint64, p
     }
 
     // Check whether unique key is conflict.
-    if p.OwnerRef != nil || p.Name != nil {
+    if p.AccountID != nil || p.Name != nil {
         webhookEndpoint, err := s.SelectByID(executor, id)
         if err != nil {
             return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
 
-        ownerRef := webhookEndpoint.OwnerRef
-        if p.OwnerRef != nil {
-            ownerRef = *p.OwnerRef
+        accountID := webhookEndpoint.AccountID
+        if p.AccountID != nil {
+            accountID = *p.AccountID
         }
 
         name := webhookEndpoint.Name
@@ -797,22 +793,22 @@ func (s *WebhookEndpointStore) UpdateByID(executor helper.Executor, id uint64, p
             name = *p.Name
         }
 
-        newWebhookEndpoint, err := s.SelectByOwnerRefAndName(executor, ownerRef, name)
+        newWebhookEndpoint, err := s.SelectByAccountIDAndName(executor, accountID, name)
         if err != nil {
             return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
 
         if newWebhookEndpoint != nil {
-            return fmt.Errorf("failed to update payment webhook endpoint by id: conflict: owner_ref=%q name=%q", ownerRef, name)
+            return fmt.Errorf("failed to update payment webhook endpoint by id: conflict: account_id=%d name=%q", accountID, name)
         }
     }
 
     assignments := make([]string, 0, 7)
     args := make([]any, 0, 8)
 
-    if p.OwnerRef != nil {
-        assignments = append(assignments, ColOwnerRef + " = ?")
-        args = append(args, *p.OwnerRef)
+    if p.AccountID != nil {
+        assignments = append(assignments, ColAccountID + " = ?")
+        args = append(args, *p.AccountID)
     }
     if p.Name != nil {
         assignments = append(assignments, ColName + " = ?")
@@ -877,9 +873,9 @@ func (p *WebhookEndpointSelectParams) BuildQuery(selectFromClause string) (strin
         conditions = append(conditions, ColID + " = ?")
         args = append(args, *p.ID)
     }
-    if p.OwnerRef != nil {
-        conditions = append(conditions, ColOwnerRef + " = ?")
-        args = append(args, *p.OwnerRef)
+    if p.AccountID != nil {
+        conditions = append(conditions, ColAccountID + " = ?")
+        args = append(args, *p.AccountID)
     }
     if p.Name != nil {
         conditions = append(conditions, ColName + " = ?")
@@ -925,8 +921,8 @@ func (p *WebhookEndpointSelectParams) Validate() error {
             return err
         }
     }
-    if p.OwnerRef != nil {
-        if err := ValidateWebhookEndpointOwnerRef(*p.OwnerRef); err != nil {
+    if p.AccountID != nil {
+        if err := ValidateWebhookEndpointAccountID(*p.AccountID); err != nil {
             return err
         }
     }
@@ -939,7 +935,7 @@ func (p *WebhookEndpointSelectParams) Validate() error {
     if p.OrderBy != "" {
         switch p.OrderBy {
         case ColID,
-            ColOwnerRef,
+            ColAccountID,
             ColName,
             ColURL,
             ColSecretProviderKind,
