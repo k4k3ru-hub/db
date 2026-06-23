@@ -295,7 +295,7 @@ func ValidateRecipientSecretKeyVersion(secretKeyVersion *string) error {
     if s == "" {        
         return fmt.Errorf("invalid parameter: secret_key_version=%q", "empty")
     }
-    if len(s) > 128 {
+    if len(s) > 255 {
         return fmt.Errorf("invalid parameter: secret_key_version=%q", "too long")
     }
     return nil
@@ -376,7 +376,7 @@ func (s *RecipientStore) CreateTable(executor helper.Executor) error {
             %s VARCHAR(16) NOT NULL COMMENT 'ChainFamily',
             %s VARCHAR(255) NOT NULL COMMENT 'Address',
             %s VARCHAR(32) NULL COMMENT 'Secret Provider kind',
-            %s VARCHAR(128) NULL COMMENT 'Secret key version',
+            %s VARCHAR(255) NULL COMMENT 'Secret key version',
             %s TEXT NULL COMMENT 'Encrypted private key',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
