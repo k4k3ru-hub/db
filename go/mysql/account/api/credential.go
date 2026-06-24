@@ -622,7 +622,7 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
             UNIQUE KEY uk_account_api_credentials_api_key (%s),
             UNIQUE KEY uk_account_api_credentials_account_id_name (%s, %s),
             KEY idx_account_api_credentials_account_id (%s),
-            CONSTRAINT fk_account_api_credentials_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE);
+            CONSTRAINT fk_%s_acc_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE);
         `,
         s.tableName,
         ColID,
@@ -643,7 +643,7 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
         ColAPIKey,
         ColAccountID, ColName,
         ColAccountID,
-        ColAccountID, s.accountTableName, account.ColID,
+        s.tableName, ColAccountID, s.accountTableName, account.ColID,
     )
 
     // Execute the query.
