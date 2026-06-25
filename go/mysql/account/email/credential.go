@@ -420,7 +420,7 @@ func (s *CredentialStore) Insert(executor helper.Executor, params *CredentialIns
         params.ID = GenerateCredentialID()
     }
 
-    now := time.Now()
+    now := time.Now().UTC()
     if params.CreatedAt.IsZero() {
         params.CreatedAt = now
     }
