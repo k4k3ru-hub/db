@@ -40,7 +40,7 @@ type Credential struct {
     Status             CredentialStatus
     Name               string
     APIKey             string
-    Algorithm          CredentialAlgorithm
+    Algorithm          CredentialSignatureAlgorithm
     PublicKey          *string
     EncryptedSecretKey *string
     KMSProviderKind    *string
@@ -73,7 +73,7 @@ type CredentialInsertParams struct {
     Status             CredentialStatus
     Name               string
     APIKey             string
-    Algorithm          CredentialAlgorithm
+    Algorithm          CredentialSignatureAlgorithm
     PublicKey          *string
     EncryptedSecretKey *string
     KMSProviderKind    *string
@@ -117,7 +117,7 @@ type CredentialUpdateParams struct {
     Status                    *CredentialStatus
     Name                      *string
     APIKey                    *string
-    Algorithm                 *CredentialAlgorithm
+    Algorithm                 *CredentialSignatureAlgorithm
     PublicKey                 *string
     EncryptedSecretKey        *string
     KMSProviderKind           *string
@@ -338,7 +338,7 @@ func (c *Credential) ValidateAPIKey() error {
 // Version:
 //   - 2026-06-03: Added.
 //
-func ValidateCredentialAlgorithm(algorithm CredentialAlgorithm) error {
+func ValidateCredentialSignatureAlgorithm(algorithm CredentialSignatureAlgorithm) error {
     if err := algorithm.Validate(); err != nil {
         return err
     }
@@ -356,7 +356,7 @@ func (c *Credential) ValidateAlgorithm() error {
     if c == nil {
         return fmt.Errorf("missing required parameter: account_api_key_credential=null")
     }
-    return ValidateCredentialAlgorithm(c.Algorithm)
+    return ValidateCredentialSignatureAlgorithm(c.Algorithm)
 }
 
 
@@ -720,7 +720,7 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
     if err := ValidateCredentialAPIKey(p.APIKey); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
-    if err := ValidateCredentialAlgorithm(p.Algorithm); err != nil {
+    if err := ValidateCredentialSignatureAlgorithm(p.Algorithm); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
     if err := ValidateCredentialPublicKey(p.PublicKey); err != nil {
@@ -742,7 +742,7 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
     switch p.Algorithm {
-    case CredentialAlgorithmHMACSHA256:
+    case CredentialSignatureAlgorithmHMACSHA256:
         if p.EncryptedSecretKey == nil  {
             return fmt.Errorf("failed to insert account api credential: missing required parameter: encrypted_secret_key=%q", "empty")
         }
@@ -752,7 +752,7 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
         if p.KMSKeyVersion == nil  {
             return fmt.Errorf("failed to insert account api credential: missing required parameter: kms_key_version=%q", "empty")
         }
-    case CredentialAlgorithmEd25519:
+    case CredentialSignatureAlgorithmEd25519:
         if p.PublicKey == nil {
             return fmt.Errorf("failed to insert account api credential: missing required parameter: public_key=%q", "empty")
         }
@@ -1108,7 +1108,7 @@ func (s *CredentialStore) Update(executor helper.Executor, id uint64, p *Credent
         args = append(args, *p.APIKey)
     }
     if p.Algorithm != nil {
-        if err := ValidateCredentialAlgorithm(*p.Algorithm); err != nil {
+        if err := ValidateCredentialSignatureAlgorithm(*p.Algorithm); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColAlgorithm + " = ?")

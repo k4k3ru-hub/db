@@ -109,11 +109,11 @@ func (s *CredentialStatus) Scan(value any) error {
 }
 
 
-type CredentialAlgorithm uint8
+type CredentialSignatureAlgorithm uint8
 
 const (
-    CredentialAlgorithmHMACSHA256 CredentialAlgorithm = iota + 1
-    CredentialAlgorithmEd25519
+    CredentialSignatureAlgorithmHMACSHA256 CredentialSignatureAlgorithm = iota + 1
+    CredentialSignatureAlgorithmEd25519
 )
 
 //
@@ -122,9 +122,9 @@ const (
 // Version:
 //   - 2026-05-03: Added.
 //
-func (a CredentialAlgorithm) IsValid() bool {
+func (a CredentialSignatureAlgorithm) IsValid() bool {
     switch a {
-    case CredentialAlgorithmHMACSHA256, CredentialAlgorithmEd25519:
+    case CredentialSignatureAlgorithmHMACSHA256, CredentialSignatureAlgorithmEd25519:
         return true
     default:
         return false
@@ -138,7 +138,7 @@ func (a CredentialAlgorithm) IsValid() bool {
 // Version:
 //   - 2026-06-03: Added.
 //
-func (s CredentialAlgorithm) Validate() error {
+func (s CredentialSignatureAlgorithm) Validate() error {
     if !s.IsValid() {
         fmt.Errorf("invalid parameter: credential_algorithm=%d", s)
     }
@@ -152,7 +152,7 @@ func (s CredentialAlgorithm) Validate() error {
 // Version:
 //   - 2026-05-03: Added.
 //
-func (s CredentialAlgorithm) Value() (driver.Value, error) {
+func (s CredentialSignatureAlgorithm) Value() (driver.Value, error) {
     if err := s.Validate(); err != nil {
         return nil, err
     }
@@ -162,27 +162,27 @@ func (s CredentialAlgorithm) Value() (driver.Value, error) {
 
 
 //
-// Scan credential algorithm as sql.Scanner.
+// Scan credential signature algorithm as sql.Scanner.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
-func (s *CredentialAlgorithm) Scan(value any) error {
-    if s == nil {
-        return fmt.Errorf("failed to scan: missing required parameter: credential_algorithm=null")
+func (a *CredentialSignatureAlgorithm) Scan(value any) error {
+    if a == nil {
+        return fmt.Errorf("failed to scan: missing required parameter: credential_signature_algorithm=null")
     }
 
-    v, err := helper.ScanUint8("credential_algorithm", value)
+    v, err := helper.ScanUint8("credential_signature_algorithm", value)
     if err != nil {
         return fmt.Errorf("failed to scan: %w", err)
     }
 
-    scanned := CredentialAlgorithm(v)
+    scanned := CredentialSignatureAlgorithm(v)
     if err := scanned.Validate(); err != nil {
         return fmt.Errorf("failed to scan: %w", err)
     }
 
-    *s = scanned
+    *a = scanned
 
     return nil
 }
