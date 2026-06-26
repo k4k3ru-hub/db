@@ -361,11 +361,15 @@ func (c *OTPChannel) Scan(value interface{}) error {
 // Version:
 //   - 2026-06-25: Added.
 //
-type OTPPurpose uint8
+type OTPPurpose uint16
 
 const (
-    OTPPurposeEmailCredentialCreation OTPPurpose = iota + 1
-    OTPPurposeAPICredentialCreation
+    // Account: Email
+    OTPPurposeAccountEmailCreateCredential OTPPurpose = 1001
+
+    // Account: API
+    OTPPurposeAccountAPICreateCredential OTPPurpose = 2001
+    OTPPurposeAccountAPIUpdateCredential OTPPurpose = 2002
 )
 
 
@@ -377,10 +381,12 @@ const (
 //
 func (p OTPPurpose) String() string {
     switch p {
-    case OTPPurposeEmailCredentialCreation:
-        return "email-credential-creation"
-    case OTPPurposeAPICredentialCreation:
-        return "api-credential-creation"
+    case OTPPurposeAccountEmailCreateCredential:
+        return "account-email-create-credential"
+    case OTPPurposeAccountAPICreateCredential:
+        return "account-api-create-credential"
+    case OTPPurposeAccountAPIUpdateCredential:
+        return "account-api-update-credential"
     default:
         return ""
     }
@@ -395,8 +401,9 @@ func (p OTPPurpose) String() string {
 //
 func (p OTPPurpose) IsValid() bool {
     switch p {
-    case OTPPurposeEmailCredentialCreation,
-         OTPPurposeAPICredentialCreation:
+    case OTPPurposeAccountEmailCreateCredential,
+         OTPPurposeAccountAPICreateCredential,
+         OTPPurposeAccountAPIUpdateCredential:
         return true
     default:
         return false

@@ -572,7 +572,7 @@ func (s *OTPStore) CreateTable(executor helper.Executor) error {
             %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Channel',
-            %s TINYINT UNSIGNED NOT NULL COMMENT 'Purpose',
+            %s SMALLINT UNSIGNED NOT NULL COMMENT 'Purpose',
             %s VARCHAR(255) NOT NULL COMMENT 'Destination hash',
             %s VARCHAR(255) NOT NULL COMMENT 'Code hash',
             %s DATETIME NULL COMMENT 'Consumed at',
@@ -730,7 +730,7 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
 
 
 //
-// Select account OTP active.
+// Select latest active account OTP.
 //
 // Version:
 //   - 2026-05-07: Added.
