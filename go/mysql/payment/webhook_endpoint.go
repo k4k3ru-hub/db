@@ -24,16 +24,16 @@ var (
 
 
 type WebhookEndpoint struct {
-    ID                 uint64                    `json:"id,string"`
-    AccountID          uint64                    `json:"accountId,string"`
-    Name               string                    `json:"name"`
-    URL                string                    `json:"url"`
-    EncryptedSecret    string                    `json:"-"`
-    SecretProviderKind string                    `json:"secretProviderKind"`
-    SecretKeyVersion   string                    `json:"secretKeyVersion"`
-    SignatureAlgorithm WebhookSignatureAlgorithm `json:"signatureAlgorithm"`
-    CreatedAt          time.Time                 `json:"createdAt,omitempty"`
-    UpdatedAt          time.Time                 `json:"updatedAt,omitempty"`
+    ID                 uint64                    
+    AccountID          uint64                    
+    Name               string                    
+    URL                string                    
+    EncryptedSecretKey string                    
+    KMSProviderKind string                    
+    KMSKeyVersion   string                    
+    SignatureAlgorithm WebhookSignatureAlgorithm 
+    CreatedAt          time.Time                 
+    UpdatedAt          time.Time                 
 }
 
 type WebhookEndpointStore struct {
@@ -42,37 +42,37 @@ type WebhookEndpointStore struct {
 
 
 type WebhookEndpointInsertParams struct {
-    ID                 uint64                    `json:"id,string"`
-    AccountID          uint64                    `json:"accountId,string"`
-    Name               string                    `json:"name"`
-    URL                string                    `json:"url"`
-    EncryptedSecret    string                    `json:"-"`
-    SecretProviderKind string                    `json:"secretProviderKind"`
-    SecretKeyVersion   string                    `json:"secretKeyVersion"`
-    SignatureAlgorithm WebhookSignatureAlgorithm `json:"signatureAlgorithm"`
-    CreatedAt          time.Time                 `json:"createdAt"`
-    UpdatedAt          time.Time                 `json:"updatedAt"`
-    Ignore             bool                      `json:"ignore"`
+    ID                 uint64                    
+    AccountID          uint64                    
+    Name               string                    
+    URL                string                    
+    EncryptedSecretKey string                    
+    KMSProviderKind    string                    
+    KMSKeyVersion      string                    
+    SignatureAlgorithm WebhookSignatureAlgorithm 
+    CreatedAt          time.Time                 
+    UpdatedAt          time.Time                 
+    Ignore             bool                      
 }
 
 type WebhookEndpointSelectParams struct {
-    ID          *uint64 `json:"id,string,omitempty"`
-    AccountID   *uint64 `json:"accountId,string,omitempty"`
-    Name        *string `json:"name,omitempty"`
-    OrderBy     string  `json:"orderBy"`
-    OrderByDesc bool    `json:"orderByDesc"`
-    Limit       int     `json:"limit"`
-    Offset      int     `json:"offset"`
+    ID          *uint64
+    AccountID   *uint64
+    Name        *string
+    OrderBy     string 
+    OrderByDesc bool   
+    Limit       int    
+    Offset      int    
 }
 
 type WebhookEndpointUpdateParams struct {
-    AccountID          *uint64                    `json:"accountId,string,omitempty"`
-    Name               *string                    `json:"name,omitempty"`
-    URL                *string                    `json:"url,omitempty"`
-    EncryptedSecret    *string                    `json:"-"`
-    SecretProviderKind *string                    `json:"secretProviderKind,omitempty"`
-    SecretKeyVersion   *string                    `json:"secretKeyVersion,omitempty"`
-    SignatureAlgorithm *WebhookSignatureAlgorithm `json:"signatureAlgorithm,omitempty"`
+    AccountID          *uint64
+    Name               *string
+    URL                *string
+    EncryptedSecretKey *string
+    KMSProviderKind    *string
+    KMSKeyVersion      *string
+    SignatureAlgorithm *WebhookSignatureAlgorithm
 }
 
 
@@ -227,98 +227,98 @@ func (e *WebhookEndpoint) ValidateURL() error {
 
 
 //
-// Validate payment webhook endpoint encrypted secret.
+// Validate payment webhook endpoint encrypted secret key.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func ValidateWebhookEndpointEncryptedSecret(encryptedSecret string) error {
-    s := strings.TrimSpace(encryptedSecret)
+func ValidateWebhookEndpointEncryptedSecretKey(encryptedSecretKey string) error {
+    s := strings.TrimSpace(encryptedSecretKey)
     if s == "" {
-        return fmt.Errorf("invalid parameter: encrypted_secret=%q", "empty")
+        return fmt.Errorf("invalid parameter: encrypted_secret_key=%q", "empty")
     }
     if len(s) > 4096 {
-        return fmt.Errorf("invalid parameter: encrypted_secret=%q max_length=4096", "too long")
+        return fmt.Errorf("invalid parameter: encrypted_secret_key=%q max_length=4096", "too long")
     }
     return nil
 }
 
 
 //
-// Validate payment webhook endpoint encrypted secret.
+// Validate payment webhook endpoint encrypted secret key.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (e *WebhookEndpoint) ValidateEncryptedSecret() error {
+func (e *WebhookEndpoint) ValidateEncryptedSecretKey() error {
     if e == nil {
         return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
-    return ValidateWebhookEndpointEncryptedSecret(e.EncryptedSecret)
+    return ValidateWebhookEndpointEncryptedSecretKey(e.EncryptedSecretKey)
 }
 
 
 //
-// Validate payment webhook endpoint secret provider kind.
+// Validate payment webhook endpoint KMS provider kind.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func ValidateWebhookEndpointSecretProviderKind(secretProviderKind string) error {
-    s := strings.TrimSpace(secretProviderKind)
+func ValidateWebhookEndpointKMSProviderKind(kmsProviderKind string) error {
+    s := strings.TrimSpace(kmsProviderKind)
     if s == "" {
-        return fmt.Errorf("invalid parameter: secret_provider_kind=%q", "empty")
+        return fmt.Errorf("invalid parameter: kms_provider_kind=%q", "empty")
     }
     if len(s) > 32 {
-        return fmt.Errorf("invalid parameter: secret_provider_kind=%q", "too long")
+        return fmt.Errorf("invalid parameter: kms_provider_kind=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate payment webhook endpoint secret provider kind.
+// Validate payment webhook endpoint KMS provider kind.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (e *WebhookEndpoint) ValidateSecretProviderKind() error {
+func (e *WebhookEndpoint) ValidateKMSProviderKind() error {
     if e == nil {
         return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
-    return ValidateWebhookEndpointSecretProviderKind(e.SecretProviderKind)
+    return ValidateWebhookEndpointKMSProviderKind(e.KMSProviderKind)
 }
 
 
 //
-// Validate payment webhook endpoint secret key version.
+// Validate payment webhook endpoint KMS key version.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func ValidateWebhookEndpointSecretKeyVersion(secretKeyVersion string) error {
-    s := strings.TrimSpace(secretKeyVersion)
+func ValidateWebhookEndpointKMSKeyVersion(kmsKeyVersion string) error {
+    s := strings.TrimSpace(kmsKeyVersion)
     if s == "" {
-        return fmt.Errorf("invalid parameter: secret_key_version=%q", "empty")
+        return fmt.Errorf("invalid parameter: KMS_key_version=%q", "empty")
     }
     if len(s) > 32 {
-        return fmt.Errorf("invalid parameter: secret_key_version=%q", "too long")
+        return fmt.Errorf("invalid parameter: KMS_key_version=%q", "too long")
     }
     return nil
 }
 
 
 //
-// Validate payment webhook endpoint secret key version.
+// Validate payment webhook endpoint KMS key version.
 //
 // Version:
 //   - 2026-06-01: Added.
 //
-func (e *WebhookEndpoint) ValidateSecretKeyVersion() error {
+func (e *WebhookEndpoint) ValidateKMSKeyVersion() error {
     if e == nil {
         return fmt.Errorf("missing required parameter: payment_webhook_endpoint=null")
     }
-    return ValidateWebhookEndpointSecretKeyVersion(e.SecretKeyVersion)
+    return ValidateWebhookEndpointKMSKeyVersion(e.KMSKeyVersion)
 }
 
 
@@ -374,8 +374,8 @@ func (s *WebhookEndpointStore) CreateTable(executor helper.Executor) error {
             %s VARCHAR(64) NOT NULL COMMENT 'Name',
             %s VARCHAR(2048) NOT NULL COMMENT 'Webhook endpoint URL',
             %s TEXT NOT NULL COMMENT 'Encrypted secret',
-            %s VARCHAR(32) NOT NULL COMMENT 'Secret provider kind',
-            %s VARCHAR(32) NOT NULL COMMENT 'Secret key version',
+            %s VARCHAR(32) NOT NULL COMMENT 'KMS provider kind',
+            %s VARCHAR(32) NOT NULL COMMENT 'KMS key version',
             %s VARCHAR(32) NOT NULL COMMENT 'Signature algorithm',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
@@ -388,9 +388,9 @@ func (s *WebhookEndpointStore) CreateTable(executor helper.Executor) error {
         ColAccountID,
         ColName,
         ColURL,
-        ColEncryptedSecret,
-        ColSecretProviderKind,
-        ColSecretKeyVersion,
+        ColEncryptedSecretKey,
+        ColKMSProviderKind,
+        ColKMSKeyVersion,
         ColSignatureAlgorithm,
         ColCreatedAt,
         ColUpdatedAt,
@@ -435,13 +435,13 @@ func (s *WebhookEndpointStore) Insert(executor helper.Executor, p *WebhookEndpoi
     if err := ValidateWebhookEndpointURL(p.URL); err != nil {
         return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
-    if err := ValidateWebhookEndpointEncryptedSecret(p.EncryptedSecret); err != nil {
+    if err := ValidateWebhookEndpointEncryptedSecretKey(p.EncryptedSecretKey); err != nil {
         return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
-    if err := ValidateWebhookEndpointSecretProviderKind(p.SecretProviderKind); err != nil {
+    if err := ValidateWebhookEndpointKMSProviderKind(p.KMSProviderKind); err != nil {
         return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
-    if err := ValidateWebhookEndpointSecretKeyVersion(p.SecretKeyVersion); err != nil {
+    if err := ValidateWebhookEndpointKMSKeyVersion(p.KMSKeyVersion); err != nil {
         return fmt.Errorf("failed to insert payment webhook endpoint: %w", err)
     }
     if err := ValidateWebhookEndpointSignatureAlgorithm(p.SignatureAlgorithm); err != nil {
@@ -473,9 +473,9 @@ func (s *WebhookEndpointStore) Insert(executor helper.Executor, p *WebhookEndpoi
         ColAccountID,
         ColName,
         ColURL,
-        ColEncryptedSecret,
-        ColSecretProviderKind,
-        ColSecretKeyVersion,
+        ColEncryptedSecretKey,
+        ColKMSProviderKind,
+        ColKMSKeyVersion,
         ColSignatureAlgorithm,
         ColCreatedAt,
         ColUpdatedAt,
@@ -487,9 +487,9 @@ func (s *WebhookEndpointStore) Insert(executor helper.Executor, p *WebhookEndpoi
         p.AccountID,
         p.Name,
         p.URL,
-        p.EncryptedSecret,
-        p.SecretProviderKind,
-        p.SecretKeyVersion,
+        p.EncryptedSecretKey,
+        p.KMSProviderKind,
+        p.KMSKeyVersion,
         p.SignatureAlgorithm,
         p.CreatedAt,
         p.UpdatedAt,
@@ -538,9 +538,9 @@ func (s *WebhookEndpointStore) Select(executor helper.Executor, p *WebhookEndpoi
             &row.AccountID,
             &row.Name,
             &row.URL,
-            &row.EncryptedSecret,
-            &row.SecretProviderKind,
-            &row.SecretKeyVersion,
+            &row.EncryptedSecretKey,
+            &row.KMSProviderKind,
+            &row.KMSKeyVersion,
             &row.SignatureAlgorithm,
             &row.CreatedAt,
             &row.UpdatedAt,
@@ -589,9 +589,9 @@ func (s *WebhookEndpointStore) SelectByID(executor helper.Executor, id uint64) (
         &result.AccountID,
         &result.Name,
         &result.URL,
-        &result.EncryptedSecret,
-        &result.SecretProviderKind,
-        &result.SecretKeyVersion,
+        &result.EncryptedSecretKey,
+        &result.KMSProviderKind,
+        &result.KMSKeyVersion,
         &result.SignatureAlgorithm,
         &result.CreatedAt,
         &result.UpdatedAt,
@@ -640,9 +640,9 @@ func (s *WebhookEndpointStore) SelectByAccountIDAndName(executor helper.Executor
         &result.AccountID,
         &result.Name,
         &result.URL,
-        &result.EncryptedSecret,
-        &result.SecretProviderKind,
-        &result.SecretKeyVersion,
+        &result.EncryptedSecretKey,
+        &result.KMSProviderKind,
+        &result.KMSKeyVersion,
         &result.SignatureAlgorithm,
         &result.CreatedAt,
         &result.UpdatedAt,
@@ -755,18 +755,18 @@ func (s *WebhookEndpointStore) UpdateByID(executor helper.Executor, id uint64, p
             return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
-    if p.EncryptedSecret != nil {
-        if err := ValidateWebhookEndpointEncryptedSecret(*p.EncryptedSecret); err != nil {
+    if p.EncryptedSecretKey != nil {
+        if err := ValidateWebhookEndpointEncryptedSecretKey(*p.EncryptedSecretKey); err != nil {
             return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
-    if p.SecretProviderKind != nil {
-        if err := ValidateWebhookEndpointSecretProviderKind(*p.SecretProviderKind); err != nil {
+    if p.KMSProviderKind != nil {
+        if err := ValidateWebhookEndpointKMSProviderKind(*p.KMSProviderKind); err != nil {
             return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
-    if p.SecretKeyVersion != nil {
-        if err := ValidateWebhookEndpointSecretKeyVersion(*p.SecretKeyVersion); err != nil {
+    if p.KMSKeyVersion != nil {
+        if err := ValidateWebhookEndpointKMSKeyVersion(*p.KMSKeyVersion); err != nil {
             return fmt.Errorf("failed to update payment webhook endpoint by id: %w", err)
         }
     }
@@ -818,17 +818,17 @@ func (s *WebhookEndpointStore) UpdateByID(executor helper.Executor, id uint64, p
         assignments = append(assignments, ColURL + " = ?")
         args = append(args, *p.URL)
     }
-    if p.EncryptedSecret != nil {
-        assignments = append(assignments, ColEncryptedSecret + " = ?")
-        args = append(args, *p.EncryptedSecret)
+    if p.EncryptedSecretKey != nil {
+        assignments = append(assignments, ColEncryptedSecretKey + " = ?")
+        args = append(args, *p.EncryptedSecretKey)
     }
-    if p.SecretProviderKind != nil {
-        assignments = append(assignments, ColSecretProviderKind + " = ?")
-        args = append(args, *p.SecretProviderKind)
+    if p.KMSProviderKind != nil {
+        assignments = append(assignments, ColKMSProviderKind + " = ?")
+        args = append(args, *p.KMSProviderKind)
     }
-    if p.SecretKeyVersion != nil {
-        assignments = append(assignments, ColSecretKeyVersion + " = ?")
-        args = append(args, *p.SecretKeyVersion)
+    if p.KMSKeyVersion != nil {
+        assignments = append(assignments, ColKMSKeyVersion + " = ?")
+        args = append(args, *p.KMSKeyVersion)
     }
     if p.SignatureAlgorithm != nil {
         assignments = append(assignments, ColSignatureAlgorithm + " = ?")
@@ -938,8 +938,8 @@ func (p *WebhookEndpointSelectParams) Validate() error {
             ColAccountID,
             ColName,
             ColURL,
-            ColSecretProviderKind,
-            ColSecretKeyVersion,
+            ColKMSProviderKind,
+            ColKMSKeyVersion,
             ColSignatureAlgorithm,
             ColCreatedAt,
             ColUpdatedAt:

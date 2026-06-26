@@ -347,20 +347,20 @@ func (w *DepositAddress) ValidateEncryptedPrivateKey() error {
 
 
 //
-// Create onchain deposit addressses table.
+// Create onchain deposit addresses table.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
 func (s *DepositAddressStore) CreateTable(executor helper.Executor) error {
     if s == nil {
-        return fmt.Errorf("failed to create onchain deposit addressses table: missing required parameter: wallet_store=null")
+        return fmt.Errorf("failed to create onchain deposit addresses table: missing required parameter: wallet_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create onchain deposit addressses table: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to create onchain deposit addresses table: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return fmt.Errorf("failed to create onchain deposit addressses table: missing required parameter: executor=null")
+        return fmt.Errorf("failed to create onchain deposit addresses table: missing required parameter: executor=null")
     }
 
     query := fmt.Sprintf(
@@ -376,8 +376,8 @@ func (s *DepositAddressStore) CreateTable(executor helper.Executor) error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            UNIQUE KEY uq_onchain_deposit_addressses_cha_fam_add (%s, %s),
-            KEY idx_onchain_deposit_addressses_own_ref_cha_fam_sta (%s, %s, %s)
+            UNIQUE KEY uq_onchain_deposit_addresses_cha_fam_add (%s, %s),
+            KEY idx_onchain_deposit_addresses_own_ref_cha_fam_sta (%s, %s, %s)
         );`,
         s.tableName,
         ColID,
@@ -396,7 +396,7 @@ func (s *DepositAddressStore) CreateTable(executor helper.Executor) error {
     )
 
     if _, err := executor.Exec(query); err != nil {
-        return fmt.Errorf("failed to create onchain deposit addressses table: %w", err)
+        return fmt.Errorf("failed to create onchain deposit addresses table: %w", err)
     }
 
     return nil
@@ -498,23 +498,23 @@ func (s *DepositAddressStore) Insert(executor helper.Executor, p *DepositAddress
 
 
 //
-// Select onchain deposit addressses.
+// Select onchain deposit addresses.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
 func (s *DepositAddressStore) Select(executor helper.Executor, p *DepositAddressSelectParams) ([]*DepositAddress, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select onchain deposit addressses: missing required parameter: wallet_store=null")
+        return nil, fmt.Errorf("failed to select onchain deposit addresses: missing required parameter: wallet_store=null")
     }
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select onchain deposit addressses: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select onchain deposit addresses: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return nil, fmt.Errorf("failed to select onchain deposit addressses: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select onchain deposit addresses: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
-        return nil, fmt.Errorf("failed to select onchain deposit addressses: %w", err)
+        return nil, fmt.Errorf("failed to select onchain deposit addresses: %w", err)
     }
 
     query, args := p.BuildQuery("SELECT * FROM " + s.tableName)
@@ -522,7 +522,7 @@ func (s *DepositAddressStore) Select(executor helper.Executor, p *DepositAddress
     // Execute.
     rows, err := executor.Query(query, args...)
     if err != nil {
-        return nil, fmt.Errorf("failed to select onchain deposit addressses: %w", err)
+        return nil, fmt.Errorf("failed to select onchain deposit addresses: %w", err)
     }
     defer rows.Close()
 
@@ -541,14 +541,14 @@ func (s *DepositAddressStore) Select(executor helper.Executor, p *DepositAddress
             &row.CreatedAt,
             &row.UpdatedAt,
         ); err != nil {
-            return nil, fmt.Errorf("failed to select onchain deposit addressses: %w", err)
+            return nil, fmt.Errorf("failed to select onchain deposit addresses: %w", err)
         }
 
         result = append(result, row)
     }
 
     if err := rows.Err(); err != nil {
-        return nil, fmt.Errorf("failed to select onchain deposit addressses: %w", err)
+        return nil, fmt.Errorf("failed to select onchain deposit addresses: %w", err)
     }
 
     return result, nil
@@ -604,30 +604,30 @@ func (s *DepositAddressStore) SelectByID(executor helper.Executor, id uint64) (*
 
 
 //
-// Count onchain deposit addressses.
+// Count onchain deposit addresses.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
 func (s *DepositAddressStore) Count(executor helper.Executor, p *DepositAddressSelectParams) (int64, error) {
     if s == nil {
-        return 0, fmt.Errorf("failed to count onchain deposit addressses: missing required parameter: wallet_store=null")
+        return 0, fmt.Errorf("failed to count onchain deposit addresses: missing required parameter: wallet_store=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count onchain deposit addressses: missing required parameter: table_name=%q", "empty")
+        return 0, fmt.Errorf("failed to count onchain deposit addresses: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return 0, fmt.Errorf("failed to count onchain deposit addressses: missing required parameter: executor=null")
+        return 0, fmt.Errorf("failed to count onchain deposit addresses: missing required parameter: executor=null")
     }
     if err := p.Validate(); err != nil {
-        return 0, fmt.Errorf("failed to count onchain deposit addressses: %w", err)
+        return 0, fmt.Errorf("failed to count onchain deposit addresses: %w", err)
     }
 
     query, args := p.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     var result int64
     if err := executor.QueryRow(query, args...).Scan(&result); err != nil {
-        return 0, fmt.Errorf("failed to count onchain deposit addressses: %w", err)
+        return 0, fmt.Errorf("failed to count onchain deposit addresses: %w", err)
     }
 
     return result, nil

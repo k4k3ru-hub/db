@@ -24,16 +24,16 @@ var (
 
 
 type Recipient struct {
-    ID                  uint64          `json:"id,string"`
-    Status              RecipientStatus `json:"status"`
-    Kind                RecipientKind   `json:"kind"`
-    ChainFamily         ChainFamily     `json:"chainFamily"`
-    Address             string          `json:"address"`
-    SecretProviderKind  *string         `json:"secretProviderKind"`
-    SecretKeyVersion    *string         `json:"secretKeyVersion"`
-    EncryptedPrivateKey *string         `json:"encryptedPrivateKey"`
-    CreatedAt           time.Time       `json:"createdAt,omitempty"`
-    UpdatedAt           time.Time       `json:"updatedAt,omitempty"`
+    ID                  uint64         
+    Status              RecipientStatus
+    Kind                RecipientKind  
+    ChainFamily         ChainFamily    
+    Address             string         
+    KMSProviderKind     *string        
+    KMSKeyVersion       *string        
+    EncryptedPrivateKey *string        
+    CreatedAt           time.Time      
+    UpdatedAt           time.Time      
 }
 
 type RecipientStore struct {
@@ -41,29 +41,29 @@ type RecipientStore struct {
 }
 
 type RecipientInsertParams struct {
-    ID                  uint64          `json:"id,string"`
-    Status              RecipientStatus `json:"status"`
-    Kind                RecipientKind   `json:"kind"`
-    ChainFamily         ChainFamily     `json:"chainFamily"`
-    Address             string          `json:"address"`
-    SecretProviderKind  *string         `json:"secretProviderKind"`
-    SecretKeyVersion    *string         `json:"secretKeyVersion"`
-    EncryptedPrivateKey *string         `json:"encryptedPrivateKey"`
-    CreatedAt           time.Time       `json:"createdAt,omitempty"`
-    UpdatedAt           time.Time       `json:"updatedAt,omitempty"`
-    Ignore              bool            `json:"ignore"`
+    ID                  uint64         
+    Status              RecipientStatus
+    Kind                RecipientKind  
+    ChainFamily         ChainFamily    
+    Address             string         
+    KMSProviderKind     *string        
+    KMSKeyVersion       *string        
+    EncryptedPrivateKey *string        
+    CreatedAt           time.Time
+    UpdatedAt           time.Time
+    Ignore              bool     
 }
 
 type RecipientSelectParams struct {
-    ID          *uint64          `json:"id,string,omitempty"`
-    Status      *RecipientStatus `json:"status,omitempty"`
-    Kind        *RecipientKind   `json:"kind,omitempty"`
-    ChainFamily *ChainFamily     `json:"chainFamily,omitempty"`
-    Address     *string          `json:"address,omitempty"`
-    OrderBy     string           `json:"orderBy"`
-    OrderByDesc bool             `json:"orderByDesc"`
-    Limit       int              `json:"limit"`
-    Offset      int              `json:"offset"`
+    ID          *uint64         
+    Status      *RecipientStatus
+    Kind        *RecipientKind  
+    ChainFamily *ChainFamily    
+    Address     *string        
+    OrderBy     string         
+    OrderByDesc bool           
+    Limit       int            
+    Offset      int            
 }
 
 type RecipientUpdateParams struct {
@@ -247,16 +247,16 @@ func (w *Recipient) ValidateAddress() error {
 
 
 //
-// Validate payment onchain recipient secret provider kind.
+// Validate payment onchain recipient KMS provider kind.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func ValidateRecipientSecretProviderKind(secretProviderKind *string) error {
-    if secretProviderKind == nil {
+func ValidateRecipientKMSProviderKind(kmsProviderKind *string) error {
+    if kmsProviderKind == nil {
         return nil
     }
-    s := strings.TrimSpace(*secretProviderKind)
+    s := strings.TrimSpace(*kmsProviderKind)
     if s == "" {
         return fmt.Errorf("invalid parameter: secret_provider_kind=%q", "empty")
     }
@@ -268,30 +268,30 @@ func ValidateRecipientSecretProviderKind(secretProviderKind *string) error {
 
 
 //
-// Validate payment onchain recipient secret provider kind.
+// Validate payment onchain recipient KMS provider kind.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func (r *Recipient) ValidateSecretProviderKind() error {
+func (r *Recipient) ValidateKMSProviderKind() error {
     if r == nil {
         return fmt.Errorf("missing required parameter: recipient=null")
     }
-    return ValidateRecipientSecretProviderKind(r.SecretProviderKind)
+    return ValidateRecipientKMSProviderKind(r.KMSProviderKind)
 }
 
 
 //
-// Validate payment onchain recipient secret key version.
+// Validate payment onchain recipient KMS key version.
 //
 // Version:
 //   - 2026-05-25: Added.
 //
-func ValidateRecipientSecretKeyVersion(secretKeyVersion *string) error {
-    if secretKeyVersion == nil {
+func ValidateRecipientKMSKeyVersion(kmsKeyVersion *string) error {
+    if kmsKeyVersion == nil {
         return nil
     }
-    s := strings.TrimSpace(*secretKeyVersion)
+    s := strings.TrimSpace(*kmsKeyVersion)
     if s == "" {        
         return fmt.Errorf("invalid parameter: secret_key_version=%q", "empty")
     }
@@ -303,16 +303,16 @@ func ValidateRecipientSecretKeyVersion(secretKeyVersion *string) error {
     
     
 //  
-// Validate payment onchain recipient secret key version.
+// Validate payment onchain recipient KMS key version.
 //  
 // Version:
 //   - 2026-05-25: Added.
 //
-func (r *Recipient) ValidateSecretKeyVersion() error {
+func (r *Recipient) ValidateKMSKeyVersion() error {
     if r == nil {
         return fmt.Errorf("missing required parameter: recipient=null")
     }
-    return ValidateRecipientSecretKeyVersion(r.SecretKeyVersion)
+    return ValidateRecipientKMSKeyVersion(r.KMSKeyVersion)
 }
 
 
@@ -390,8 +390,8 @@ func (s *RecipientStore) CreateTable(executor helper.Executor) error {
         ColKind,
         ColChainFamily,
         ColAddress,
-        ColSecretProviderKind,
-        ColSecretKeyVersion,
+        ColKMSProviderKind,
+        ColKMSKeyVersion,
         ColEncryptedPrivateKey,
         ColCreatedAt,
         ColUpdatedAt,
@@ -439,10 +439,10 @@ func (s *RecipientStore) Insert(executor helper.Executor, p *RecipientInsertPara
     if err := ValidateRecipientAddress(p.Address); err != nil {
         return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
     }
-    if err := ValidateRecipientSecretProviderKind(p.SecretProviderKind); err != nil {
+    if err := ValidateRecipientKMSProviderKind(p.KMSProviderKind); err != nil {
         return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
     }
-    if err := ValidateRecipientSecretKeyVersion(p.SecretKeyVersion); err != nil {
+    if err := ValidateRecipientKMSKeyVersion(p.KMSKeyVersion); err != nil {
         return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
     }
     if err := ValidateRecipientEncryptedPrivateKey(p.EncryptedPrivateKey); err != nil {
@@ -475,8 +475,8 @@ func (s *RecipientStore) Insert(executor helper.Executor, p *RecipientInsertPara
         ColKind,
         ColChainFamily,
         ColAddress,
-        ColSecretProviderKind,
-        ColSecretKeyVersion,
+        ColKMSProviderKind,
+        ColKMSKeyVersion,
         ColEncryptedPrivateKey,
         ColCreatedAt,
         ColUpdatedAt,
@@ -489,8 +489,8 @@ func (s *RecipientStore) Insert(executor helper.Executor, p *RecipientInsertPara
         p.Kind,
         p.ChainFamily,
         p.Address,
-        p.SecretProviderKind,
-        p.SecretKeyVersion,
+        p.KMSProviderKind,
+        p.KMSKeyVersion,
         p.EncryptedPrivateKey,
         p.CreatedAt,
         p.UpdatedAt,
@@ -540,8 +540,8 @@ func (s *RecipientStore) Select(executor helper.Executor, p *RecipientSelectPara
             &row.Kind,
             &row.ChainFamily,
             &row.Address,
-            &row.SecretProviderKind,
-            &row.SecretKeyVersion,
+            &row.KMSProviderKind,
+            &row.KMSKeyVersion,
             &row.EncryptedPrivateKey,
             &row.CreatedAt,
             &row.UpdatedAt,
@@ -591,8 +591,8 @@ func (s *RecipientStore) SelectByID(executor helper.Executor, id uint64) (*Recip
         &result.Kind,
         &result.ChainFamily,
         &result.Address,
-        &result.SecretProviderKind,
-        &result.SecretKeyVersion,
+        &result.KMSProviderKind,
+        &result.KMSKeyVersion,
         &result.EncryptedPrivateKey,
         &result.CreatedAt,
         &result.UpdatedAt,
@@ -826,8 +826,8 @@ func (p *RecipientSelectParams) Validate() error {
             ColKind,
             ColChainFamily,
             ColAddress,
-            ColSecretProviderKind,
-            ColSecretKeyVersion,
+            ColKMSProviderKind,
+            ColKMSKeyVersion,
             ColEncryptedPrivateKey,
             ColCreatedAt,
             ColUpdatedAt:
