@@ -6,7 +6,7 @@ package api
 
 const (
     ColAccountID          = "account_id"
-    ColAlgorithm          = "algorithm"
+    ColSignatureAlgorithm = "signature_algorithm"
     ColAPIKey             = "api_key"
     ColEncryptedSecretKey = "encrypted_secret_key"
     ColScopes             = "scopes"
@@ -14,7 +14,6 @@ const (
     ColExpiresAt          = "expires_at"
     ColID                 = "id"
     ColName               = "name"
-    ColPublicKey          = "public_key"
     ColKMSProviderKind    = "kms_provider_kind"
     ColKMSKeyVersion      = "kms_key_version"
     ColStatus             = "status"
