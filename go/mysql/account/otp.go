@@ -13,6 +13,7 @@ import (
     "math/big"
     "strings"
     "time"
+    "unicode"
 
     "github.com/go-sql-driver/mysql"
 
@@ -215,6 +216,100 @@ func NewOTPStore(tableName string, accountTableName string) (*OTPStore, error) {
         accountTableName: accountTableName,
     }, nil
 }
+
+
+//
+// Normalize destination raw.
+//
+// Version:
+//   - 2026-06-26: Added.
+//
+func NormalizeDestinationRaw(channel OTPChannel, destinationRaw string) (string, error) {
+    // Guard.
+    if err := channel.Validate(); err != nil {
+        return "", err
+    }
+    if destinationRaw == "" {
+        return "", fmt.Errorf("invalid parameter: destination_raw=%q", "empty")
+    }
+
+    switch channel {
+    case OTPChannelEmail:
+        return NormalizeEmailDestinationRaw(destinationRaw)
+    case OTPChannelSMS:
+        return NormalizePhoneDestinationRaw(destinationRaw)
+    default:
+        return "", fmt.Errorf("invalid parameter: otp_channel=%q", channel)
+    }
+}
+
+
+//
+// Normalize email destination raw.
+//
+// Version:
+//   - 2026-06-26: Added.
+//
+func NormalizeEmailDestinationRaw(emailRaw string) (string, error) {
+    email := strings.ToLower(strings.TrimSpace(emailRaw))
+
+    if email == "" {
+        return "", fmt.Errorf("invalid parameter: email=%q", "empty")
+    }
+    if strings.Count(email, "@") != 1 {
+        return "", fmt.Errorf("invalid parameter: email=%q", email)
+    }
+
+    parts := strings.Split(email, "@")
+    if parts[0] == "" || parts[1] == "" {
+        return "", fmt.Errorf("invalid parameter: email=%q", email)
+    }
+
+    return email, nil
+}
+
+
+//
+// Normalize phone destination raw.
+//
+// Version:
+//   - 2026-06-26: Added.
+//
+func NormalizePhoneDestinationRaw(phoneRaw string) (string, error) {
+    phone := strings.TrimSpace(phoneRaw)
+
+    var b strings.Builder
+
+    for _, r := range phone {
+        switch {
+        case r >= '0' && r <= '9':
+            b.WriteRune(r)
+
+        case r >= '０' && r <= '９':
+            b.WriteRune('0' + (r - '０'))
+
+        case r == '+':
+            if b.Len() != 0 {
+                return "", fmt.Errorf("invalid parameter: phone=%q", phoneRaw)
+            }
+            b.WriteRune(r)
+
+        case unicode.IsSpace(r), r == '-', r == 'ー', r == '−', r == '(', r == ')':
+            continue
+    
+        default:
+            return "", fmt.Errorf("invalid parameter: phone_contains_invalid_character")
+        }
+    }   
+            
+    normalizedPhone := b.String()
+    if normalizedPhone == "" { 
+        return "", fmt.Errorf("invalid parameter: phone=%q", "empty")
+    }
+
+    return normalizedPhone, nil
+}
+
 
 
 //
