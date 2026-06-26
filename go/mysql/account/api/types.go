@@ -116,6 +116,25 @@ const (
     CredentialSignatureAlgorithmEd25519
 )
 
+
+//
+// Convert credential signature algorithm to string.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func (a CredentialSignatureAlgorithm) String() string {
+    switch a {
+    case CredentialSignatureAlgorithmHMACSHA256:
+        return "hmac-sha256"
+    case CredentialSignatureAlgorithmEd25519:
+        return "ed25519"
+    default:
+        return ""
+    }
+}
+
+
 //
 // Check whether credential algorithm is valid.
 //
