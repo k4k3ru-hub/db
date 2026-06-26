@@ -15,8 +15,8 @@ const (
     ColID                 = "id"
     ColName               = "name"
     ColPublicKey          = "public_key"
-    ColSecretProviderKind = "secret_provider_kind"
-    ColSecretKeyVersion   = "secret_key_version"
+    ColKMSProviderKind    = "kms_provider_kind"
+    ColKMSKeyVersion      = "kms_key_version"
     ColStatus             = "status"
     ColUpdatedAt          = "updated_at"
 )

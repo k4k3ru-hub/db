@@ -35,20 +35,20 @@ var (
 //   - 2026-05-09: Added.
 //
 type Credential struct {
-    ID                 uint64              `json:"id,string"`
-    AccountID          uint64              `json:"accountId,string"`
-    Status             CredentialStatus    `json:"status"`
-    Name               string              `json:"name"`
-    APIKey             string              `json:"apiKey"`
-    Algorithm          CredentialAlgorithm `json:"algorithm"`
-    PublicKey          *string             `json:"publicKey,omitempty"`
-    EncryptedSecretKey *string             `json:"encryptedSecretKey,omitempty"`
-    SecretProviderKind *string             `json:"secretProviderKind,omitempty"`
-    SecretKeyVersion   *string             `json:"secretKeyVersion,omitempty"`
-    ExpiresAt          time.Time           `json:"expiresAt"`
-    Scopes             CredentialScopes    `json:"scopes"`
-    CreatedAt          time.Time           `json:"createdAt"`
-    UpdatedAt          time.Time           `json:"updatedAt"`
+    ID                 uint64
+    AccountID          uint64
+    Status             CredentialStatus
+    Name               string
+    APIKey             string
+    Algorithm          CredentialAlgorithm
+    PublicKey          *string
+    EncryptedSecretKey *string
+    KMSProviderKind    *string
+    KMSKeyVersion      *string
+    ExpiresAt          time.Time
+    Scopes             CredentialScopes
+    CreatedAt          time.Time
+    UpdatedAt          time.Time
 }
 
 
@@ -68,21 +68,21 @@ type CredentialStore struct {
 // CredentialInsertParams
 //
 type CredentialInsertParams struct {
-    ID                 uint64              `json:"id,string"`
-    AccountID          uint64              `json:"accountId,string"`
-    Status             CredentialStatus    `json:"status"`
-    Name               string              `json:"name"`
-    APIKey             string              `json:"apiKey"`
-    Algorithm          CredentialAlgorithm `json:"algorithm"`
-    PublicKey          *string             `json:"publicKey,omitempty"`
-    EncryptedSecretKey *string             `json:"encryptedSecretKey,omitempty"`
-    SecretProviderKind *string             `json:"secretProviderKind,omitempty"`
-    SecretKeyVersion   *string             `json:"secretKeyVersion,omitempty"`
-    ExpiresAt          time.Time           `json:"expiresAt"`
-    Scopes             CredentialScopes    `json:"scopes"`
-    CreatedAt          time.Time           `json:"createdAt"`
-    UpdatedAt          time.Time           `json:"updatedAt"`
-    Ignore             bool                `json:"ignore"`
+    ID                 uint64
+    AccountID          uint64
+    Status             CredentialStatus
+    Name               string
+    APIKey             string
+    Algorithm          CredentialAlgorithm
+    PublicKey          *string
+    EncryptedSecretKey *string
+    KMSProviderKind    *string
+    KMSKeyVersion      *string
+    ExpiresAt          time.Time
+    Scopes             CredentialScopes
+    CreatedAt          time.Time
+    UpdatedAt          time.Time
+    Ignore             bool
 }
 
 
@@ -93,16 +93,16 @@ type CredentialInsertParams struct {
 //   - 2026-05-09: Added.
 //
 type CredentialSelectOption struct {
-    ID           *uint64           `json:"id,string,omitempty"`
-    AccountID    *uint64           `json:"accountId,string,omitempty"`
-    Status       *CredentialStatus `json:"status,omitempty"`
-    NameLike     *string           `json:"nameLike,omitempty"`
-    ExpiresAtGTE *time.Time        `json:"idGte,omitempty"`
-    ExpiresAtLTE *time.Time        `json:"idLte,omitempty"`
-    OrderBy      string            `json:"orderBy"`
-    OrderByDesc  bool              `json:"orderByDesc"`
-    Limit        int               `json:"limit"`
-    Offset       int               `json:"offset"`
+    ID           *uint64
+    AccountID    *uint64
+    Status       *CredentialStatus
+    NameLike     *string
+    ExpiresAtGTE *time.Time
+    ExpiresAtLTE *time.Time
+    OrderBy      string
+    OrderByDesc  bool
+    Limit        int
+    Offset       int
 }
 
 
@@ -113,21 +113,21 @@ type CredentialSelectOption struct {
 //   - 2026-05-09: Added.
 //
 type CredentialUpdateParams struct {
-    AccountID                 *uint64              `json:"accountId,string,omitempty"`
-    Status                    *CredentialStatus    `json:"status,omitempty"`
-    Name                      *string              `json:"name,omitempty"`
-    APIKey                    *string              `json:"apiKey,omitempty"`
-    Algorithm                 *CredentialAlgorithm `json:"algorithm,omitempty"`
-    PublicKey                 *string              `json:"publicKey,omitempty"`
-    EncryptedSecretKey        *string              `json:"encryptedSecretKey,omitempty"`
-    SecretProviderKind        *string              `json:"secretProviderKind,omitempty"`
-    SecretKeyVersion          *string              `json:"secretKeyVersion,omitempty"`
-    ExpiresAt                 *time.Time           `json:"expiresAt,omitempty"`
-    Scopes                    CredentialScopes     `json:"scopes,omitempty"`
-    SetNullPublicKey          bool                 `json:"setNullPublicKey"`
-    SetNullEncryptedSecretKey bool                 `json:"setNullEncryptedSecretKey"`
-    SetNullSecretProviderKind bool                 `json:"setNullSecretProviderKind"`
-    SetNullSecretKeyVersion   bool                 `json:"setNullSecretKeyVersion"`
+    AccountID                 *uint64
+    Status                    *CredentialStatus
+    Name                      *string
+    APIKey                    *string
+    Algorithm                 *CredentialAlgorithm
+    PublicKey                 *string
+    EncryptedSecretKey        *string
+    KMSProviderKind           *string
+    KMSKeyVersion             *string
+    ExpiresAt                 *time.Time
+    Scopes                    CredentialScopes
+    SetNullPublicKey          bool
+    SetNullEncryptedSecretKey bool
+    SetNullKMSProviderKind    bool
+    SetNullKMSKeyVersion      bool
 }
 
 
@@ -429,70 +429,70 @@ func (c *Credential) ValidateEncryptedSecretKey() error {
 
 
 //
-// Validate account API credential secret provider kind.
+// Validate account API credential kms provider kind.
 //
 // Version:
 //   - 2026-06-03: Added.
 //
-func ValidateCredentialSecretProviderKind(secretProviderKind *string) error {
-    if secretProviderKind == nil {
+func ValidateCredentialKMSProviderKind(kmsProviderKind *string) error {
+    if kmsProviderKind == nil {
         return nil
     }
-    if *secretProviderKind == "" {
-        return fmt.Errorf("invalid parameter: secret_provider_kind=%q", "empty")
+    if *kmsProviderKind == "" {
+        return fmt.Errorf("invalid parameter: kms_provider_kind=%q", "empty")
     }
-    if len(*secretProviderKind) > 32 {
-        return fmt.Errorf("invalid parameter: secret_provider_kind=%q max_length=32", "too long")
+    if len(*kmsProviderKind) > 32 {
+        return fmt.Errorf("invalid parameter: kms_provider_kind=%q max_length=32", "too long")
     }
     return nil
 }
 
 
 //
-// Validate account API credential secret provider kind.
+// Validate account API credential kms provider kind.
 //
 // Version:
 //   - 2026-06-03: Added.
 //
-func (c *Credential) ValidateSecretProviderKind() error {
+func (c *Credential) ValidateKMSProviderKind() error {
     if c == nil {
         return fmt.Errorf("missing required parameter: account_api_key_credential=null")
     }
-    return ValidateCredentialSecretProviderKind(c.SecretProviderKind)
+    return ValidateCredentialKMSProviderKind(c.KMSProviderKind)
 }
 
 
 //
-// Validate account API credential secret key version.
+// Validate account API credential kms key version.
 //
 // Version:
 //   - 2026-06-03: Added.
 //
-func ValidateCredentialSecretKeyVersion(secretKeyVersion *string) error {
-    if secretKeyVersion == nil {
+func ValidateCredentialKMSKeyVersion(kmsKeyVersion *string) error {
+    if kmsKeyVersion == nil {
         return nil
     }
-    if *secretKeyVersion == "" {
-        return fmt.Errorf("invalid parameter: secret_key_version=%q", "empty")
+    if *kmsKeyVersion == "" {
+        return fmt.Errorf("invalid parameter: kms_key_version=%q", "empty")
     }
-    if len(*secretKeyVersion) > 128 {
-        return fmt.Errorf("invalid parameter: secret_key_version=%q max_length=128", "too long")
+    if len(*kmsKeyVersion) > 128 {
+        return fmt.Errorf("invalid parameter: kms_key_version=%q max_length=128", "too long")
     }
     return nil
 }
 
 
 //
-// Validate account API credential secret key version.
+// Validate account API credential kms key version.
 //
 // Version:
 //   - 2026-06-03: Added.
 //
-func (c *Credential) ValidateSecretKeyVersion() error {
+func (c *Credential) ValidateKMSKeyVersion() error {
     if c == nil {
         return fmt.Errorf("missing required parameter: account_api_key_credential=null")
     }
-    return ValidateCredentialSecretKeyVersion(c.SecretKeyVersion)
+    return ValidateCredentialKMSKeyVersion(c.KMSKeyVersion)
 }
 
 
@@ -612,8 +612,8 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Algorithm',
             %s TEXT NULL COMMENT 'Public key',
             %s TEXT NULL COMMENT 'Encrypted secret key',
-            %s VARCHAR(32) NULL COMMENT 'Secret provider kind',
-            %s VARCHAR(128) NULL COMMENT 'Secret key version',
+            %s VARCHAR(32) NULL COMMENT 'KMS provider kind',
+            %s VARCHAR(128) NULL COMMENT 'KMS key version',
             %s DATETIME NOT NULL COMMENT 'Expires at',
             %s JSON NOT NULL COMMENT 'Scopes',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
@@ -633,8 +633,8 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
         ColAlgorithm,
         ColPublicKey,
         ColEncryptedSecretKey,
-        ColSecretProviderKind,
-        ColSecretKeyVersion,
+        ColKMSProviderKind,
+        ColKMSKeyVersion,
         ColExpiresAt,
         ColScopes,
         ColCreatedAt,
@@ -729,10 +729,10 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
     if err := ValidateCredentialEncryptedSecretKey(p.EncryptedSecretKey); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
-    if err := ValidateCredentialSecretProviderKind(p.SecretProviderKind); err != nil {
+    if err := ValidateCredentialKMSProviderKind(p.KMSProviderKind); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
-    if err := ValidateCredentialSecretKeyVersion(p.SecretKeyVersion); err != nil {
+    if err := ValidateCredentialKMSKeyVersion(p.KMSKeyVersion); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
     if err := ValidateCredentialExpiresAt(p.ExpiresAt); err != nil {
@@ -746,11 +746,11 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
         if p.EncryptedSecretKey == nil  {
             return fmt.Errorf("failed to insert account api credential: missing required parameter: encrypted_secret_key=%q", "empty")
         }
-        if p.SecretProviderKind == nil  {
-            return fmt.Errorf("failed to insert account api credential: missing required parameter: secret_provider_kind=%q", "empty")
+        if p.KMSProviderKind == nil  {
+            return fmt.Errorf("failed to insert account api credential: missing required parameter: kms_provider_kind=%q", "empty")
         }
-        if p.SecretKeyVersion == nil  {
-            return fmt.Errorf("failed to insert account api credential: missing required parameter: secret_key_version=%q", "empty")
+        if p.KMSKeyVersion == nil  {
+            return fmt.Errorf("failed to insert account api credential: missing required parameter: kms_key_version=%q", "empty")
         }
     case CredentialAlgorithmEd25519:
         if p.PublicKey == nil {
@@ -770,8 +770,8 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
         ColAlgorithm,
         ColPublicKey,
         ColEncryptedSecretKey,
-        ColSecretProviderKind,
-        ColSecretKeyVersion,
+        ColKMSProviderKind,
+        ColKMSKeyVersion,
         ColExpiresAt,
         ColScopes,
         ColCreatedAt,
@@ -801,8 +801,8 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
         p.Algorithm,
         p.PublicKey,
         p.EncryptedSecretKey,
-        p.SecretProviderKind,
-        p.SecretKeyVersion,
+        p.KMSProviderKind,
+        p.KMSKeyVersion,
         p.ExpiresAt,
         p.Scopes,
         p.CreatedAt,
@@ -859,8 +859,8 @@ func (s *CredentialStore) Select(executor helper.Executor, option *CredentialSel
             &row.Algorithm,
             &row.PublicKey,
             &row.EncryptedSecretKey,
-            &row.SecretProviderKind,
-            &row.SecretKeyVersion,
+            &row.KMSProviderKind,
+            &row.KMSKeyVersion,
             &row.ExpiresAt,
             &row.Scopes,
             &row.CreatedAt,
@@ -919,8 +919,8 @@ func (s *CredentialStore) SelectByID(executor helper.Executor, id uint64) (*Cred
         &result.Algorithm,
         &result.PublicKey,
         &result.EncryptedSecretKey,
-        &result.SecretProviderKind,
-        &result.SecretKeyVersion,
+        &result.KMSProviderKind,
+        &result.KMSKeyVersion,
         &result.ExpiresAt,
         &result.Scopes,
         &result.CreatedAt,
@@ -975,8 +975,8 @@ func (s *CredentialStore) SelectByAPIKey(executor helper.Executor, apiKey string
         &result.Algorithm,
         &result.PublicKey,
         &result.EncryptedSecretKey,
-        &result.SecretProviderKind,
-        &result.SecretKeyVersion,
+        &result.KMSProviderKind,
+        &result.KMSKeyVersion,
         &result.ExpiresAt,
         &result.Scopes,
         &result.CreatedAt,
@@ -1034,8 +1034,8 @@ func (s *CredentialStore) SelectByAccountIDAndName(executor helper.Executor, acc
         &result.Algorithm,
         &result.PublicKey,
         &result.EncryptedSecretKey,
-        &result.SecretProviderKind,
-        &result.SecretKeyVersion,
+        &result.KMSProviderKind,
+        &result.KMSKeyVersion,
         &result.ExpiresAt,
         &result.Scopes,
         &result.CreatedAt,
@@ -1134,25 +1134,25 @@ func (s *CredentialStore) Update(executor helper.Executor, id uint64, p *Credent
         assignments = append(assignments, ColEncryptedSecretKey + " = ?")
         args = append(args, *p.EncryptedSecretKey)
     }
-    if p.SetNullSecretProviderKind {
-        assignments = append(assignments, ColSecretProviderKind + " = NULL")
+    if p.SetNullKMSProviderKind {
+        assignments = append(assignments, ColKMSProviderKind + " = NULL")
     }
-    if !p.SetNullSecretProviderKind && p.SecretProviderKind != nil {
-        if err := ValidateCredentialSecretProviderKind(p.SecretProviderKind); err != nil {
+    if !p.SetNullKMSProviderKind && p.KMSProviderKind != nil {
+        if err := ValidateCredentialKMSProviderKind(p.KMSProviderKind); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
-        assignments = append(assignments, ColSecretProviderKind + " = ?")
-        args = append(args, *p.SecretProviderKind)
+        assignments = append(assignments, ColKMSProviderKind + " = ?")
+        args = append(args, *p.KMSProviderKind)
     }
-    if p.SetNullSecretKeyVersion {
-        assignments = append(assignments, ColSecretKeyVersion + " = NULL")
+    if p.SetNullKMSKeyVersion {
+        assignments = append(assignments, ColKMSKeyVersion + " = NULL")
     }
-    if !p.SetNullSecretKeyVersion && p.SecretKeyVersion != nil {
-        if err := ValidateCredentialSecretKeyVersion(p.SecretKeyVersion); err != nil {
+    if !p.SetNullKMSKeyVersion && p.KMSKeyVersion != nil {
+        if err := ValidateCredentialKMSKeyVersion(p.KMSKeyVersion); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
-        assignments = append(assignments, ColSecretKeyVersion + " = ?")
-        args = append(args, *p.SecretKeyVersion)
+        assignments = append(assignments, ColKMSKeyVersion + " = ?")
+        args = append(args, *p.KMSKeyVersion)
     }
     if p.ExpiresAt != nil {
         if err := ValidateCredentialExpiresAt(*p.ExpiresAt); err != nil {
