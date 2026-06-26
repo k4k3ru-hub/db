@@ -825,63 +825,92 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
 
 
 //
-// Select latest active account OTP.
+// Select latest usable active OTP and normalize its state if needed.
 //
 // Version:
 //   - 2026-05-07: Added.
 //
-func (s *OTPStore) SelectLatestActive(executor helper.Executor, accountID uint64, channel OTPChannel, purpose OTPPurpose, destinationHash string) (*OTP, error) {
+func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Executor, accountID uint64, channel OTPChannel, purpose OTPPurpose, destinationHash string) (*OTP, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select latest active account otp: missing required parameter: otp_store=null")
+        return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: otp_store=null")
     }   
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select latest active account otp: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return nil, fmt.Errorf("failed to select latest active account otp: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: executor=null")
     }
     if err := ValidateOTPAccountID(accountID); err != nil {
-        return nil, fmt.Errorf("failed to select latest active account otp: %w", err)
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
     }
     if err := ValidateOTPChannel(channel); err != nil {
-        return nil, fmt.Errorf("failed to select latest active account otp: %w", err)
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
     }
     if err := ValidateOTPPurpose(purpose); err != nil {
-        return nil, fmt.Errorf("failed to select latest active account otp: %w", err)
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
     }
 
-    status := OTPStatusActive
-
+    // Generate query.
     query := fmt.Sprintf(
-        "SELECT * FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? AND %s = ? ORDER BY %s DESC LIMIT 1;",
-        s.tableName, ColAccountID, ColStatus, ColChannel, ColPurpose, ColDestinationHash, ColCreatedAt,
+        "SELECT * FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? ORDER BY %s DESC LIMIT 1;",
+        s.tableName, ColAccountID, ColChannel, ColPurpose, ColDestinationHash, ColCreatedAt,
     )
 
-    result := &OTP{}
-    err := executor.QueryRow(query, accountID, status, channel, purpose, destinationHash).Scan(
-        &result.ID,
-        &result.AccountID,
-        &result.Status,
-        &result.Channel,
-        &result.Purpose,
-        &result.DestinationHash,
-        &result.CodeHash,
-        &result.ConsumedAt,
-        &result.ExpiresAt,
-        &result.AttemptCount,
-        &result.LastSentAt,
-        &result.LockedUntil,
-        &result.CreatedAt,
-        &result.UpdatedAt,
+    // Execute.
+    otp := &OTP{}
+    err := executor.QueryRow(query, accountID, channel, purpose, destinationHash).Scan(
+        &otp.ID,
+        &otp.AccountID,
+        &otp.Status,
+        &otp.Channel,
+        &otp.Purpose,
+        &otp.DestinationHash,
+        &otp.CodeHash,
+        &otp.ConsumedAt,
+        &otp.ExpiresAt,
+        &otp.AttemptCount,
+        &otp.LastSentAt,
+        &otp.LockedUntil,
+        &otp.CreatedAt,
+        &otp.UpdatedAt,
     )
     if err != nil {
         if err == sql.ErrNoRows {
             return nil, nil
         }
-        return nil, fmt.Errorf("failed to select account otp by email and purpose: %w", err)
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
     }
 
-    return result, nil
+    now := time.Now().UTC()
+
+    // Check whether OTP has been locked.
+    if otp.LockedUntil != nil && otp.LockedUntil.After(now) {
+        return nil, fmt.Errorf("failed to select latest usable account otp: forbidden: locked_until=%q", otp.LockedUntil)
+    }
+
+    // Check whether OTP is expired.
+    if !otp.ExpiresAt.After(now) {
+        expiredStatus := OTPStatusExpired
+        updateParams := &OTPUpdateParams{
+            Status: &expiredStatus,
+        }
+        if err := s.UpdateByID(executor, otp.ID, updateParams); err != nil {
+            return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
+        }
+        return nil, fmt.Errorf("failed to select latest usable account otp: expired: expired_at=%q", otp.ExpiresAt)
+    }
+
+    // Check whether OTP is already verified.
+    if otp.Status == OTPStatusVerified {
+        return nil, fmt.Errorf("failed to select latest usable account otp: forbidden: otp=%q", "already verified")
+    }
+
+    // Check whether OTP is not active.
+    if otp.Status != OTPStatusActive {
+        return nil, fmt.Errorf("failed to select latest usable account otp: forbidden: otp=%q", "not active")
+    }
+
+    return otp, nil
 }
 
 
