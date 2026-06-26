@@ -14,10 +14,10 @@ import (
 type CredentialStatus uint8
 
 const (
-    StatusPending CredentialStatus = iota
-    StatusActive
-    StatusExpired
-    StatusSuspended
+    CredentialStatusPending CredentialStatus = iota
+    CredentialStatusActive
+    CredentialStatusExpired
+    CredentialStatusSuspended
 )
 
 //
@@ -28,13 +28,13 @@ const (
 //
 func (s CredentialStatus) String() string {
     switch s {
-    case StatusPending:
+    case CredentialStatusPending:
         return "pending"
-    case StatusActive:
+    case CredentialStatusActive:
         return "active"
-    case StatusExpired:
+    case CredentialStatusExpired:
         return "expired"
-    case StatusSuspended:
+    case CredentialStatusSuspended:
         return "suspended"
     default:
         return ""
@@ -49,7 +49,7 @@ func (s CredentialStatus) String() string {
 //   - 2026-05-03: Added.
 //
 func (s CredentialStatus) IsValid() bool {
-    return s <= StatusSuspended
+    return s <= CredentialStatusSuspended
 }
 
 
