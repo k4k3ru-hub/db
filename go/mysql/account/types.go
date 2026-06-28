@@ -366,6 +366,8 @@ type OTPPurpose uint16
 const (
     // Account: Email
     OTPPurposeAccountEmailCreateCredential OTPPurpose = 1001
+    OTPPurposeAccountEmailUpdateCredential OTPPurpose = 1002
+    OTPPurposeAccountEmailLogin            OTPPurpose = 1003
 
     // Account: API
     OTPPurposeAccountAPICreateCredential OTPPurpose = 2001
