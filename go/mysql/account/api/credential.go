@@ -29,20 +29,19 @@ var (
 
 
 type Credential struct {
-    ID                  uint64
-    AccountID           uint64
-    Status              CredentialStatus
-    Name                string
-    APIKey              string
-    SignatureAlgorithm  CredentialSignatureAlgorithm
-    EncryptedSigningKey *string
-    KMSProviderKind     *string
-    KMSKeyVersion       *string
-    PublicKey           *string
-    ExpiresAt           time.Time
-    Scopes              CredentialScopes
-    CreatedAt           time.Time
-    UpdatedAt           time.Time
+    ID                 uint64
+    AccountID          uint64
+    Status             CredentialStatus
+    Name               string
+    APIKey             string
+    SignatureAlgorithm *CredentialSignatureAlgorithm
+    PublicKey          *string
+    SecretProviderRef  *string
+    SecretRef          *string
+    Scopes             CredentialScopes
+    ExpiresAt          *time.Time
+    CreatedAt          time.Time
+    UpdatedAt          time.Time
 }
 
 type CredentialStore struct {
@@ -51,24 +50,23 @@ type CredentialStore struct {
 }
 
 type CredentialInsertParams struct {
-    ID                  uint64
-    AccountID           uint64
-    Status              CredentialStatus
-    Name                string
-    APIKey              string
-    SignatureAlgorithm  CredentialSignatureAlgorithm
-    EncryptedSigningKey *string
-    KMSProviderKind     *string
-    KMSKeyVersion       *string
-    PublicKey           *string
-    ExpiresAt           time.Time
-    Scopes              CredentialScopes
-    CreatedAt           time.Time
-    UpdatedAt           time.Time
-    Ignore              bool
+    ID                 uint64
+    AccountID          uint64
+    Status             CredentialStatus
+    Name               string
+    APIKey             string
+    SignatureAlgorithm *CredentialSignatureAlgorithm
+    PublicKey          *string
+    SecretProviderRef  *string
+    SecretRef          *string
+    Scopes             CredentialScopes
+    ExpiresAt          *time.Time
+    CreatedAt          time.Time
+    UpdatedAt          time.Time
+    Ignore             bool
 }
 
-type CredentialSelectOption struct {
+type CredentialSelectParams struct {
     ID           *uint64
     AccountID    *uint64
     Status       *CredentialStatus
@@ -82,21 +80,20 @@ type CredentialSelectOption struct {
 }
 
 type CredentialUpdateParams struct {
-    AccountID                  *uint64
-    Status                     *CredentialStatus
-    Name                       *string
-    APIKey                     *string
-    SignatureAlgorithm         *CredentialSignatureAlgorithm
-    EncryptedSigningKey        *string
-    KMSProviderKind            *string
-    KMSKeyVersion              *string
-    PublicKey                  *string
-    ExpiresAt                  *time.Time
-    Scopes                     CredentialScopes
-    SetNullEncryptedSigningKey bool
-    SetNullKMSProviderKind     bool
-    SetNullKMSKeyVersion       bool
-    SetNullPublicKey           bool
+    AccountID                 *uint64
+    Status                    *CredentialStatus
+    Name                      *string
+    APIKey                    *string
+    SignatureAlgorithm        *CredentialSignatureAlgorithm
+    PublicKey                 *string
+    SecretProviderRef         *string
+    SecretRef                 *string
+    Scopes                    *CredentialScopes
+    ExpiresAt                 *time.Time
+    SetNullSignatureAlgorithm bool
+    SetNullPublicKey          bool
+    SetNullSecretProviderRef  bool
+    SetNullSecretRef          bool
 }
 
 
@@ -177,7 +174,7 @@ func ValidateCredentialID(id uint64) error {
 //
 func (c *Credential) ValidateID() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialID(c.ID)
 }
@@ -205,7 +202,7 @@ func ValidateCredentialAccountID(accountID uint64) error {
 //
 func (c *Credential) ValidateAccountID() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialID(c.AccountID)
 }
@@ -233,7 +230,7 @@ func ValidateCredentialStatus(status CredentialStatus) error {
 //
 func (c *Credential) ValidateStatus() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialStatus(c.Status)
 }
@@ -264,7 +261,7 @@ func ValidateCredentialName(name string) error {
 //
 func (c *Credential) ValidateName() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialName(c.Name)
 }
@@ -295,7 +292,7 @@ func ValidateCredentialAPIKey(apiKey string) error {
 //
 func (c *Credential) ValidateAPIKey() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialAPIKey(c.APIKey)
 }
@@ -307,7 +304,10 @@ func (c *Credential) ValidateAPIKey() error {
 // Version:
 //   - 2026-06-03: Added.
 //
-func ValidateCredentialSignatureAlgorithm(algorithm CredentialSignatureAlgorithm) error {
+func ValidateCredentialSignatureAlgorithm(algorithm *CredentialSignatureAlgorithm) error {
+    if algorithm == nil {
+        return nil
+    }
     if err := algorithm.Validate(); err != nil {
         return err
     }
@@ -323,111 +323,9 @@ func ValidateCredentialSignatureAlgorithm(algorithm CredentialSignatureAlgorithm
 //
 func (c *Credential) ValidateSignatureAlgorithm() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialSignatureAlgorithm(c.SignatureAlgorithm)
-}
-
-
-//
-// Validate account API credential encrypted signing key.
-//
-// Version:
-//   - 2026-06-03: Added.
-//
-func ValidateCredentialEncryptedSigningKey(encryptedSecretKey *string) error {
-    if encryptedSecretKey == nil {
-        return nil
-    }
-    if *encryptedSecretKey == "" {
-        return fmt.Errorf("invalid parameter: encrypted_signing_key=%q", "empty")
-    }
-    if len(*encryptedSecretKey) > 1024 {
-        return fmt.Errorf("invalid parameter: encrypted_signing_key=%q max_length=1024", "too long")
-    }
-    return nil
-}
-
-
-//
-// Validate account API credential encrypted signing key.
-//
-// Version:
-//   - 2026-06-03: Added.
-//
-func (c *Credential) ValidateEncryptedSigningKey() error {
-    if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
-    }
-    return ValidateCredentialEncryptedSigningKey(c.EncryptedSigningKey)
-}
-
-
-//
-// Validate account API credential kms provider kind.
-//
-// Version:
-//   - 2026-06-03: Added.
-//
-func ValidateCredentialKMSProviderKind(kmsProviderKind *string) error {
-    if kmsProviderKind == nil {
-        return nil
-    }
-    if *kmsProviderKind == "" {
-        return fmt.Errorf("invalid parameter: kms_provider_kind=%q", "empty")
-    }
-    if len(*kmsProviderKind) > 32 {
-        return fmt.Errorf("invalid parameter: kms_provider_kind=%q max_length=32", "too long")
-    }
-    return nil
-}
-
-
-//
-// Validate account API credential kms provider kind.
-//
-// Version:
-//   - 2026-06-03: Added.
-//
-func (c *Credential) ValidateKMSProviderKind() error {
-    if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
-    }
-    return ValidateCredentialKMSProviderKind(c.KMSProviderKind)
-}
-
-
-//
-// Validate account API credential kms key version.
-//
-// Version:
-//   - 2026-06-03: Added.
-//
-func ValidateCredentialKMSKeyVersion(kmsKeyVersion *string) error {
-    if kmsKeyVersion == nil {
-        return nil
-    }
-    if *kmsKeyVersion == "" {
-        return fmt.Errorf("invalid parameter: kms_key_version=%q", "empty")
-    }
-    if len(*kmsKeyVersion) > 128 {
-        return fmt.Errorf("invalid parameter: kms_key_version=%q max_length=128", "too long")
-    }
-    return nil
-}
-
-
-//
-// Validate account API credential kms key version.
-//
-// Version:
-//   - 2026-06-03: Added.
-//
-func (c *Credential) ValidateKMSKeyVersion() error {
-    if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
-    }
-    return ValidateCredentialKMSKeyVersion(c.KMSKeyVersion)
 }
 
 
@@ -459,37 +357,77 @@ func ValidateCredentialPublicKey(publicKey *string) error {
 //
 func (c *Credential) ValidatePublicKey() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialPublicKey(c.PublicKey)
 }
 
 
 //
-// Validate account API credential expires at.
+// Validate account API credential secret provider ref.
 //
 // Version:
-//   - 2026-05-09: Added.
+//   - 2026-06-03: Added.
 //
-func ValidateCredentialExpiresAt(expiresAt time.Time) error {
-    if expiresAt.IsZero() {
-        return fmt.Errorf("invalid parameter: expires_at=%q", "empty")
+func ValidateCredentialSecretProviderRef(secretProviderRef *string) error {
+    if secretProviderRef == nil {
+        return nil
+    }
+    if *secretProviderRef == "" {
+        return fmt.Errorf("invalid parameter: secret_provider_ref=%q", "empty")
+    }
+    if len(*secretProviderRef) > 128 {
+        return fmt.Errorf("invalid parameter: secret_provider_ref=%q max_length=32", "too long")
     }
     return nil
 }
 
 
 //
-// Validate account API credential expires at.
+// Validate account API credential secret provider ref.
 //
 // Version:
-//   - 2026-05-09: Added.
+//   - 2026-06-03: Added.
 //
-func (c *Credential) ValidateExpiresAt() error {
+func (c *Credential) ValidateSecretProviderRef() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
-    return ValidateCredentialExpiresAt(c.ExpiresAt)
+    return ValidateCredentialSecretProviderRef(c.SecretProviderRef)
+}
+
+
+//
+// Validate account API credential secret ref.
+//
+// Version:
+//   - 2026-06-03: Added.
+//
+func ValidateCredentialSecretRef(secretRef *string) error {
+    if secretRef == nil {
+        return nil
+    }
+    if *secretRef == "" {
+        return fmt.Errorf("invalid parameter: secret_ref=%q", "empty")
+    }
+    if len(*secretRef) > 1024 {
+        return fmt.Errorf("invalid parameter: secret_ref=%q max_length=1024", "too long")
+    }
+    return nil
+}
+
+
+//
+// Validate account API credential secret ref.
+//
+// Version:
+//   - 2026-06-03: Added.
+//
+func (c *Credential) ValidateSecretRef() error {
+    if c == nil {
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
+    }
+    return ValidateCredentialSecretRef(c.SecretRef)
 }
 
 
@@ -512,9 +450,40 @@ func ValidateCredentialScopes(s CredentialScopes) error {
 //
 func (c *Credential) ValidateScopes() error {
     if c == nil {
-        return fmt.Errorf("missing required parameter: account_api_key_credential=null")
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
     }
     return ValidateCredentialScopes(c.Scopes)
+}
+
+
+//
+// Validate account API credential expires at.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func ValidateCredentialExpiresAt(expiresAt *time.Time) error {
+    if expiresAt == nil {
+        return nil
+    }
+    if expiresAt.IsZero() {
+        return fmt.Errorf("invalid parameter: expires_at=%q", "empty")
+    }
+    return nil
+}
+
+
+//
+// Validate account API credential expires at.
+//
+// Version:
+//   - 2026-05-09: Added.
+//
+func (c *Credential) ValidateExpiresAt() error {
+    if c == nil {
+        return fmt.Errorf("missing required parameter: account_api_credential=null")
+    }
+    return ValidateCredentialExpiresAt(c.ExpiresAt)
 }
 
 
@@ -524,7 +493,7 @@ func (c *Credential) ValidateScopes() error {
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) Count(executor helper.Executor, option *CredentialSelectOption) (int64, error) {
+func (s *CredentialStore) Count(executor helper.Executor, option *CredentialSelectParams) (int64, error) {
     // Guard.
     if s == nil {
         return 0, fmt.Errorf("failed to count account api credentials: missing required parameter: credential_store=null")
@@ -566,6 +535,9 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
     if s.tableName == "" {
         return fmt.Errorf("failed to create account api credentials table: missing required parameter: table_name=%q", "empty")
     }
+    if s.accountTableName == "" {
+        return fmt.Errorf("failed to create account api credentials table: missing required parameter: account_table_name=%q", "empty")
+    }
     if executor == nil {
         return fmt.Errorf("failed to create account api credentials table: missing required parameter: executor=null")
     }
@@ -578,13 +550,12 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s VARCHAR(64) NOT NULL COMMENT 'Name',
             %s VARCHAR(255) NOT NULL COMMENT 'API key',
-            %s TINYINT UNSIGNED NOT NULL COMMENT 'SignatureAlgorithm',
-            %s TEXT NULL COMMENT 'Encrypted signing key',
-            %s VARCHAR(32) NULL COMMENT 'KMS provider kind',
-            %s VARCHAR(128) NULL COMMENT 'KMS key version',
+            %s TINYINT UNSIGNED NULL COMMENT 'Signature algorithm',
             %s TEXT NULL COMMENT 'public key',
-            %s DATETIME NOT NULL COMMENT 'Expires at',
+            %s VARCHAR(128) NULL COMMENT 'Secret provider ref',
+            %s TEXT NULL COMMENT 'Secret ref',
             %s JSON NOT NULL COMMENT 'Scopes',
+            %s DATETIME NULL COMMENT 'Expires at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
@@ -600,12 +571,11 @@ func (s *CredentialStore) CreateTable(executor helper.Executor) error {
         ColName,
         ColAPIKey,
         ColSignatureAlgorithm,
-        ColEncryptedSigningKey,
-        ColKMSProviderKind,
-        ColKMSKeyVersion,
         ColPublicKey,
-        ColExpiresAt,
+        ColSecretProviderRef,
+        ColSecretRef,
         ColScopes,
+        ColExpiresAt,
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
@@ -692,28 +662,25 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
     if err := ValidateCredentialSignatureAlgorithm(p.SignatureAlgorithm); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
-    if err := ValidateCredentialEncryptedSigningKey(p.EncryptedSigningKey); err != nil {
-        return fmt.Errorf("failed to insert account api credential: %w", err)
-    }
-    if err := ValidateCredentialKMSProviderKind(p.KMSProviderKind); err != nil {
-        return fmt.Errorf("failed to insert account api credential: %w", err)
-    }
-    if err := ValidateCredentialKMSKeyVersion(p.KMSKeyVersion); err != nil {
-        return fmt.Errorf("failed to insert account api credential: %w", err)
-    }
     if err := ValidateCredentialPublicKey(p.PublicKey); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
-    if err := ValidateCredentialExpiresAt(p.ExpiresAt); err != nil {
+    if err := ValidateCredentialSecretProviderRef(p.SecretProviderRef); err != nil {
+        return fmt.Errorf("failed to insert account api credential: %w", err)
+    }
+    if err := ValidateCredentialSecretRef(p.SecretRef); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
     if err := ValidateCredentialScopes(p.Scopes); err != nil {
         return fmt.Errorf("failed to insert account api credential: %w", err)
     }
+    if err := ValidateCredentialExpiresAt(p.ExpiresAt); err != nil {
+        return fmt.Errorf("failed to insert account api credential: %w", err)
+    }
 
     // Generate an INSERT query.
     query := fmt.Sprintf(
-        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        "INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
         s.tableName,
         ColID,
         ColAccountID,
@@ -721,12 +688,11 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
         ColName,
         ColAPIKey,
         ColSignatureAlgorithm,
-        ColEncryptedSigningKey,
-        ColKMSProviderKind,
-        ColKMSKeyVersion,
         ColPublicKey,
-        ColExpiresAt,
+        ColSecretProviderRef,
+        ColSecretRef,
         ColScopes,
+        ColExpiresAt,
         ColCreatedAt,
         ColUpdatedAt,
     )
@@ -752,12 +718,11 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
         p.Name,
         p.APIKey,
         p.SignatureAlgorithm,
-        p.EncryptedSigningKey,
-        p.KMSProviderKind,
-        p.KMSKeyVersion,
         p.PublicKey,
-        p.ExpiresAt,
+        p.SecretProviderRef,
+        p.SecretRef,
         p.Scopes,
+        p.ExpiresAt,
         p.CreatedAt,
         p.UpdatedAt,
     ); err != nil {
@@ -774,7 +739,7 @@ func (s *CredentialStore) Insert(executor helper.Executor, p *CredentialInsertPa
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) Select(executor helper.Executor, option *CredentialSelectOption) ([]*Credential, error) {
+func (s *CredentialStore) Select(executor helper.Executor, option *CredentialSelectParams) ([]*Credential, error) {
     // Guard.
     if s == nil {
         return nil, fmt.Errorf("failed to select account api credentials: missing required parameter: credential_store=null")
@@ -810,12 +775,11 @@ func (s *CredentialStore) Select(executor helper.Executor, option *CredentialSel
             &row.Name,
             &row.APIKey,
             &row.SignatureAlgorithm,
-            &row.EncryptedSigningKey,
-            &row.KMSProviderKind,
-            &row.KMSKeyVersion,
             &row.PublicKey,
-            &row.ExpiresAt,
+            &row.SecretProviderRef,
+            &row.SecretRef,
             &row.Scopes,
+            &row.ExpiresAt,
             &row.CreatedAt,
             &row.UpdatedAt,
         )
@@ -870,12 +834,11 @@ func (s *CredentialStore) SelectByID(executor helper.Executor, id uint64) (*Cred
         &result.Name,
         &result.APIKey,
         &result.SignatureAlgorithm,
-        &result.EncryptedSigningKey,
-        &result.KMSProviderKind,
-        &result.KMSKeyVersion,
         &result.PublicKey,
-        &result.ExpiresAt,
+        &result.SecretProviderRef,
+        &result.SecretRef,
         &result.Scopes,
+        &result.ExpiresAt,
         &result.CreatedAt,
         &result.UpdatedAt,
     )
@@ -926,12 +889,11 @@ func (s *CredentialStore) SelectByAPIKey(executor helper.Executor, apiKey string
         &result.Name,
         &result.APIKey,
         &result.SignatureAlgorithm,
-        &result.EncryptedSigningKey,
-        &result.KMSProviderKind,
-        &result.KMSKeyVersion,
         &result.PublicKey,
-        &result.ExpiresAt,
+        &result.SecretProviderRef,
+        &result.SecretRef,
         &result.Scopes,
+        &result.ExpiresAt,
         &result.CreatedAt,
         &result.UpdatedAt,
     )
@@ -985,12 +947,11 @@ func (s *CredentialStore) SelectByAccountIDAndName(executor helper.Executor, acc
         &result.Name,
         &result.APIKey,
         &result.SignatureAlgorithm,
-        &result.EncryptedSigningKey,
-        &result.KMSProviderKind,
-        &result.KMSKeyVersion,
         &result.PublicKey,
-        &result.ExpiresAt,
+        &result.SecretProviderRef,
+        &result.SecretRef,
         &result.Scopes,
+        &result.ExpiresAt,
         &result.CreatedAt,
         &result.UpdatedAt,
     )
@@ -1011,7 +972,7 @@ func (s *CredentialStore) SelectByAccountIDAndName(executor helper.Executor, acc
 // Version:
 //   - 2026-05-09: Added.
 //
-func (s *CredentialStore) Update(executor helper.Executor, id uint64, p *CredentialUpdateParams) error {
+func (s *CredentialStore) UpdateByID(executor helper.Executor, params *CredentialUpdateParams, id uint64) error {
     // Guard.
     if s == nil {
         return fmt.Errorf("failed to update account api credential by id: missing required parameter: credential_store=null")
@@ -1022,100 +983,93 @@ func (s *CredentialStore) Update(executor helper.Executor, id uint64, p *Credent
     if executor == nil {
         return fmt.Errorf("failed to update account api credential by id: missing required parameter: executor=null")
     }
+    if params == nil {
+        return fmt.Errorf("failed to update account api credential by id: missing required parameter: credential_update_params=null")
+    }
     if id == 0 {
         return fmt.Errorf("failed to update account api credential by id: invalid parameter: id=0")
-    }
-    if p == nil {
-        return fmt.Errorf("failed to update account api credential by id: missing required parameter: credential_update_params=null")
     }
 
     assignments := make([]string, 0, 11)
     args := make([]any, 0, 12)
 
-    if p.AccountID != nil {
-        if err := ValidateCredentialAccountID(*p.AccountID); err != nil {
+    if params.AccountID != nil {
+        if err := ValidateCredentialAccountID(*params.AccountID); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColAccountID + " = ?")
-        args = append(args, *p.AccountID)
+        args = append(args, *params.AccountID)
     }
-    if p.Status != nil {
-        if err := ValidateCredentialStatus(*p.Status); err != nil {
+    if params.Status != nil {
+        if err := ValidateCredentialStatus(*params.Status); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColStatus + " = ?")
-        args = append(args, *p.Status)
+        args = append(args, *params.Status)
     }
-    if p.Name != nil {
-        if err := ValidateCredentialName(*p.Name); err != nil {
+    if params.Name != nil {
+        if err := ValidateCredentialName(*params.Name); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColName + " = ?")
-        args = append(args, *p.Name)
+        args = append(args, *params.Name)
     }
-    if p.APIKey != nil {
-        if err := ValidateCredentialAPIKey(*p.APIKey); err != nil {
+    if params.APIKey != nil {
+        if err := ValidateCredentialAPIKey(*params.APIKey); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColAPIKey + " = ?")
-        args = append(args, *p.APIKey)
+        args = append(args, *params.APIKey)
     }
-    if p.SignatureAlgorithm != nil {
-        if err := ValidateCredentialSignatureAlgorithm(*p.SignatureAlgorithm); err != nil {
+    if params.SetNullSignatureAlgorithm {
+        assignments = append(assignments, ColSignatureAlgorithm + " = NULL")
+    } else if params.SignatureAlgorithm != nil {
+        if err := ValidateCredentialSignatureAlgorithm(params.SignatureAlgorithm); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColSignatureAlgorithm + " = ?")
-        args = append(args, *p.SignatureAlgorithm)
+        args = append(args, *params.SignatureAlgorithm)
     }
-    if p.SetNullEncryptedSigningKey {
-        assignments = append(assignments, ColEncryptedSigningKey + " = NULL")
-    } else if p.EncryptedSigningKey != nil {
-        if err := ValidateCredentialEncryptedSigningKey(p.EncryptedSigningKey); err != nil {
-            return fmt.Errorf("failed to update account api credential by id: %w", err)
-        }
-        assignments = append(assignments, ColEncryptedSigningKey + " = ?")
-        args = append(args, *p.EncryptedSigningKey)
-    }
-    if p.SetNullKMSProviderKind {
-        assignments = append(assignments, ColKMSProviderKind + " = NULL")
-    } else if p.KMSProviderKind != nil {
-        if err := ValidateCredentialKMSProviderKind(p.KMSProviderKind); err != nil {
-            return fmt.Errorf("failed to update account api credential by id: %w", err)
-        }
-        assignments = append(assignments, ColKMSProviderKind + " = ?")
-        args = append(args, *p.KMSProviderKind)
-    }
-    if p.SetNullKMSKeyVersion {
-        assignments = append(assignments, ColKMSKeyVersion + " = NULL")
-    } else if p.KMSKeyVersion != nil {
-        if err := ValidateCredentialKMSKeyVersion(p.KMSKeyVersion); err != nil {
-            return fmt.Errorf("failed to update account api credential by id: %w", err)
-        }
-        assignments = append(assignments, ColKMSKeyVersion + " = ?")
-        args = append(args, *p.KMSKeyVersion)
-    }
-    if p.SetNullPublicKey {
+    if params.SetNullPublicKey {
         assignments = append(assignments, ColPublicKey + " = NULL")
-    } else if p.PublicKey != nil {
-        if err := ValidateCredentialEncryptedSigningKey(p.PublicKey); err != nil {
+    } else if params.PublicKey != nil {
+        if err := ValidateCredentialSecretRef(params.PublicKey); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColPublicKey + " = ?")
-        args = append(args, *p.PublicKey)
+        args = append(args, *params.PublicKey)
     }
-    if p.ExpiresAt != nil {
-        if err := ValidateCredentialExpiresAt(*p.ExpiresAt); err != nil {
+    if params.SetNullSecretRef {
+        assignments = append(assignments, ColSecretRef + " = NULL")
+    } else if params.SecretRef != nil {
+        if err := ValidateCredentialSecretRef(params.SecretRef); err != nil {
+            return fmt.Errorf("failed to update account api credential by id: %w", err)
+        }
+        assignments = append(assignments, ColSecretRef + " = ?")
+        args = append(args, *params.SecretRef)
+    }
+    if params.SetNullSecretProviderRef {
+        assignments = append(assignments, ColSecretProviderRef + " = NULL")
+    } else if params.SecretProviderRef != nil {
+        if err := ValidateCredentialSecretProviderRef(params.SecretProviderRef); err != nil {
+            return fmt.Errorf("failed to update account api credential by id: %w", err)
+        }
+        assignments = append(assignments, ColSecretProviderRef + " = ?")
+        args = append(args, *params.SecretProviderRef)
+    }
+    if params.ExpiresAt != nil {
+        if err := ValidateCredentialExpiresAt(params.ExpiresAt); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColExpiresAt + " = ?")
-        args = append(args, *p.ExpiresAt)
+        args = append(args, *params.ExpiresAt)
     }
-    if p.Scopes != nil {
-        if err := ValidateCredentialScopes(p.Scopes); err != nil {
+    if params.Scopes != nil {
+        if err := ValidateCredentialScopes(*params.Scopes); err != nil {
             return fmt.Errorf("failed to update account api credential by id: %w", err)
         }
         assignments = append(assignments, ColScopes + " = ?")
-        args = append(args, p.Scopes)
+        args = append(args, params.Scopes)
     }
 
     if len(assignments) == 0 {
@@ -1142,7 +1096,7 @@ func (s *CredentialStore) Update(executor helper.Executor, id uint64, p *Credent
 // Version:
 //   - 2025-05-09: Added.
 //
-func (o *CredentialSelectOption) BuildQuery(selectFromClause string) (string, []any) {
+func (o *CredentialSelectParams) BuildQuery(selectFromClause string) (string, []any) {
     // Guard.
     if o == nil {
         return selectFromClause, nil
@@ -1207,7 +1161,7 @@ func (o *CredentialSelectOption) BuildQuery(selectFromClause string) (string, []
 // Version:
 //   - 2025-05-09: Added.
 //
-func (o *CredentialSelectOption) Validate() error {
+func (o *CredentialSelectParams) Validate() error {
     // Guard.
     if o == nil {
         return fmt.Errorf("missing required parameter: credential_select_option=null")
