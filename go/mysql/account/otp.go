@@ -4,6 +4,7 @@
 package account
 
 import (
+    "crypto/hmac"
     "crypto/rand"
 	"crypto/sha256"
     "database/sql"
@@ -310,6 +311,35 @@ func NormalizePhoneDestinationRaw(phoneRaw string) (string, error) {
     return normalizedPhone, nil
 }
 
+
+//
+// Hash destination raw.
+//
+// Version:
+//   - 2026-06-29: Added.
+//
+func HashDestinationRaw(secret []byte, destinationRaw string) (string, error) {
+    // Guard.
+    if len(secret) == 0 {
+        return "", fmt.Errorf("failed to hash destination raw: missing required parameter: secret=%q", "empty")
+    }
+    if destinationRaw == "" {
+        return "", fmt.Errorf("failed to hash destination raw: missing required parameter: destination_raw=%q", "empty")
+    }
+
+    mac := hmac.New(sha256.New, secret)
+    if _, err := mac.Write([]byte(destinationRaw)); err != nil {
+        return "", fmt.Errorf("failed to hash destination raw: %w", err)
+    }
+
+    destinationHash := hex.EncodeToString(mac.Sum(nil))
+
+    if err := ValidateOTPDestinationHash(destinationHash); err != nil {
+        return "", fmt.Errorf("failed to hash destination raw: %w", err)
+    }
+
+    return destinationHash, nil
+}
 
 
 //
