@@ -29,9 +29,8 @@ type Recipient struct {
     Kind                RecipientKind  
     ChainFamily         ChainFamily    
     Address             string         
-    KMSProviderKind     *string        
-    KMSKeyVersion       *string        
     EncryptedPrivateKey *string        
+    SecretProviderRef   *string
     CreatedAt           time.Time      
     UpdatedAt           time.Time      
 }
@@ -46,24 +45,23 @@ type RecipientInsertParams struct {
     Kind                RecipientKind  
     ChainFamily         ChainFamily    
     Address             string         
-    KMSProviderKind     *string        
-    KMSKeyVersion       *string        
     EncryptedPrivateKey *string        
+    SecretProviderRef   *string
     CreatedAt           time.Time
     UpdatedAt           time.Time
     Ignore              bool     
 }
 
 type RecipientSelectParams struct {
-    ID          *uint64         
+    ID          *uint64
     Status      *RecipientStatus
-    Kind        *RecipientKind  
-    ChainFamily *ChainFamily    
-    Address     *string        
-    OrderBy     string         
-    OrderByDesc bool           
-    Limit       int            
-    Offset      int            
+    Kind        *RecipientKind
+    ChainFamily *ChainFamily
+    Address     *string
+    OrderBy     string
+    OrderByDesc bool
+    Limit       int
+    Offset      int
 }
 
 type RecipientUpdateParams struct {
@@ -247,76 +245,6 @@ func (w *Recipient) ValidateAddress() error {
 
 
 //
-// Validate payment onchain recipient KMS provider kind.
-//
-// Version:
-//   - 2026-05-25: Added.
-//
-func ValidateRecipientKMSProviderKind(kmsProviderKind *string) error {
-    if kmsProviderKind == nil {
-        return nil
-    }
-    s := strings.TrimSpace(*kmsProviderKind)
-    if s == "" {
-        return fmt.Errorf("invalid parameter: secret_provider_kind=%q", "empty")
-    }
-    if len(s) > 32 {
-        return fmt.Errorf("invalid parameter: secret_provider_kind=%q", "too long")
-    }
-    return nil
-}
-
-
-//
-// Validate payment onchain recipient KMS provider kind.
-//
-// Version:
-//   - 2026-05-25: Added.
-//
-func (r *Recipient) ValidateKMSProviderKind() error {
-    if r == nil {
-        return fmt.Errorf("missing required parameter: recipient=null")
-    }
-    return ValidateRecipientKMSProviderKind(r.KMSProviderKind)
-}
-
-
-//
-// Validate payment onchain recipient KMS key version.
-//
-// Version:
-//   - 2026-05-25: Added.
-//
-func ValidateRecipientKMSKeyVersion(kmsKeyVersion *string) error {
-    if kmsKeyVersion == nil {
-        return nil
-    }
-    s := strings.TrimSpace(*kmsKeyVersion)
-    if s == "" {        
-        return fmt.Errorf("invalid parameter: secret_key_version=%q", "empty")
-    }
-    if len(s) > 255 {
-        return fmt.Errorf("invalid parameter: secret_key_version=%q", "too long")
-    }
-    return nil
-}   
-    
-    
-//  
-// Validate payment onchain recipient KMS key version.
-//  
-// Version:
-//   - 2026-05-25: Added.
-//
-func (r *Recipient) ValidateKMSKeyVersion() error {
-    if r == nil {
-        return fmt.Errorf("missing required parameter: recipient=null")
-    }
-    return ValidateRecipientKMSKeyVersion(r.KMSKeyVersion)
-}
-
-
-//
 // Validate payment onchain recipient encrypted private key.
 //
 // Version:
@@ -352,6 +280,40 @@ func (r *Recipient) ValidateEncryptedPrivateKey() error {
 
 
 //
+// Validate payment onchain recipient secret provider ref.
+//
+// Version:
+//   - 2026-06-30: Added.
+//
+func ValidateRecipientSecretProviderRef(secretProviderRef *string) error {
+    if secretProviderRef == nil {
+        return nil
+    }
+    if *secretProviderRef == "" {
+        return fmt.Errorf("invalid parameter: secret_provider_ref=%q", "empty")
+    }
+    if len(*secretProviderRef) > 128 {
+        return fmt.Errorf("invalid parameter: secret_provider_ref=%q max_length=128", "too long")
+    }
+    return nil
+}
+
+
+//
+// Validate payment onchain recipient secret provider ref.
+//
+// Version:
+//   - 2026-06-30: Added.
+//
+func (r *Recipient) ValidateSecretProviderRef() error {
+    if r == nil {
+        return fmt.Errorf("missing required parameter: recipient=null")
+    }
+    return ValidateRecipientSecretProviderRef(r.SecretProviderRef)
+}
+
+
+//
 // Create payment onchain recipients table.
 //
 // Version:
@@ -375,9 +337,8 @@ func (s *RecipientStore) CreateTable(executor helper.Executor) error {
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Kind',
             %s VARCHAR(16) NOT NULL COMMENT 'ChainFamily',
             %s VARCHAR(255) NOT NULL COMMENT 'Address',
-            %s VARCHAR(32) NULL COMMENT 'Secret Provider kind',
-            %s VARCHAR(255) NULL COMMENT 'Secret key version',
             %s TEXT NULL COMMENT 'Encrypted private key',
+            %s VARCHAR(128) NULL COMMENT 'Secret provider ref',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
@@ -390,9 +351,8 @@ func (s *RecipientStore) CreateTable(executor helper.Executor) error {
         ColKind,
         ColChainFamily,
         ColAddress,
-        ColKMSProviderKind,
-        ColKMSKeyVersion,
         ColEncryptedPrivateKey,
+        ColSecretProviderRef,
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
@@ -439,13 +399,10 @@ func (s *RecipientStore) Insert(executor helper.Executor, p *RecipientInsertPara
     if err := ValidateRecipientAddress(p.Address); err != nil {
         return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
     }
-    if err := ValidateRecipientKMSProviderKind(p.KMSProviderKind); err != nil {
-        return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
-    }
-    if err := ValidateRecipientKMSKeyVersion(p.KMSKeyVersion); err != nil {
-        return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
-    }
     if err := ValidateRecipientEncryptedPrivateKey(p.EncryptedPrivateKey); err != nil {
+        return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
+    }
+    if err := ValidateRecipientSecretProviderRef(p.SecretProviderRef); err != nil {
         return fmt.Errorf("failed to insert payment onchain recipient: %w", err)
     }
 
@@ -467,7 +424,7 @@ func (s *RecipientStore) Insert(executor helper.Executor, p *RecipientInsertPara
     }
 
     query := fmt.Sprintf(
-        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
         queryPrefix,
         s.tableName,
         ColID,
@@ -475,9 +432,8 @@ func (s *RecipientStore) Insert(executor helper.Executor, p *RecipientInsertPara
         ColKind,
         ColChainFamily,
         ColAddress,
-        ColKMSProviderKind,
-        ColKMSKeyVersion,
         ColEncryptedPrivateKey,
+        ColSecretProviderRef,
         ColCreatedAt,
         ColUpdatedAt,
     )
@@ -489,9 +445,8 @@ func (s *RecipientStore) Insert(executor helper.Executor, p *RecipientInsertPara
         p.Kind,
         p.ChainFamily,
         p.Address,
-        p.KMSProviderKind,
-        p.KMSKeyVersion,
         p.EncryptedPrivateKey,
+        p.SecretProviderRef,
         p.CreatedAt,
         p.UpdatedAt,
     ); err != nil {
@@ -540,9 +495,8 @@ func (s *RecipientStore) Select(executor helper.Executor, p *RecipientSelectPara
             &row.Kind,
             &row.ChainFamily,
             &row.Address,
-            &row.KMSProviderKind,
-            &row.KMSKeyVersion,
             &row.EncryptedPrivateKey,
+            &row.SecretProviderRef,
             &row.CreatedAt,
             &row.UpdatedAt,
         ); err != nil {
@@ -591,9 +545,8 @@ func (s *RecipientStore) SelectByID(executor helper.Executor, id uint64) (*Recip
         &result.Kind,
         &result.ChainFamily,
         &result.Address,
-        &result.KMSProviderKind,
-        &result.KMSKeyVersion,
         &result.EncryptedPrivateKey,
+        &result.SecretProviderRef,
         &result.CreatedAt,
         &result.UpdatedAt,
     )
@@ -826,8 +779,6 @@ func (p *RecipientSelectParams) Validate() error {
             ColKind,
             ColChainFamily,
             ColAddress,
-            ColKMSProviderKind,
-            ColKMSKeyVersion,
             ColEncryptedPrivateKey,
             ColCreatedAt,
             ColUpdatedAt:
