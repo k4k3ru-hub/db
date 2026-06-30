@@ -1039,15 +1039,6 @@ func (s *CredentialStore) UpdateByID(executor helper.Executor, params *Credentia
         assignments = append(assignments, ColPublicKey + " = ?")
         args = append(args, *params.PublicKey)
     }
-    if params.SetNullSecretRef {
-        assignments = append(assignments, ColSecretRef + " = NULL")
-    } else if params.SecretRef != nil {
-        if err := ValidateCredentialSecretRef(params.SecretRef); err != nil {
-            return fmt.Errorf("failed to update account api credential by id: %w", err)
-        }
-        assignments = append(assignments, ColSecretRef + " = ?")
-        args = append(args, *params.SecretRef)
-    }
     if params.SetNullSecretProviderRef {
         assignments = append(assignments, ColSecretProviderRef + " = NULL")
     } else if params.SecretProviderRef != nil {
@@ -1056,6 +1047,15 @@ func (s *CredentialStore) UpdateByID(executor helper.Executor, params *Credentia
         }
         assignments = append(assignments, ColSecretProviderRef + " = ?")
         args = append(args, *params.SecretProviderRef)
+    }
+    if params.SetNullSecretRef {
+        assignments = append(assignments, ColSecretRef + " = NULL")
+    } else if params.SecretRef != nil {
+        if err := ValidateCredentialSecretRef(params.SecretRef); err != nil {
+            return fmt.Errorf("failed to update account api credential by id: %w", err)
+        }
+        assignments = append(assignments, ColSecretRef + " = ?")
+        args = append(args, *params.SecretRef)
     }
     if params.ExpiresAt != nil {
         if err := ValidateCredentialExpiresAt(params.ExpiresAt); err != nil {
