@@ -761,7 +761,7 @@ func (o *UsageLedgerEntrySelectOption) BuildQuery(selectFromClause string) (stri
 func (o *UsageLedgerEntrySelectOption) Validate() error {
     // Guard.
     if o == nil {
-        return fmt.Errorf("missing required parameter: usage_ledger_entry_select_option=null")
+        return nil
     }
 
     if o.ID != nil {

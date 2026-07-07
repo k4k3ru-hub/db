@@ -1237,7 +1237,7 @@ func (o *OTPSelectParams) BuildQuery(selectFromClause string) (string, []any) {
 func (o *OTPSelectParams) Validate() error {
     // Guard.
     if o == nil {
-        return fmt.Errorf("missing required parameter: otp_select_params=null")
+        return nil
     }
 
     if o.AccountID != nil {

@@ -743,7 +743,7 @@ func (p *RecipientSelectParams) BuildQuery(selectFromClause string) (string, []a
 func (p *RecipientSelectParams) Validate() error {
     // Guard.
     if p == nil {
-        return fmt.Errorf("missing required parameter: wallet_select_params=null")
+        return nil
     }
 
     if p.ID != nil {

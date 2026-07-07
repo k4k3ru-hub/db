@@ -600,7 +600,7 @@ func (o *AccountSelectOption) BuildQuery(selectFromClause string) (string, []any
 func (o *AccountSelectOption) Validate() error {
     // Guard.
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_select_option=null")
+        return nil
     }
 
     if o.ID != nil {

@@ -966,7 +966,7 @@ func (o *ProductSelectOption) BuildQuery(selectFromClause string) (string, []any
 //
 func (o *ProductSelectOption) Validate() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: product_select_option=null")
+        return nil
     }
 
     if o.ID != nil {

@@ -853,7 +853,7 @@ func (p *WebhookEndpointSelectParams) BuildQuery(selectFromClause string) (strin
 func (p *WebhookEndpointSelectParams) Validate() error {
     // Guard.
     if p == nil {
-        return fmt.Errorf("missing required parameter: payment_webhook_endpoint_select_params=null")
+        return nil
     }
 
     if p.ID != nil {

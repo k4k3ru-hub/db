@@ -1170,7 +1170,7 @@ func (p *IntentTransferSelectParams) BuildQuery(selectFromClause string) (string
 func (p *IntentTransferSelectParams) Validate() error {
     // Guard.
     if p == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_intent_transfer_select_params=null")
+        return nil
     }
 
     if p.IntentID != nil {

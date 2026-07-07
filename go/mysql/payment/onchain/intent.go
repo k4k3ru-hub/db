@@ -1027,7 +1027,7 @@ func (p *IntentSelectParams) BuildQuery(selectFromClause string) (string, []any)
 func (p *IntentSelectParams) Validate() error {
     // Guard.
     if p == nil {
-        return fmt.Errorf("missing required parameter: payment_onchain_intent_select_params=null")
+        return nil
     }
 
     if p.AccountID != nil {

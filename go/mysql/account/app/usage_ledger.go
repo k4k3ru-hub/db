@@ -793,7 +793,7 @@ func (o *UsageLedgerSelectOption) BuildQuery(selectFromClause string) (string, [
 func (o *UsageLedgerSelectOption) Validate() error {
     // Guard.
     if o == nil {
-        return fmt.Errorf("missing required parameter: usage_ledger_select_option=null")
+        return nil
     }
 
     if o.AccountID != nil {
