@@ -882,13 +882,13 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
 
     // Generate query.
     query := fmt.Sprintf(
-        "SELECT * FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? ORDER BY %s DESC LIMIT 1;",
-        s.tableName, ColAccountID, ColChannel, ColPurpose, ColDestinationHash, ColCreatedAt,
+        "SELECT * FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? AND %s = ? ORDER BY %s DESC LIMIT 1;",
+        s.tableName, ColAccountID, ColStatus, ColChannel, ColPurpose, ColDestinationHash, ColCreatedAt,
     )
 
     // Execute.
     otp := &OTP{}
-    err := executor.QueryRow(query, accountID, channel, purpose, destinationHash).Scan(
+    err := executor.QueryRow(query, accountID, OTPStatusActive, channel, purpose, destinationHash).Scan(
         &otp.ID,
         &otp.AccountID,
         &otp.Status,
