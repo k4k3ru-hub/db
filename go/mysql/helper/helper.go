@@ -10,6 +10,7 @@ import (
     "encoding/json"
     "errors"
     "fmt"
+    "math"
     "strconv"
     "strings"
     "sync"
@@ -203,22 +204,22 @@ func ScanUint8(name string, value any) (uint8, error) {
     case uint8:
         return v, nil
     case uint16:
-        if v > 255 {
+        if v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
     case uint32:
-        if v > 255 {
+        if v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
     case uint64:
-        if v > 255 {
+        if v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
     case uint:
-        if v > 255 {
+        if v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
@@ -228,22 +229,22 @@ func ScanUint8(name string, value any) (uint8, error) {
         }
         return uint8(v), nil
     case int16:
-        if v < 0 || v > 255 {
+        if v < 0 || v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
     case int32:
-        if v < 0 || v > 255 {
+        if v < 0 || v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
     case int64:
-        if v < 0 || v > 255 {
+        if v < 0 || v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
     case int:
-        if v < 0 || v > 255 {
+        if v < 0 || v > math.MaxUint8 {
             return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
         }
         return uint8(v), nil
@@ -259,6 +260,80 @@ func ScanUint8(name string, value any) (uint8, error) {
             return 0, fmt.Errorf("invalid parameter: %s=%s", name, v)
         }
         return uint8(n), nil
+    default:
+        return 0, fmt.Errorf("unsupported parameter: %s_type=%T", name, value)
+    }
+}
+
+
+//
+// Scan uint16 value.
+//
+// Version:
+//   - 2026-07-08: Added.
+//
+func ScanUint16(name string, value any) (uint16, error) {
+    if value == nil {
+        return 0, fmt.Errorf("missing required parameter: %s=null", name)
+    }
+
+    switch v := value.(type) {
+    case uint8:
+        return uint16(v), nil
+    case uint16:
+        return v, nil
+    case uint32:
+        if v > math.MaxUint16 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case uint64:
+        if v > math.MaxUint16 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case uint:
+        if v > math.MaxUint16 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case int8:
+        if v < 0 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case int16:
+        if v < 0 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case int32:
+        if v < 0 || v > math.MaxUint16 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case int64:
+        if v < 0 || v > math.MaxUint16 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case int:
+        if v < 0 || v > math.MaxUint16 {
+            return 0, fmt.Errorf("invalid parameter: %s=%d", name, v)
+        }
+        return uint16(v), nil
+    case []byte:
+        n, err := strconv.ParseUint(string(v), 10, 16)
+        if err != nil {
+            return 0, fmt.Errorf("invalid parameter: %s=%s", name, string(v))
+        }
+        return uint16(n), nil
+    case string:
+        n, err := strconv.ParseUint(v, 10, 16)
+        if err != nil {
+            return 0, fmt.Errorf("invalid parameter: %s=%s", name, v)
+        }
+        return uint16(n), nil
     default:
         return 0, fmt.Errorf("unsupported parameter: %s_type=%T", name, value)
     }
