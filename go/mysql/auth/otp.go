@@ -22,7 +22,7 @@ import (
 )
 
 const (
-    DefaultOTPTableName = "account_otps"
+    DefaultOTPTableName = "otp"
 
     DefaultCodeLength = 6
 
@@ -68,8 +68,7 @@ type OTP struct {
 //   - 2026-05-03: Added.
 //
 type OTPStore struct {
-    tableName        string
-    accountTableName string
+    tableName string
 }
 
 
@@ -198,20 +197,15 @@ func HashCode(code string, maxCodeLength int) (string, error) {
 // Version:
 //   - 2026-05-03: Added.
 //
-func NewOTPStore(tableName string, accountTableName string) (*OTPStore, error) {
+func NewOTPStore(tableName string) (*OTPStore, error) {
     // Guard.
     tableName = strings.TrimSpace(tableName)
     if tableName == "" {
-        return nil, fmt.Errorf("failed to create account otp store: missing required parameter: table_name=%q", "empty")
-    }
-    accountTableName = strings.TrimSpace(accountTableName)
-    if accountTableName == "" {
-        return nil, fmt.Errorf("failed to create account otp store: missing required parameter: account_table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to create otp store: missing required parameter: table_name=%q", "empty")
     }
 
     return &OTPStore{
-        tableName:        tableName,
-        accountTableName: accountTableName,
+        tableName: tableName,
     }, nil
 }
 
@@ -340,7 +334,7 @@ func HashDestinationRaw(secret []byte, destinationRaw string) (string, error) {
 
 
 //
-// Validate account OTP ID.
+// Validate OTP ID.
 //
 // Version:
 //   - 2026-06-25: Added.
@@ -354,21 +348,21 @@ func ValidateOTPID(id uint64) error {
 
 
 //
-// Validate account OTP ID.
+// Validate OTP ID.
 //
 // Version:
 //   - 2026-06-25: Added.
 //
 func (o *OTP) ValidateID() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPID(o.ID)
 }
 
 
 //
-// Validate account OTP channel.
+// Validate OTP channel.
 //
 // Version:
 //   - 2026-06-25: Added.
@@ -382,21 +376,21 @@ func ValidateOTPChannel(channel OTPChannel) error {
 
 
 //
-// Validate account OTP channel.
+// Validate OTP channel.
 //
 // Version:
 //   - 2026-06-25: Added.
 //
 func (o *OTP) ValidateChannel() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPChannel(o.Channel)
 }
 
 
 //
-// Validate account OTP purpose.
+// Validate OTP purpose.
 //
 // Version:
 //   - 2026-05-12: Added.
@@ -410,21 +404,21 @@ func ValidateOTPPurpose(purpose OTPPurpose) error {
 
 
 //
-// Validate account OTP purpose.
+// Validate OTP purpose.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidatePurpose() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPPurpose(o.Purpose)
 }
 
 
 //
-// Validate account OTP status.
+// Validate OTP status.
 //
 // Version:
 //   - 2026-05-09: Added.
@@ -438,21 +432,21 @@ func ValidateOTPStatus(status OTPStatus) error {
 
 
 //
-// Validate account OTP status.
+// Validate OTP status.
 //
 // Version:
 //   - 2026-05-09: Added.
 //
 func (o *OTP) ValidateStatus() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPStatus(o.Status)
 }
 
 
 //
-// Validate account OTP destination hash.
+// Validate OTP destination hash.
 //
 // Version:
 //   - 2026-06-25: Added.
@@ -469,21 +463,21 @@ func ValidateOTPDestinationHash(destinationHash string) error {
 
 
 //
-// Validate account OTP destination hash.
+// Validate OTP destination hash.
 //
 // Version:
 //   - 2026-06-25: Added.
 //
 func (o *OTP) ValidateDestinationHash() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPDestinationHash(o.DestinationHash)
 }
 
 
 //
-// Validate account OTP code hash.
+// Validate OTP code hash.
 //
 // Version:
 //   - 2026-05-03: Added.
@@ -500,21 +494,21 @@ func ValidateOTPCodeHash(codeHash string) error {
 
 
 //
-// Validate account OTP code hash.
+// Validate OTP code hash.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateCodeHash() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPCodeHash(o.CodeHash)
 }
 
 
 //
-// Validate account OTP consumed at.
+// Validate OTP consumed at.
 //
 // Version:
 //   - 2026-06-25: Added.
@@ -534,21 +528,21 @@ func ValidateOTPConsumedAt(consumedAt *time.Time) error {
 
 
 //
-// Validate account OTP consumed at.
+// Validate OTP consumed at.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateConsumedAt() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPConsumedAt(o.ConsumedAt)
 }
 
 
 //
-// Validate account OTP expires at.
+// Validate OTP expires at.
 //
 // Version:
 //   - 2026-05-03: Added.
@@ -565,21 +559,21 @@ func ValidateOTPExpiresAt(expiresAt time.Time) error {
 
 
 //
-// Validate account OTP expires at.
+// Validate OTP expires at.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateExpiresAt() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPExpiresAt(o.ExpiresAt)
 }
 
 
 //
-// Validate account OTP last sent at.
+// Validate OTP last sent at.
 //
 // Version:
 //   - 2026-05-03: Added.
@@ -596,21 +590,21 @@ func ValidateOTPLastSentAt(lastSentAt time.Time) error {
 
 
 //
-// Validate account OTP last sent at.
+// Validate OTP last sent at.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateLastSentAt() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPLastSentAt(o.LastSentAt)
 }
 
 
 //
-// Validate account OTP locked until.
+// Validate OTP locked until.
 //
 // Version:
 //   - 2026-05-03: Added.
@@ -630,34 +624,34 @@ func ValidateOTPLockedUntil(lockedUntil *time.Time) error {
 
 
 //
-// Validate account OTP locked until.
+// Validate OTP locked until.
 //
 // Version:
 //   - 2026-05-03: Added.
 //
 func (o *OTP) ValidateLockedUntil() error {
     if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
+        return fmt.Errorf("missing required parameter: otp=null")
     }
     return ValidateOTPLockedUntil(o.LockedUntil)
 }
 
 
 //
-// Create account OTPs table.
+// Create OTP table.
 //
 // Version:
 //   - 2026-05-02: Added.
 //
 func (s *OTPStore) CreateTable(executor helper.Executor) error {
     if s == nil {
-        return fmt.Errorf("failed to create account otps table: missing required parameter: otp_store=null")
+        return fmt.Errorf("failed to create otp table: missing required parameter: otp_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to create account otps table: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to create otp table: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return fmt.Errorf("failed to create account otps table: missing required parameter: executor=null")
+        return fmt.Errorf("failed to create otp table: missing required parameter: executor=null")
     }
 
     query := fmt.Sprintf(
@@ -699,7 +693,7 @@ func (s *OTPStore) CreateTable(executor helper.Executor) error {
     )
 
     if _, err := executor.Exec(query); err != nil {
-        return fmt.Errorf("failed to create account otps table: %w", err)
+        return fmt.Errorf("failed to create otp table: %w", err)
     }
 
     return nil
@@ -707,50 +701,50 @@ func (s *OTPStore) CreateTable(executor helper.Executor) error {
 
 
 //
-// Insert account OTP.
+// Insert OTP.
 //
 // Version:
 //   - 2026-05-04: Added.
 //
 func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) error {
     if s == nil {
-        return fmt.Errorf("failed to insert account otp: missing required parameter: otp_store=null")
+        return fmt.Errorf("failed to insert otp: missing required parameter: otp_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to insert account otp: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to insert otp: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return fmt.Errorf("failed to insert account otp: missing required parameter: executor=null")
+        return fmt.Errorf("failed to insert otp: missing required parameter: executor=null")
     }
     if params == nil {
-        return fmt.Errorf("failed to insert account otp: missing required parameter: otp_insert_params=null")
+        return fmt.Errorf("failed to insert otp: missing required parameter: otp_insert_params=null")
     }
     if err := ValidateOTPStatus(params.Status); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPChannel(params.Channel); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPPurpose(params.Purpose); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPDestinationHash(params.DestinationHash); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPCodeHash(params.CodeHash); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPConsumedAt(params.ConsumedAt); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPExpiresAt(params.ExpiresAt); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPLastSentAt(params.LastSentAt); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
     if err := ValidateOTPLockedUntil(params.LockedUntil); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
 
     if params.ID == 0 {
@@ -803,9 +797,9 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
     ); err != nil {
         var mysqlErr *mysql.MySQLError
         if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-            return fmt.Errorf("failed to insert account otp: %w", helper.ErrDuplicateKey)
+            return fmt.Errorf("failed to insert otp: %w", helper.ErrDuplicateKey)
         }
-        return fmt.Errorf("failed to insert account otp: %w", err)
+        return fmt.Errorf("failed to insert otp: %w", err)
     }
 
     return nil
@@ -820,19 +814,19 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
 //
 func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Executor, channel OTPChannel, purpose OTPPurpose, destinationHash string) (*OTP, error) {
     if s == nil {
-        return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: otp_store=null")
+        return nil, fmt.Errorf("failed to select latest usable otp: missing required parameter: otp_store=null")
     }   
     if s.tableName == "" {
-        return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: table_name=%q", "empty")
+        return nil, fmt.Errorf("failed to select latest usable otp: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: executor=null")
+        return nil, fmt.Errorf("failed to select latest usable otp: missing required parameter: executor=null")
     }
     if err := ValidateOTPChannel(channel); err != nil {
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
+        return nil, fmt.Errorf("failed to select latest usable otp: %w", err)
     }
     if err := ValidateOTPPurpose(purpose); err != nil {
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
+        return nil, fmt.Errorf("failed to select latest usable otp: %w", err)
     }
 
     // Generate query.
@@ -862,14 +856,14 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
         if err == sql.ErrNoRows {
             return nil, nil
         }
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
+        return nil, fmt.Errorf("failed to select latest usable otp: %w", err)
     }
 
     now := time.Now().UTC()
 
     // Check whether OTP has been locked.
     if otp.LockedUntil != nil && otp.LockedUntil.After(now) {
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w: locked_until=%q", helper.ErrForbidden, otp.LockedUntil)
+        return nil, fmt.Errorf("failed to select latest usable otp: %w: locked_until=%q", helper.ErrForbidden, otp.LockedUntil)
     }
 
     // Check whether OTP is expired.
@@ -879,19 +873,19 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
             Status: &expiredStatus,
         }
         if err := s.UpdateByID(executor, otp.ID, updateParams); err != nil {
-            return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
+            return nil, fmt.Errorf("failed to select latest usable otp: %w", err)
         }
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w: expired_at=%q", helper.ErrExpired, otp.ExpiresAt)
+        return nil, fmt.Errorf("failed to select latest usable otp: %w: expired_at=%q", helper.ErrExpired, otp.ExpiresAt)
     }
 
     // Check whether OTP is already verified.
     if otp.Status == OTPStatusVerified {
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w: otp=%q", helper.ErrForbidden, "already verified")
+        return nil, fmt.Errorf("failed to select latest usable otp: %w: otp=%q", helper.ErrForbidden, "already verified")
     }
 
     // Check whether OTP is not active.
     if otp.Status != OTPStatusActive {
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w: otp=%q", helper.ErrForbidden, "not active")
+        return nil, fmt.Errorf("failed to select latest usable otp: %w: otp=%q", helper.ErrForbidden, "not active")
     }
 
     return otp, nil
@@ -899,30 +893,30 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
 
 
 //
-// Select account otps.
+// Select otp.
 //
 // Version:
 //   - 2026-05-04: Added.
 //
 //func (s *OTPStore) Select(executor helper.Executor, params *OTPSelectParams) ([]*OTP, error) {
 //    if s == nil {
-//        return nil, fmt.Errorf("failed to select account otps: missing required parameter: otp_store=null")
+//        return nil, fmt.Errorf("failed to select otp: missing required parameter: otp_store=null")
 //    }
 //    if s.tableName == "" {
-//        return nil, fmt.Errorf("failed to select account otps: missing required parameter: table_name=%q", "empty")
+//        return nil, fmt.Errorf("failed to select otp: missing required parameter: table_name=%q", "empty")
 //    }
 //    if executor == nil {
-//        return nil, fmt.Errorf("failed to select account otps: missing required parameter: executor=null")
+//        return nil, fmt.Errorf("failed to select otp: missing required parameter: executor=null")
 //    }
 //    if err := params.Validate(); err != nil {
-//        return nil, fmt.Errorf("failed to select account otps: %w", err)
+//        return nil, fmt.Errorf("failed to select otp: %w", err)
 //    }
 // 
 //    query, args := option.BuildQuery("SELECT * FROM " + s.tableName)
 // 
 //    rows, err := executor.Query(query, args...)
 //    if err != nil {
-//        return nil, fmt.Errorf("failed to select account otps: %w", err)
+//        return nil, fmt.Errorf("failed to select otp: %w", err)
 //    }
 //    defer rows.Close()
 // 
@@ -939,14 +933,14 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
 //            &row.LastSentAt,
 //            &row.LockedUntil,
 //        ); err != nil {
-//            return nil, fmt.Errorf("failed to select account otps: %w", err)
+//            return nil, fmt.Errorf("failed to select otp: %w", err)
 //        }
 // 
 //        result = append(result, row)
 //    }
 // 
 //    if err := rows.Err(); err != nil {
-//        return nil, fmt.Errorf("failed to select account otps: %w", err)
+//        return nil, fmt.Errorf("failed to select otp: %w", err)
 //    }
 // 
 //    return result, nil
@@ -954,30 +948,30 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
 
 
 //
-// Count account otps.
+// Count otp.
 //
 // Version:
 //   - 2026-05-04: Added.
 //
 func (s *OTPStore) Count(executor helper.Executor, params *OTPSelectParams) (int64, error) {
     if s == nil {
-        return 0, fmt.Errorf("failed to count account otps: missing required parameter: otp_store=null")
+        return 0, fmt.Errorf("failed to count otp: missing required parameter: otp_store=null")
     }
     if s.tableName == "" {
-        return 0, fmt.Errorf("failed to count account otps: missing required parameter: table_name=%q", "empty")
+        return 0, fmt.Errorf("failed to count otp: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return 0, fmt.Errorf("failed to count account otps: missing required parameter: executor=null")
+        return 0, fmt.Errorf("failed to count otp: missing required parameter: executor=null")
     }
     if err := params.Validate(); err != nil {
-        return 0, fmt.Errorf("failed to count account otps: %w", err)
+        return 0, fmt.Errorf("failed to count otp: %w", err)
     }
 
     query, args := params.BuildQuery("SELECT COUNT(*) FROM " + s.tableName)
 
     var result int64
     if err := executor.QueryRow(query, args...).Scan(&result); err != nil {
-        return 0, fmt.Errorf("failed to count account otps: %w", err)
+        return 0, fmt.Errorf("failed to count otp: %w", err)
     }
 
     return result, nil
@@ -985,23 +979,23 @@ func (s *OTPStore) Count(executor helper.Executor, params *OTPSelectParams) (int
 
 
 //
-// Update account OTP.
+// Update OTP.
 //
 // Version:
 //   - 2026-05-04: Added.
 //
 func (s *OTPStore) UpdateByID(executor helper.Executor, id uint64, params *OTPUpdateParams) error {
     if s == nil {
-        return fmt.Errorf("failed to update account otp by id: missing required parameter: otp_store=null")
+        return fmt.Errorf("failed to update otp by id: missing required parameter: otp_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to update account otp by id: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to update otp by id: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return fmt.Errorf("failed to update account otp by id: missing required parameter: executor=null")
+        return fmt.Errorf("failed to update otp by id: missing required parameter: executor=null")
     }
     if err := params.Validate(); err != nil {
-        return fmt.Errorf("failed to update account otp by id: %w", err)
+        return fmt.Errorf("failed to update otp by id: %w", err)
     }
 
     assignments := make([]string, 0, 7)
@@ -1035,7 +1029,7 @@ func (s *OTPStore) UpdateByID(executor helper.Executor, id uint64, params *OTPUp
     }
 
     if len(assignments) == 0 {
-        return fmt.Errorf("failed to update account otp by id: invalid parameter: assignments=%q", "empty")
+        return fmt.Errorf("failed to update otp by id: invalid parameter: assignments=%q", "empty")
     }
 
     query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?;", s.tableName, strings.Join(assignments, ", "), ColID)
@@ -1043,7 +1037,7 @@ func (s *OTPStore) UpdateByID(executor helper.Executor, id uint64, params *OTPUp
     args = append(args, id)
 
     if _, err := executor.Exec(query, args...); err != nil {
-        return fmt.Errorf("failed to update account otp: %w", err)
+        return fmt.Errorf("failed to update otp: %w", err)
     }
 
     return nil
@@ -1051,29 +1045,29 @@ func (s *OTPStore) UpdateByID(executor helper.Executor, id uint64, params *OTPUp
 
 
 // 
-// Delete account otp by ID.
+// Delete otp by ID.
 // 
 // Version:
 //   - 2026-05-04: Added.
 //
 func (s *OTPStore) DeleteByID(executor helper.Executor, id uint64) error {
     if s == nil {
-        return fmt.Errorf("failed to delete account otp by id: missing required parameter: otp_store=null")
+        return fmt.Errorf("failed to delete otp by id: missing required parameter: otp_store=null")
     }
     if s.tableName == "" {
-        return fmt.Errorf("failed to delete account otp by id: missing required parameter: table_name=%q", "empty")
+        return fmt.Errorf("failed to delete otp by id: missing required parameter: table_name=%q", "empty")
     }
     if executor == nil {
-        return fmt.Errorf("failed to delete account otp by id: missing required parameter: executor=null")
+        return fmt.Errorf("failed to delete otp by id: missing required parameter: executor=null")
     }
     if err := ValidateOTPID(id); err != nil {
-        return fmt.Errorf("failed to delete account otp by id: %w", err)
+        return fmt.Errorf("failed to delete otp by id: %w", err)
     }
     
     query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?;", s.tableName, ColID)
 
     if _, err := executor.Exec(query, id); err != nil {
-        return fmt.Errorf("failed to delete account otp by id: %w", err)
+        return fmt.Errorf("failed to delete otp by id: %w", err)
     }   
     
     return nil
@@ -1081,7 +1075,7 @@ func (s *OTPStore) DeleteByID(executor helper.Executor, id uint64) error {
 
 
 //
-// Select usable account otp by email and purpose.
+// Select usable otp by email and purpose.
 //
 //func (s *OTPStore) SelectUsableByEmailAndPurpose(executor helper.Executor, email string, p OTPPurpose, now time.Time) (*OTP, error) {
 //    otp, err := s.SelectByEmailAndPurpose(executor, email, p)
@@ -1179,7 +1173,7 @@ func (o *OTPSelectParams) BuildQuery(selectFromClause string) (string, []any) {
 
 
 //
-// Validate account otp select params.
+// Validate otp select params.
 //
 // Version:
 //   - 2025-05-02: Added.
@@ -1246,7 +1240,7 @@ func (o *OTPSelectParams) Validate() error {
 
 
 //
-// Validate account otp update params.
+// Validate otp update params.
 //
 // Version:
 //   - 2025-05-03: Added.
