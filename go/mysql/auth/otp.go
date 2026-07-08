@@ -46,7 +46,6 @@ var (
 //
 type OTP struct {
     ID              uint64    
-    AccountID       uint64    
     Status          OTPStatus 
     Channel         OTPChannel
     Purpose         OTPPurpose
@@ -76,7 +75,6 @@ type OTPStore struct {
 
 type OTPInsertParams struct {
     ID              uint64
-    AccountID       uint64
     Status          OTPStatus
     Channel         OTPChannel
     Purpose         OTPPurpose
@@ -94,7 +92,6 @@ type OTPInsertParams struct {
 
 
 type OTPSelectParams struct {
-    AccountID    *uint64
     Status       *OTPStatus 
     Channel      *OTPChannel
     Purpose      *OTPPurpose
@@ -367,34 +364,6 @@ func (o *OTP) ValidateID() error {
         return fmt.Errorf("missing required parameter: account_otp=null")
     }
     return ValidateOTPID(o.ID)
-}
-
-
-//
-// Validate account OTP account ID.
-//
-// Version:
-//   - 2026-06-25: Added.
-//
-func ValidateOTPAccountID(accountID uint64) error {
-    if accountID == 0 {
-        return fmt.Errorf("invalid parameter: account_id=0")
-    }
-    return nil
-}
-
-
-//
-// Validate account OTP account ID.
-//
-// Version:
-//   - 2026-06-25: Added.
-//
-func (o *OTP) ValidateAccountID() error {
-    if o == nil {
-        return fmt.Errorf("missing required parameter: account_otp=null")
-    }
-    return ValidateOTPAccountID(o.AccountID)
 }
 
 
@@ -694,7 +663,6 @@ func (s *OTPStore) CreateTable(executor helper.Executor) error {
     query := fmt.Sprintf(
         `CREATE TABLE IF NOT EXISTS %s (
             %s BIGINT UNSIGNED NOT NULL COMMENT 'ID',
-            %s BIGINT UNSIGNED NOT NULL COMMENT 'Account ID',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Status',
             %s TINYINT UNSIGNED NOT NULL COMMENT 'Channel',
             %s SMALLINT UNSIGNED NOT NULL COMMENT 'Purpose',
@@ -708,14 +676,11 @@ func (s *OTPStore) CreateTable(executor helper.Executor) error {
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
             %s DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
             PRIMARY KEY (%s),
-            KEY idx_account_otps_account_id (%s),
-            KEY idx_account_otps_acc_id_sta_cha_pur_des_has (%s, %s, %s, %s, %s),
-            KEY idx_account_otps_status_expires_at (%s, %s),
-            CONSTRAINT fk_%s_account_id FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE CASCADE ON UPDATE CASCADE
+            KEY idx_%s_sta_cha_pur_des_has (%s, %s, %s, %s),
+            KEY idx_%s_status_expires_at (%s, %s)
         );`,
         s.tableName,
         ColID,
-        ColAccountID,
         ColStatus,
         ColChannel,
         ColPurpose,
@@ -729,10 +694,8 @@ func (s *OTPStore) CreateTable(executor helper.Executor) error {
         ColCreatedAt,
         ColUpdatedAt,
         ColID,
-        ColAccountID,
-        ColAccountID, ColStatus, ColChannel, ColPurpose, ColDestinationHash,
-        ColStatus, ColExpiresAt,
-        s.tableName, ColAccountID, s.accountTableName, ColID,
+        s.tableName, ColStatus, ColChannel, ColPurpose, ColDestinationHash,
+        s.tableName, ColStatus, ColExpiresAt,
     )
 
     if _, err := executor.Exec(query); err != nil {
@@ -761,9 +724,6 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
     }
     if params == nil {
         return fmt.Errorf("failed to insert account otp: missing required parameter: otp_insert_params=null")
-    }
-    if err := ValidateOTPAccountID(params.AccountID); err != nil {
-        return fmt.Errorf("failed to insert account otp: %w", err)
     }
     if err := ValidateOTPStatus(params.Status); err != nil {
         return fmt.Errorf("failed to insert account otp: %w", err)
@@ -811,11 +771,10 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
     }
 
     query := fmt.Sprintf(
-        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        "%s INTO %s (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
         queryPrefix,
         s.tableName,
         ColID,
-        ColAccountID,
         ColStatus,
         ColChannel,
         ColPurpose,
@@ -831,7 +790,6 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
     if _, err := executor.Exec(
         query,
         params.ID,
-        params.AccountID,
         params.Status,
         params.Channel,
         params.Purpose,
@@ -860,7 +818,7 @@ func (s *OTPStore) Insert(executor helper.Executor, params *OTPInsertParams) err
 // Version:
 //   - 2026-05-07: Added.
 //
-func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Executor, accountID uint64, channel OTPChannel, purpose OTPPurpose, destinationHash string) (*OTP, error) {
+func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Executor, channel OTPChannel, purpose OTPPurpose, destinationHash string) (*OTP, error) {
     if s == nil {
         return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: otp_store=null")
     }   
@@ -869,9 +827,6 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
     }
     if executor == nil {
         return nil, fmt.Errorf("failed to select latest usable account otp: missing required parameter: executor=null")
-    }
-    if err := ValidateOTPAccountID(accountID); err != nil {
-        return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
     }
     if err := ValidateOTPChannel(channel); err != nil {
         return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
@@ -882,15 +837,14 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
 
     // Generate query.
     query := fmt.Sprintf(
-        "SELECT * FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? AND %s = ? ORDER BY %s DESC LIMIT 1;",
-        s.tableName, ColAccountID, ColStatus, ColChannel, ColPurpose, ColDestinationHash, ColCreatedAt,
+        "SELECT * FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? ORDER BY %s DESC LIMIT 1;",
+        s.tableName, ColStatus, ColChannel, ColPurpose, ColDestinationHash, ColCreatedAt,
     )
 
     // Execute.
     otp := &OTP{}
-    err := executor.QueryRow(query, accountID, OTPStatusActive, channel, purpose, destinationHash).Scan(
+    err := executor.QueryRow(query, OTPStatusActive, channel, purpose, destinationHash).Scan(
         &otp.ID,
-        &otp.AccountID,
         &otp.Status,
         &otp.Channel,
         &otp.Purpose,
@@ -1181,10 +1135,6 @@ func (o *OTPSelectParams) BuildQuery(selectFromClause string) (string, []any) {
     conditions := make([]string, 0, 6)
     args := make([]any, 0, 8)
 
-    if o.AccountID != nil {
-        conditions = append(conditions, ColAccountID + " = ?")
-        args = append(args, *o.AccountID)
-    }
     if o.Status != nil {
         conditions = append(conditions, ColStatus + " = ?")
         args = append(args, *o.Status)
@@ -1240,11 +1190,6 @@ func (o *OTPSelectParams) Validate() error {
         return nil
     }
 
-    if o.AccountID != nil {
-        if err := ValidateOTPAccountID(*o.AccountID); err != nil {
-            return err
-        }
-    }
     if o.Status != nil {
         if err := ValidateOTPStatus(*o.Status); err != nil {
             return err
@@ -1274,7 +1219,6 @@ func (o *OTPSelectParams) Validate() error {
     if o.OrderBy != "" {
         switch o.OrderBy {
         case ColID,
-             ColAccountID,
              ColStatus,
              ColChannel,
              ColPurpose,
