@@ -453,7 +453,7 @@ func (p *OTPPurpose) Scan(value interface{}) error {
         return fmt.Errorf("failed to scan: missing required parameter: otp_purpose=null")
     }
 
-    v, err := helper.ScanUint8("otp_purpose", value)
+    v, err := helper.ScanUint16("otp_purpose", value)
     if err != nil {
         return fmt.Errorf("failed to scan: %w", err)
     }
