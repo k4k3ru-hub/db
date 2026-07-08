@@ -915,7 +915,7 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
 
     // Check whether OTP has been locked.
     if otp.LockedUntil != nil && otp.LockedUntil.After(now) {
-        return nil, fmt.Errorf("failed to select latest usable account otp: forbidden: locked_until=%q", otp.LockedUntil)
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w: locked_until=%q", helper.ErrForbidden, otp.LockedUntil)
     }
 
     // Check whether OTP is expired.
@@ -927,17 +927,17 @@ func (s *OTPStore) SelectLatestUsableAndNormalizeIfNeeded(executor helper.Execut
         if err := s.UpdateByID(executor, otp.ID, updateParams); err != nil {
             return nil, fmt.Errorf("failed to select latest usable account otp: %w", err)
         }
-        return nil, fmt.Errorf("failed to select latest usable account otp: expired: expired_at=%q", otp.ExpiresAt)
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w: expired_at=%q", helper.ErrExpired, otp.ExpiresAt)
     }
 
     // Check whether OTP is already verified.
     if otp.Status == OTPStatusVerified {
-        return nil, fmt.Errorf("failed to select latest usable account otp: forbidden: otp=%q", "already verified")
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w: otp=%q", helper.ErrForbidden, "already verified")
     }
 
     // Check whether OTP is not active.
     if otp.Status != OTPStatusActive {
-        return nil, fmt.Errorf("failed to select latest usable account otp: forbidden: otp=%q", "not active")
+        return nil, fmt.Errorf("failed to select latest usable account otp: %w: otp=%q", helper.ErrForbidden, "not active")
     }
 
     return otp, nil

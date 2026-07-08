@@ -23,6 +23,8 @@ import (
 
 var (
     ErrDuplicateKey = errors.New("duplicate key")
+    ErrExpired      = errors.New("expired")
+    ErrForbidden    = errors.New("forbidden")
 )
 
 
