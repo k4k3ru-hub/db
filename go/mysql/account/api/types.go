@@ -304,7 +304,20 @@ func (s *CredentialScopes) Scan(src any) error {
     return nil
 }
 
+//
+// Get credential scopes as JSON string.
+//
+// Version:
+//   - 2026-07-20: Added.
+//
+func (s CredentialScopes) String() string {
+    if s == nil {
+        return "[]"
+    }
 
+    b, _ := json.Marshal([]string(s))
+    return string(b)
+}
 
 
 
