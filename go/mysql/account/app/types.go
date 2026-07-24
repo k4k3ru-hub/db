@@ -73,20 +73,20 @@ func (s *UsageLedgerStatus) Scan(value any) error {
 type UsageLedgerEntryType uint8
 
 const (
-    UsageTypeDeposit UsageLedgerEntryType = iota + 1
-    UsageTypeBonusGrant
-    UsageTypeRefund
-    UsageTypeAdjustment
-    UsageTypeExpiration
-    UsageTypeHTTPRequest
-    UsageTypeWSConnection
-    UsageTypeWSSubscription
-    UsageTypeFIXSession
-    UsageTypeFIXMessage
+    UsageLedgerEntryTypeDeposit UsageLedgerEntryType = iota + 1
+    UsageLedgerEntryTypeBonusGrant
+    UsageLedgerEntryTypeRefund
+    UsageLedgerEntryTypeAdjustment
+    UsageLedgerEntryTypeExpiration
+    UsageLedgerEntryTypeHTTPRequest
+    UsageLedgerEntryTypeWSConnection
+    UsageLedgerEntryTypeWSSubscription
+    UsageLedgerEntryTypeFIXSession
+    UsageLedgerEntryTypeFIXMessage
 )
 
 func (t UsageLedgerEntryType) IsValid() bool {
-    return t <= UsageTypeFIXMessage
+    return t <= UsageLedgerEntryTypeFIXMessage
 }
 
 func (t UsageLedgerEntryType) Validate() error {
