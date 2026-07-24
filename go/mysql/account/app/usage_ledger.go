@@ -4,6 +4,7 @@
 package app
 
 import (
+    "context"
     "database/sql"
     "encoding/json"
     "errors"
@@ -434,7 +435,6 @@ func (s *UsageLedgerStore) Insert(executor helper.Executor, params *UsageLedgerI
     return nil
 }
 
-
 //
 // Add bonus balance ticks.
 //
@@ -515,6 +515,46 @@ func (s *UsageLedgerStore) SelectByAccountID(executor helper.Executor, accountID
     return result, nil
 }
 
+func (s *UsageLedgerStore) SelectForUpdateByAccountID(ctx context.Context, tx *sql.Tx, accountID uint64) (*UsageLedger, error) {
+    if s == nil {
+        return nil, fmt.Errorf("failed to select account app usage ledger by account id: missing required parameter: usage_ledger_store=null")
+    }
+    if s.tableName == "" {
+        return nil, fmt.Errorf("failed to select account app usage ledger by account id: missing required parameter: table_name=%q", "empty")
+    }
+    if ctx == nil {
+        return nil, fmt.Errorf("failed to select account app usage ledger for update by account id: missing required parameter: context=null")
+    }
+    if tx == nil {
+        return nil, fmt.Errorf("failed to select account app usage ledger by account id: missing required parameter: tx=null")
+    }
+    if accountID == 0 {
+        return nil, fmt.Errorf("failed to select account app usage ledger by account id: invalid parameter: account_id=0")
+    }
+
+    query := fmt.Sprintf("SELECT * FROM %s WHERE %s = ? LIMIT 1 FOR UPDATE;", s.tableName, ColAccountID)
+
+    result := &UsageLedger{}
+    err := tx.QueryRowContext(ctx, query, accountID).Scan(
+        &result.AccountID,
+        &result.Status,
+        &result.CreditBalanceTicks,
+        &result.BonusBalanceTicks,
+        &result.CreditExpiresAt,
+        &result.BonusExpiresAt,
+        &result.MetaData,
+        &result.CreatedAt,
+        &result.UpdatedAt,
+    )
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, nil
+        }
+        return nil, fmt.Errorf("failed to select account app usage ledger by account id: %w", err)
+    }
+
+    return result, nil
+}
 
 //
 // Select account app usage ledger.
