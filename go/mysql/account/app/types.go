@@ -73,8 +73,7 @@ func (s *UsageLedgerStatus) Scan(value any) error {
 type UsageLedgerEntryType uint8
 
 const (
-    UsageTypeUnknown UsageLedgerEntryType = iota
-    UsageTypeDeposit
+    UsageTypeDeposit UsageLedgerEntryType = iota + 1
     UsageTypeBonusGrant
     UsageTypeRefund
     UsageTypeAdjustment
@@ -90,6 +89,15 @@ func (t UsageLedgerEntryType) IsValid() bool {
     return t <= UsageTypeFIXMessage
 }
 
+func (t UsageLedgerEntryType) Validate() error {
+    if t == 0 {
+        return fmt.Errorf("missing required parameter: usage_ledger_entry_type=empty")
+    }
+    if !t.IsValid() {
+        return fmt.Errorf("invalid parameter: usage_ledger_entry_type=%d", t)
+    }
+    return nil
+}
 
 //
 // Value.
